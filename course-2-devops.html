@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Foundry — 12-Week DevOps &amp; Cloud Curriculum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F7FA;
+  --paper-raised:#FFFFFF;
+  --ink:#101820;
+  --ink-soft:rgba(16,24,32,.64);
+  --ink-faint:rgba(16,24,32,.45);
+  --line:rgba(16,24,32,.13);
+  --grid-dot:rgba(16,24,32,.055);
+  --trace:#0C8F86;
+  --trace-bright:#0FA89C;
+  --trace-wash:rgba(12,143,134,.09);
+  --amber:#C97A1F;
+  --amber-bright:#E0922E;
+  --danger:#B23B2E;
+  --ok:#1E8E5A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0/22px 22px,
+    var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--trace); color:#fff;}
+a{color:var(--trace);}
+.mono{font-family:'IBM Plex Mono', monospace;}
+.display{font-family:'IBM Plex Sans', sans-serif; font-weight:700; letter-spacing:-0.02em;}
+
+.app{display:grid; grid-template-columns:300px 1fr; min-height:100vh;}
+@media (max-width:900px){ .app{grid-template-columns:1fr;} .sidebar{position:relative; height:auto;} }
+
+.sidebar{
+  background:var(--paper-raised);
+  border-right:1px solid var(--line);
+  padding:28px 22px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{margin-bottom:26px;}
+.brand .mark{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--trace); border:1px solid var(--trace); background:var(--trace-wash);
+  padding:4px 9px; border-radius:2px;
+}
+.brand h1{font-family:'IBM Plex Sans'; font-weight:700; font-size:25px; line-height:1.18; margin:14px 0 4px; letter-spacing:-0.015em; color:var(--ink);}
+.brand p{margin:0; font-size:13px; color:var(--ink-soft); line-height:1.55;}
+
+.overall-progress{margin:22px 0 8px;}
+.overall-progress .row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); margin-bottom:7px; text-transform:uppercase; letter-spacing:.08em;}
+.bar-track{height:5px; background:rgba(16,24,32,.08); border-radius:2px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--trace); border-radius:2px; transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* ---- PCB trace rail ---- */
+.cuts{list-style:none; margin:24px 0 0; padding:0 0 0 2px; position:relative;}
+.cut-group{margin-bottom:2px; position:relative; padding-left:20px; border-left:2px solid var(--line);}
+.cut-label{
+  font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--trace); padding:13px 0 9px; opacity:.95; margin-left:-2px; border-left:2px solid var(--trace); padding-left:10px;
+}
+.week-btn{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:none; border:none; color:var(--ink); font-family:'IBM Plex Sans';
+  font-size:14px; padding:8px 6px; border-radius:3px; cursor:pointer; transition:background .15s;
+  position:relative; margin-left:-2px;
+}
+.week-btn::before{
+  content:''; position:absolute; left:-22px; top:50%; width:12px; height:2px; background:var(--line);
+}
+.week-btn:hover{background:rgba(12,143,134,.06);}
+.week-btn.active{background:var(--trace-wash); color:var(--trace); font-weight:600;}
+.week-btn.active::before{background:var(--trace);}
+.week-num{
+  font-family:'IBM Plex Mono'; font-size:11px; width:20px; height:20px; flex:0 0 20px;
+  border:1.5px solid var(--ink-faint); border-radius:3px; background:var(--paper-raised);
+  display:flex; align-items:center; justify-content:center; color:var(--ink-soft); position:relative; z-index:1;
+}
+.week-btn.active .week-num{border-color:var(--trace); color:var(--trace); background:#fff;}
+.week-btn.done .week-num{background:var(--ok); border-color:var(--ok); color:#fff;}
+.week-title-mini{flex:1; font-size:13px; opacity:.92;}
+
+.main{padding:44px 56px 100px; max-width:900px;}
+@media (max-width:700px){ .main{padding:28px 20px 80px;} }
+
+/* ---- Signature corner-bracket frame ---- */
+.hero-intro, .week-header{
+  position:relative; padding:28px 30px 40px; margin-bottom:56px;
+  border:1px solid var(--line); border-radius:2px; background:var(--paper-raised);
+}
+.hero-intro::before, .hero-intro::after, .week-header::before, .week-header::after{
+  content:''; position:absolute; width:16px; height:16px; border-color:var(--trace); border-style:solid; border-width:0;
+}
+.hero-intro::before, .week-header::before{ top:-1px; left:-1px; border-top-width:2px; border-left-width:2px; }
+.hero-intro::after, .week-header::after{ bottom:-1px; right:-1px; border-bottom-width:2px; border-right-width:2px; }
+
+.hero-intro{padding-bottom:36px;}
+.hero-intro .eyebrow{font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:.13em; text-transform:uppercase; color:var(--trace);}
+.hero-intro h1{font-size:42px; font-weight:700; line-height:1.1; margin:14px 0 18px; max-width:14ch; color:var(--ink);}
+.hero-intro p.lede{font-size:16.5px; line-height:1.65; color:var(--ink-soft); max-width:58ch;}
+.hero-stats{display:flex; gap:34px; margin-top:30px; flex-wrap:wrap;}
+.hero-stat b{font-family:'IBM Plex Mono'; font-size:26px; font-weight:600; display:block; color:var(--trace);}
+.hero-stat span{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint);}
+.start-btn{
+  margin-top:30px; display:inline-block; background:var(--trace); color:#fff; border:none;
+  font-family:'IBM Plex Sans'; font-weight:600; font-size:15px; padding:12px 24px; border-radius:3px; cursor:pointer;
+}
+.start-btn:hover{background:var(--trace-bright);}
+
+.week-header{margin-bottom:44px;}
+.week-header .eyebrow{font-family:'IBM Plex Mono'; font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--amber);}
+.week-header h2{font-size:32px; font-weight:700; margin:10px 0 12px; line-height:1.18; color:var(--ink);}
+.week-header .goal{font-size:15.5px; color:var(--ink-soft); line-height:1.62; max-width:62ch; margin-bottom:4px;}
+
+.lesson-block{font-size:15px; line-height:1.7; color:rgba(16,24,32,.88); max-width:66ch;}
+.lesson-block p{margin:0 0 14px;}
+.lesson-block pre{
+  background:#101820; color:#D4D4D4; font-family:'IBM Plex Mono', monospace; font-size:12.8px;
+  padding:14px 16px; border-radius:3px; overflow-x:auto; line-height:1.6; margin:12px 0 16px;
+}
+.lesson-block .callout{
+  border-left:3px solid var(--amber); background:rgba(201,122,31,.08); padding:11px 15px; margin:12px 0 16px;
+  font-size:14px; border-radius:0 3px 3px 0; line-height:1.6;
+}
+.lesson-block .callout b{color:var(--amber-bright);}
+.lesson-block code{font-family:'IBM Plex Mono', monospace; background:var(--trace-wash); color:var(--trace); padding:1px 5px; border-radius:2px; font-size:.93em;}
+
+.section-block{margin-top:40px;}
+.section-block h3{
+  font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--trace); margin-bottom:16px; display:flex; align-items:center; gap:10px;
+}
+.section-block h3::after{content:''; flex:1; height:1px; background:var(--line);}
+
+.day-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+.day-item{
+  display:grid; grid-template-columns:74px 1fr; gap:18px; padding:14px 4px; border-bottom:1px solid var(--line);
+}
+.day-item .day-label{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--ink-faint); padding-top:2px;}
+.day-item .day-topic{font-size:14.5px; line-height:1.6; color:rgba(16,24,32,.86);}
+.day-item .day-topic b{color:var(--ink); font-weight:600;}
+
+.resource-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px;}
+.resource-list li{font-size:14px; line-height:1.5; padding-left:18px; position:relative; color:rgba(16,24,32,.78);}
+.resource-list li::before{content:'▸'; position:absolute; left:0; color:var(--trace); font-size:12px; top:2px;}
+.resource-list a{text-decoration:none; border-bottom:1px solid rgba(12,143,134,.35); font-weight:500;}
+.resource-list a:hover{border-color:var(--trace);}
+
+.project-card{background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:3px; padding:20px 22px;}
+.project-card p{font-size:14.5px; line-height:1.65; color:rgba(16,24,32,.86); margin:0;}
+.project-card .ship{margin-top:12px; font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--amber);}
+
+.quiz-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:3px; padding:22px 24px; margin-bottom:14px;}
+.quiz-card .q{font-weight:600; font-size:15px; margin-bottom:14px; line-height:1.5; color:var(--ink);}
+.quiz-opts{display:flex; flex-direction:column; gap:8px;}
+.quiz-opt{
+  text-align:left; background:var(--paper); border:1px solid var(--line); border-radius:3px;
+  padding:11px 14px; font-family:'IBM Plex Sans'; font-size:13.5px; cursor:pointer; color:var(--ink);
+  transition:all .15s;
+}
+.quiz-opt:hover{border-color:var(--trace);}
+.quiz-opt.correct{background:rgba(30,142,90,.12); border-color:var(--ok); font-weight:600; color:var(--ok);}
+.quiz-opt.wrong{background:rgba(178,59,46,.1); border-color:var(--danger); color:var(--danger);}
+.quiz-explain{font-size:13px; margin-top:12px; color:var(--ink-soft); line-height:1.5; display:none;}
+.quiz-explain.show{display:block;}
+
+.milestone-box{
+  display:flex; align-items:flex-start; gap:16px; background:var(--trace-wash);
+  border:1px solid rgba(12,143,134,.3); border-radius:3px; padding:20px 22px; margin-top:14px;
+}
+.milestone-box .check{
+  width:24px; height:24px; flex:0 0 24px; border-radius:3px; border:2px solid var(--trace);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; margin-top:2px; transition:all .15s; background:#fff;
+}
+.milestone-box .check.checked{background:var(--trace);}
+.milestone-box .check.checked::after{content:'✓'; color:#fff; font-weight:700; font-size:13px;}
+.milestone-box .txt b{display:block; font-size:15px; margin-bottom:5px; color:var(--trace);}
+.milestone-box .txt p{margin:0; font-size:14px; line-height:1.6; color:rgba(16,24,32,.8);}
+
+.nav-buttons{display:flex; justify-content:space-between; margin-top:52px; padding-top:22px; border-top:1px solid var(--line);}
+.nav-btn{
+  background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); font-family:'IBM Plex Sans'; font-size:14px;
+  padding:10px 17px; border-radius:3px; cursor:pointer; display:flex; align-items:center; gap:8px;
+}
+.nav-btn:hover{border-color:var(--trace); color:var(--trace);}
+.nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+::-webkit-scrollbar{width:9px;}
+::-webkit-scrollbar-track{background:var(--paper);}
+::-webkit-scrollbar-thumb{background:rgba(16,24,32,.15); border-radius:99px;}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="mark">◆ The Foundry</span>
+      <h1>Ore to Ingot to Infrastructure</h1>
+      <p>Course 2 of the series. Where Cut, Craft &amp; Setting built the piece, The Foundry builds and hardens the furnace it's made in — servers, pipelines, and production infrastructure.</p>
+    </div>
+    <div class="overall-progress">
+      <div class="row"><span>Progress</span><span id="progressPct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>
+    <ul class="cuts" id="weekNav"></ul>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+const CURRICULUM = [
+{cut:"Phase I — Ore to Ingot", title:"Raw Materials", weeks:[
+{
+  n:1, title:"Linux &amp; the Command Line",
+  goal:"Every server you'll ever touch runs Linux. This week you stop being a guest on the command line and start being fluent in it.",
+  lesson:"<p>Almost the entire server-side internet runs on Linux, so command-line fluency is not optional -- it is the baseline. The core mental model: everything is a file, including devices and process information, organized in a single tree rooted at <code>/</code>. <code>/etc</code> holds configuration, <code>/var</code> holds variable data like logs, <code>/usr</code> holds installed programs. Once that tree makes sense, <code>cd</code>, <code>ls -la</code>, and <code>find</code> stop feeling like memorized incantations and start feeling like navigating a filesystem you actually understand.</p><p>The single habit that separates a fluent user from someone who is just getting by is piping and redirection: chaining small, single-purpose commands together with <code>|</code> instead of reaching for a GUI tool or writing a script for every little task.</p><pre>ps aux | grep node          # find every running node process\ncat access.log | grep 500 | wc -l   # count how many requests returned a 500 error</pre><div class=\"callout\"><b>Common mistake:</b> running destructive commands (<code>rm -rf</code>, overwriting a config file) without first confirming you are in the directory and on the machine you think you are. On a real server, checking <code>pwd</code> and <code>hostname</code> before anything destructive is not paranoia, it is standard practice.</div><p>Permissions matter just as much as navigation: every file has an owner, a group, and three permission bits (read/write/execute) for each. <code>chmod 600 private_key</code> is not decoration -- SSH will outright refuse to use a private key that is readable by anyone else, because a key file with loose permissions defeats the entire point of key-based authentication.</p>",
+  days:[
+    ["Mon","<b>Filesystem &amp; navigation</b> — directory structure (/etc, /var, /usr), ls/cd/find/grep, piping and redirection."],
+    ["Tue","<b>Permissions &amp; users</b> — chmod/chown, the permission bits, sudo, user/group management."],
+    ["Wed","<b>Processes</b> — ps/top/htop, kill/signals, background jobs, systemd basics (starting/stopping services)."],
+    ["Thu","<b>Package management</b> — apt (Ubuntu/Debian), installing/removing/updating software, common server packages."],
+    ["Fri","<b>Shell scripting</b> — bash basics, variables, loops, conditionals, writing a real automation script."],
+    ["Sat","<b>SSH</b> — key-based auth (no more passwords), config files, port forwarding, connecting to a real remote box."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://linuxjourney.com/" target="_blank">Linux Journey</a>', "free, structured, exactly the right depth to start"],
+    ['<a href="https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys" target="_blank">DigitalOcean — SSH Essentials</a>', "the clearest practical SSH walkthrough available"],
+    ['<a href="https://explainshell.com/" target="_blank">explainshell.com</a>', "paste any shell command and see it broken down piece by piece"]
+  ],
+  project:"Spin up a free-tier Linux VM (Oracle Cloud free tier or a $5 DigitalOcean droplet), SSH in with key-based auth only, and write a bash script that automates a repetitive task from your own work (e.g. batch-renaming/organizing exported files).",
+  quiz:[
+    {q:"Why is key-based SSH auth preferred over password auth for servers?", opts:["It's faster to type","It's far more resistant to brute-force attacks and can't be guessed like a password", "It's required by Linux", "There's no real difference"], correct:1, explain:"A private key is effectively unguessable compared to a password, and most production servers disable password auth entirely for this reason."},
+    {q:"What does the pipe operator | do between two commands?", opts:["It runs them one after another regardless of success","It feeds the output of the command on the left as input to the command on the right","It runs both commands at the exact same time in parallel","It only works with grep"], correct:1, explain:"A pipe connects standard output of the left command directly to standard input of the right command, letting you chain small tools into one larger operation -- the foundational Unix philosophy."},
+    {q:"Why would SSH refuse to use a private key file that has loose (e.g. world-readable) permissions?", opts:["SSH keys must always be exactly 2048 bits","A loose-permission key file could be read by any other user on the machine, defeating the security the key is meant to provide","SSH only accepts keys stored in /etc","It's a bug in OpenSSH that will eventually be fixed"], correct:1, explain:"If anyone else on the machine could read your private key file, it would no longer be private -- SSH enforces strict permissions (chmod 600) specifically to guarantee that only the owner can read it."}
+  ],
+  milestone:"A real cloud VM, accessed only via SSH keys, running a bash script you wrote yourself."
+},
+{
+  n:2, title:"Docker Fundamentals",
+  goal:"Learn to package an application so it runs identically everywhere — your laptop, a colleague's machine, or production. This is the single highest-leverage DevOps skill to learn first.",
+  lesson:"<p>Docker solves a problem every developer has lived through: \"works on my machine.\" A Docker image packages your application together with its exact runtime, dependencies, and OS libraries into one portable unit -- a container built from that image runs identically on your laptop, a teammate's machine, or a production server, because it is not relying on whatever happens to already be installed there.</p><p>The mental model that matters most: an <b>image</b> is a read-only template (built once from a Dockerfile); a <b>container</b> is a running instance of that image. You can start, stop, and destroy containers freely without ever touching the image they came from.</p><pre>FROM node:20-slim\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nCMD [\"node\", \"server.js\"]</pre><div class=\"callout\"><b>Why layer order matters:</b> Docker caches each instruction in a Dockerfile as a separate layer. Copying package.json and running npm install BEFORE copying the rest of your source code means that changing a single line of application code does not force a full dependency reinstall on every build -- only the layers after the changed one get rebuilt.</div><p>Volumes are the other concept worth internalizing early: a container's filesystem is disposable by design, so anything that must survive a restart (a database's actual data, uploaded files) needs to live in a volume mounted into the container, not in the container's own writable layer.</p>",
+  days:[
+    ["Mon","<b>Why containers</b> — the 'works on my machine' problem, images vs containers, Docker architecture."],
+    ["Tue","<b>Running containers</b> — docker run/ps/stop/logs/exec, ports, volumes for persistent data."],
+    ["Wed","<b>Writing a Dockerfile</b> — base images, layers and caching, COPY/RUN/CMD, multi-stage builds."],
+    ["Thu","<b>Dockerizing a real app</b> — containerize a Node/Express API from scratch."],
+    ["Fri","<b>Networking</b> — how containers talk to each other, exposing ports, bridge networks."],
+    ["Sat","<b>docker-compose</b> — defining multi-container apps (API + database) in one file."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.docker.com/get-started/" target="_blank">Docker — official Get Started guide</a>', "current and accurate, start here over any older course"],
+    ['<a href="https://www.docker.com/blog/docker-best-practices-using-tags-and-labels-to-manage-docker-image-sprawl/" target="_blank">Docker — image tagging best practices</a>', "avoid the 'latest tag chaos' beginners fall into"],
+    ['<a href="https://docs.docker.com/compose/gettingstarted/" target="_blank">Docker Compose — getting started</a>', "official compose walkthrough"]
+  ],
+  project:"Containerize one of your real Node/Express or FastAPI apps (e.g. the inventory price API) with a proper Dockerfile, then use docker-compose to run it alongside a real Postgres/Mongo container with persistent volumes.",
+  quiz:[
+    {q:"What's the main benefit of Docker's layer caching in a Dockerfile?", opts:["It compresses the final image automatically","Rebuilding is much faster because unchanged layers (e.g. dependency installs) are reused instead of redone", "It encrypts your code","It's only relevant for very large images"], correct:1, explain:"Ordering a Dockerfile so rarely-changed steps (like installing dependencies) come before frequently-changed steps (like copying source code) means Docker can reuse cached layers and skip redundant work."},
+    {q:"Why is it best practice to COPY package.json and run npm install BEFORE copying the rest of your application source code?", opts:["It's required syntax, Docker enforces this order","It lets Docker reuse the cached dependency-install layer when only application code changes, making rebuilds much faster","It reduces the final image size automatically","It has no real effect, it's just convention"], correct:1, explain:"Docker caches each instruction as a layer. If dependency installation happens before copying frequently-changing source code, an unchanged package.json means that expensive npm install layer gets reused from cache instead of re-run on every build."},
+    {q:"Why shouldn't a database's actual data live inside a container's own writable layer?", opts:["Containers cannot write any data at all","A container's filesystem is meant to be disposable -- destroying and recreating the container (a very normal operation) would permanently lose that data unless it lives in a mounted volume","It's technically impossible to write files inside a container","Only read-only data is allowed inside containers"], correct:1, explain:"Containers are designed to be thrown away and recreated freely. Anything that must persist across that -- a database's real data, uploaded files -- needs to live in a volume mounted from outside the container, not inside its own disposable layer."}
+  ],
+  milestone:"A real app running in Docker via docker-compose, with a database container and persistent volumes — torn down and rebuilt from scratch successfully at least once."
+},
+{
+  n:3, title:"Git Workflows at Scale &amp; Automation Basics",
+  goal:"Go beyond solo git usage — branching strategies, PR discipline, and your first taste of automation via GitHub Actions.",
+  lesson:"<p>Solo git usage (commit, push, done) stops scaling the moment more than one person touches the codebase, or the moment you want confidence that a change did not break anything before it reaches production. Two habits do most of the work: small, focused commits with real messages, and branch protection that mechanically enforces review and checks before anything reaches main -- instead of relying on everyone remembering to be careful.</p><p><b>Conventional commits</b> (<code>feat:</code>, <code>fix:</code>, <code>chore:</code>, <code>refactor:</code>) turn your commit history into machine-readable data: tools can auto-generate a changelog, and a reviewer scanning history instantly knows the intent of each change without opening the diff.</p><pre>feat: add bulk CSV export to inventory module\nfix: correct rounding error in GST calculation\nchore: bump dependencies</pre><div class=\"callout\"><b>Why this matters:</b> GitHub Actions is your first real taste of automation -- a YAML file describing \"when X happens (a push, a PR), run Y\" turns manual, forgettable steps (running tests, linting) into something that happens every single time, with no one needing to remember to do it.</div><p>Branch protection rules are the mechanical backbone of all of this: requiring a passing CI check and at least one review before a PR can merge means broken code physically cannot reach main, regardless of how rushed anyone is that day.</p>",
+  days:[
+    ["Mon","<b>Branching strategies</b> — trunk-based vs git-flow, feature branches, when to use which."],
+    ["Tue","<b>PRs done right</b> — small diffs, meaningful descriptions, review etiquette, resolving merge conflicts calmly."],
+    ["Wed","<b>Semantic commits &amp; changelogs</b> — conventional commits, auto-generating changelogs from commit history."],
+    ["Thu","<b>Intro to GitHub Actions</b> — YAML workflow syntax, triggers (push/PR), your first automated job (running tests)."],
+    ["Fri","<b>Branch protection &amp; CODEOWNERS</b> — requiring checks before merge, protecting main."],
+    ["Sat","<b>Build day</b> — set up a real Actions workflow on one of your repos."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.atlassian.com/git/tutorials/comparing-workflows" target="_blank">Atlassian — Comparing Git workflows</a>', "clear comparison of branching strategies"],
+    ['<a href="https://docs.github.com/en/actions/writing-workflows/quickstart" target="_blank">GitHub Actions — quickstart</a>', "official, current YAML syntax reference"],
+    ['<a href="https://www.conventionalcommits.org/" target="_blank">Conventional Commits spec</a>', "the standard for machine-readable commit messages"]
+  ],
+  project:"Set up a GitHub Actions workflow on a real repo (e.g. World Shiner or the customs module) that automatically runs on every push: lints the code and runs any existing tests, failing the check if either breaks.",
+  quiz:[
+    {q:"What's the core purpose of branch protection rules on `main`?", opts:["To make commits smaller","To require checks (tests, reviews) to pass before code can merge, preventing broken code from reaching production", "To hide the branch from other developers","To automatically delete old branches"], correct:1, explain:"Branch protection is a gate — it enforces that CI checks and/or reviews pass before anything lands on the branch that deploys."},
+    {q:"What is the main practical benefit of using conventional commit prefixes like feat:/fix:/chore:?", opts:["They make commits run faster","They make the commit history machine-readable, enabling automatic changelog generation and letting anyone scan history and instantly understand each change's intent","They are required by Git itself","They replace the need for a PR description"], correct:1, explain:"Conventional commits add structure to what would otherwise be free-text messages, which is exactly what tooling (changelog generators, release automation) and human reviewers both benefit from."},
+    {q:"What problem does a GitHub Actions workflow triggered on every push actually solve?", opts:["It makes git push itself faster","It removes reliance on a human remembering to run tests/lint manually before every change reaches the repo -- the check runs automatically, every time, with no exceptions","It automatically writes your code for you","It only matters for very large teams"], correct:1, explain:"Automation's real value is consistency: a manual step that depends on someone remembering to do it will eventually get skipped under deadline pressure. A CI workflow runs the exact same check, every time, with zero exceptions."}
+  ],
+  milestone:"A real GitHub Actions workflow running automated checks on every push to one of your actual repos."
+},
+{
+  n:4, title:"Environment &amp; Secrets Management",
+  goal:"Learn to handle configuration and secrets the way production systems require — never hardcoded, never committed, always reproducible.",
+  lesson:"<p>The 12-factor principle that matters most here: configuration belongs in the environment, never in the code. The moment a database password or API key is typed directly into a source file, it is one accidental git push away from being public forever (git history does not forget, even if you delete the line in a later commit).</p><pre># .env (never committed)\nDATABASE_URL=postgres://user:realpassword@host:5432/db\nSTRIPE_SECRET_KEY=sk_live_abc123\n\n# .env.example (committed -- documents what's needed, no real values)\nDATABASE_URL=\nSTRIPE_SECRET_KEY=</pre><div class=\"callout\"><b>Common mistake:</b> adding a secret to .gitignore AFTER it has already been committed once. Gitignore only prevents FUTURE commits of that file -- if the secret is already anywhere in git history, it is already exposed and must be rotated (treated as compromised), not just removed going forward.</div><p>Rotation is the discipline most beginners skip: a credential that has ever been exposed (committed, pasted in a chat, logged accidentally) should be treated as burned and replaced, not just hoped that no one saw it. Thinking in terms of blast radius -- what could someone actually do with this one leaked key -- is what separates reactive security from a real practice.</p>",
+  days:[
+    ["Mon","<b>The 12-factor config principle</b> — why config lives in the environment, not the code."],
+    ["Tue","<b>.env files done right</b> — dotenv patterns, .env.example conventions, what never gets committed."],
+    ["Wed","<b>Secrets management</b> — GitHub Actions secrets, platform-level secret stores (Render/Vercel env vars), intro to dedicated tools (Doppler/Vault) conceptually."],
+    ["Thu","<b>Reproducible dev environments</b> — devcontainers, why 'it works on my machine' should never happen again."],
+    ["Fri","<b>Rotating credentials</b> — why and how to rotate API keys/passwords, blast-radius thinking."],
+    ["Sat","<b>Build day</b> — audit a real project of yours for secrets hygiene and fix any issues found."],
+    ["Sun","<b>Review + ship. PHASE I milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://12factor.net/config" target="_blank">The Twelve-Factor App — Config</a>', "the foundational text on this"],
+    ['<a href="https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions" target="_blank">GitHub Actions — using secrets</a>', "official secrets-in-CI reference"],
+    ['<a href="https://containers.dev/" target="_blank">Dev Containers spec</a>', "reproducible, containerized dev environments"]
+  ],
+  project:"Audit one real repo of yours (customs module, CAD order form, or inventory API) for hardcoded secrets/config, move everything to properly-gitignored .env files with a committed .env.example, and rotate any credential that was ever exposed.",
+  quiz:[
+    {q:"Why should a `.env.example` file be committed even though `.env` itself is gitignored?", opts:["It's not necessary, this is a myth","It documents which environment variables the app needs, without exposing real secret values", "It speeds up deployment","It replaces the need for a README"], correct:1, explain:"`.env.example` shows every teammate (or future you) exactly what config is required, with placeholder values instead of real secrets."},
+    {q:"If a secret was accidentally committed to git and later added to .gitignore, is it now safe?", opts:["Yes, .gitignore retroactively removes it from history","No — .gitignore only prevents future commits of that file; the secret is still present in git history and must be treated as compromised and rotated","Yes, as long as the repo is private","Only if the repo has fewer than 10 commits"], correct:1, explain:"Git history is permanent by default. A secret that was ever committed remains recoverable from history even after the file is gitignored or deleted in a later commit — the only real fix is rotating the credential."},
+    {q:"What does committing a .env.example file (with no real values) actually accomplish?", opts:["Nothing, it's just a convention with no real use","It documents exactly which environment variables the app requires, so any teammate (or future you) can set up a working .env without guessing","It's a backup copy of the real secrets","It disables the need for environment variables entirely"], correct:1, explain:"`.env.example` is documentation that stays in sync with the code almost automatically — whoever adds a new required variable updates it alongside their change, so setup never silently breaks for the next person."}
+  ],
+  milestone:"PHASE I COMPLETE — a real project fully containerized, CI-checked on every push, and audited clean for secrets hygiene."
+}
+]},
+{cut:"Phase II — The Mold", title:"Casting the Pipeline", weeks:[
+{
+  n:5, title:"CI/CD Pipelines",
+  goal:"Automate the full path from commit to deployed app — the pipeline that lets you ship confidently, often, and without manual steps.",
+  lesson:"<p>CI (continuous integration) and CD are often said together but solve different problems. CI means every change is automatically built and tested the moment it is pushed, so integration problems surface in minutes, not weeks. CD is the next step -- continuous <i>delivery</i> means every passing change is automatically packaged and ready to release (a human still presses the button), while continuous <i>deployment</i> removes even that button: a passing change ships to production with zero manual steps.</p><pre># .github/workflows/deploy.yml (conceptual shape)\non: { push: { branches: [main] } }\njobs:\n  test:\n    steps: [checkout, install, run tests]\n  deploy:\n    needs: test          # deploy ONLY runs if test job passed\n    steps: [build, deploy to production]</pre><div class=\"callout\"><b>Why this matters:</b> the <code>needs: test</code> relationship is the entire safety mechanism of a real pipeline -- deployment is structurally incapable of running on top of a failing test suite, not just discouraged by convention.</div><p>Rollback planning is what separates a pipeline you can trust from one that is one bad deploy away from an incident: knowing, before you need it, exactly how to get back to the last good version (redeploying a previous build, or reverting the merge) turns a production mistake into a five-minute fix instead of a crisis.</p>",
+  days:[
+    ["Mon","<b>CI vs CD</b> — continuous integration vs continuous delivery vs continuous deployment, where the line is drawn."],
+    ["Tue","<b>Build pipelines</b> — automated builds, artifact caching, matrix builds (multiple Node versions/OS)."],
+    ["Wed","<b>Automated testing in CI</b> — running your Week-8-of-Course-1-style test suite on every PR, required checks."],
+    ["Thu","<b>Automated deployment</b> — deploying automatically on merge to main (to Render/Vercel/Fly.io)."],
+    ["Fri","<b>Rollbacks &amp; deployment safety</b> — staging environments, feature flags conceptually, how to undo a bad deploy fast."],
+    ["Sat","<b>Build day</b> — full pipeline: push → test → build → deploy, automatically."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.github.com/en/actions/deployment/about-deployments" target="_blank">GitHub Actions — deployment guide</a>', "official deployment automation patterns"],
+    ['<a href="https://render.com/docs/deploy-on-push" target="_blank">Render — deploy on push</a>', "simplest real CD target to practice against"],
+    ['<a href="https://martinfowler.com/bliki/FeatureToggle.html" target="_blank">Martin Fowler — Feature Toggles</a>', "why feature flags de-risk deployment"]
+  ],
+  project:"Build a complete CI/CD pipeline for a real app: every push runs tests, every merge to main auto-deploys to a live environment, with a documented rollback step if something breaks.",
+  quiz:[
+    {q:"What's the practical difference between continuous delivery and continuous deployment?", opts:["They're identical terms","Delivery means every change is deploy-ready but a human approves the release; deployment means it ships automatically with no manual gate", "Delivery is for frontend, deployment is for backend", "Deployment doesn't use CI"], correct:1, explain:"Continuous delivery keeps main always releasable with a manual go/no-go; continuous deployment removes that gate entirely and ships every passing change automatically."},
+    {q:"What is the key structural difference between continuous delivery and continuous deployment, in terms of the pipeline itself?", opts:["There is no real difference, they're the same thing","Delivery keeps every passing change ready to release with a human approving the actual release; deployment removes that approval step and ships automatically","Delivery is only for backend code","Deployment doesn't require passing tests"], correct:1, explain:"Both guarantee that main is always in a releasable state. The difference is purely about the final step: a human gate (delivery) versus full automation (deployment)."},
+    {q:"In a pipeline where the deploy job has `needs: test`, what happens if the test job fails?", opts:["Deploy runs anyway, tests are just informational","Deploy is structurally prevented from running at all — it never even starts","Deploy runs but shows a warning","It depends on which day of the week it is"], correct:1, explain:"A `needs` dependency is enforced by the CI system itself, not just a convention — if the job it depends on fails, the dependent job simply does not execute."}
+  ],
+  milestone:"A working end-to-end pipeline: commit → automated test → automated deploy, on a real project."
+},
+{
+  n:6, title:"Cloud Fundamentals",
+  goal:"Learn the core building blocks every cloud provider offers — compute, storage, networking, identity — so you're not locked into thinking only in terms of PaaS platforms.",
+  lesson:"<p>Every cloud provider, underneath their branded product names, offers the same small set of building blocks: compute (a machine to run code on), storage (a place to keep files/data), networking (how things talk to each other and to the internet), and identity (who is allowed to do what). Platforms like Vercel or Render are PaaS -- they manage compute/networking/deployment FOR you, trading flexibility for simplicity. Raw AWS/GCP/Azure are IaaS -- you get the building blocks directly, with far more control and far more responsibility.</p><pre># the shape of an IAM policy, conceptually\n{\n  \"effect\": \"allow\",\n  \"action\": [\"s3:GetObject\"],      // only read access\n  \"resource\": \"arn:...:my-bucket/*\"  // only this one bucket\n}</pre><div class=\"callout\"><b>Why least privilege matters:</b> a root/admin credential can do anything -- if it ever leaks, the blast radius is the entire account. A narrowly-scoped credential that can only read one specific storage bucket leaks the same way, but the damage is contained to exactly that bucket.</div><p>Regions and availability zones matter for a practical reason beyond compliance: placing your database and your application server in the same region keeps the network round-trip between them in single-digit milliseconds instead of adding real, user-visible latency.</p>",
+  days:[
+    ["Mon","<b>Cloud models</b> — IaaS vs PaaS vs SaaS, where Vercel/Render sit vs raw AWS/GCP."],
+    ["Tue","<b>Compute</b> — virtual machines (EC2/Compute Engine), sizing, regions and availability zones."],
+    ["Wed","<b>Storage</b> — object storage (S3/Cloud Storage) vs block storage vs databases-as-a-service."],
+    ["Thu","<b>Networking basics</b> — VPCs, subnets, security groups/firewall rules, load balancers conceptually."],
+    ["Fri","<b>IAM</b> — identity and access management, least-privilege principle, why root/admin keys are dangerous."],
+    ["Sat","<b>Build day</b> — provision real cloud resources by hand (console) to build intuition before automating them."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://aws.amazon.com/getting-started/cloud-essentials/" target="_blank">AWS Cloud Essentials</a>', "free, structured intro to core AWS services"],
+    ['<a href="https://cloud.google.com/docs/get-started" target="_blank">Google Cloud — Get Started</a>', "GCP's equivalent core-services walkthrough"],
+    ['<a href="https://roadmap.sh/devops" target="_blank">roadmap.sh — DevOps path</a>', "visual map of the whole field so you know what's ahead"]
+  ],
+  project:"Manually provision (via the console, no automation yet) a VM, an object storage bucket, and a properly-scoped IAM user with least-privilege access on AWS or GCP's free tier — then deploy a static site to the storage bucket.",
+  quiz:[
+    {q:"What does 'least privilege' mean in IAM design?", opts:["Giving every user admin access for simplicity","Granting each user/service only the exact permissions it needs to do its job, nothing more", "Using the cheapest cloud tier available", "Disabling all access by default permanently"], correct:1, explain:"Least privilege limits the blast radius of a compromised account or leaked key — it can only do what it was explicitly permitted to do."},
+    {q:"What's the core trade-off between a PaaS platform (like Render/Vercel) and raw IaaS (like direct AWS/GCP compute)?", opts:["PaaS is always slower","PaaS trades some control/flexibility for a much simpler operational experience; IaaS gives full control at the cost of managing far more yourself","IaaS is always cheaper","There is no real trade-off, they're interchangeable"], correct:1, explain:"PaaS platforms handle provisioning, scaling, and much of the ops burden for you. That convenience is real, but it comes from giving up some of the low-level control raw IaaS compute gives you."},
+    {q:"Why does placing your database and application server in the same cloud region matter?", opts:["It doesn't matter at all","It keeps the network latency between them very low, since cross-region network hops add real, user-visible delay to every single database query","It's required by law in most countries","It only affects billing, not performance"], correct:1, explain:"Every query your app makes to its database crosses the network between them. Same-region placement keeps that round-trip in single-digit milliseconds; cross-region can add tens or hundreds of milliseconds, multiplied across every query."}
+  ],
+  milestone:"Real cloud resources — VM, storage, and a least-privilege IAM user — provisioned and understood, not just clicked through."
+},
+{
+  n:7, title:"Infrastructure as Code",
+  goal:"Stop clicking consoles. Learn to define infrastructure declaratively so it's versioned, reviewable, and reproducible — the practice that separates DevOps from 'ops with extra steps.'",
+  lesson:"<p>Clicking through a cloud console to create resources works, right up until you need to do it again identically (disaster recovery), explain exactly what exists and why (a teammate asks why a resource exists), or review a change before it happens (a PR, instead of a silent click). Infrastructure as Code (IaC) fixes all three by making infrastructure a text file: version-controlled, reviewable, and reproducible from scratch.</p><pre>resource \"aws_instance\" \"app_server\" {\n  ami           = \"ami-0abcdef1234567890\"\n  instance_type = \"t3.micro\"\n  tags = { Name = \"world-shiner-api\" }\n}</pre><div class=\"callout\"><b>The state file is the part beginners underestimate:</b> Terraform's state file is its record of what it believes actually exists in the cloud. If that file is lost, corrupted, or edited by hand, Terraform's understanding of reality desyncs from the real cloud account -- which is exactly why real projects store state remotely (not on one person's laptop) with locking enabled.</div><p><code>terraform plan</code> before <code>terraform apply</code> is the habit that prevents surprises: plan shows you exactly what will change before anything actually changes, the infrastructure equivalent of reviewing a diff before merging it.</p>",
+  days:[
+    ["Mon","<b>Why IaC</b> — declarative vs imperative infra, drift, the case for infra-as-code over console clicking."],
+    ["Tue","<b>Terraform basics</b> — providers, resources, state files, plan vs apply."],
+    ["Wed","<b>Writing your first config</b> — provisioning a VM declaratively, variables and outputs."],
+    ["Thu","<b>State management</b> — why remote state matters, avoiding state file disasters."],
+    ["Fri","<b>Modules</b> — reusable Terraform modules, structuring larger infra definitions."],
+    ["Sat","<b>Build day</b> — recreate Week 6's manually-provisioned resources entirely in Terraform."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://developer.hashicorp.com/terraform/tutorials/aws-get-started" target="_blank">Terraform — official AWS getting-started tutorial</a>', "hands-on, current syntax"],
+    ['<a href="https://developer.hashicorp.com/terraform/language/state" target="_blank">Terraform — state documentation</a>', "understand this before it bites you"],
+    ['<a href="https://www.terraform-best-practices.com/" target="_blank">Terraform Best Practices</a>', "community-maintained patterns for structuring real projects"]
+  ],
+  project:"Write a Terraform configuration that provisions everything from Week 6 (VM + storage + IAM user) declaratively — destroy it, then recreate it from a single `terraform apply` to prove reproducibility.",
+  quiz:[
+    {q:"Why is Terraform's state file so critical to handle carefully?", opts:["It's just a log file, low importance","It's Terraform's record of what infrastructure actually exists — losing or corrupting it can desync reality from your configs", "It stores your cloud provider password","It's automatically regenerated if lost, no risk"], correct:1, explain:"The state file maps your config to real-world resources; if it's lost or corrupted, Terraform loses track of what it's actually managing."},
+    {q:"Why do real Terraform projects store their state file remotely (e.g. in S3) rather than on one person's laptop?", opts:["Remote storage is required by Terraform's license","A local-only state file can't be safely shared or locked across a team, risking two people applying conflicting changes at once and corrupting the infrastructure's recorded state","It makes terraform apply run faster","It's purely a cost-saving measure"], correct:1, explain:"Remote state with locking lets a team share one source of truth about what infrastructure exists, and prevents two people from running conflicting applies at the same time."},
+    {q:"What is the practical purpose of running `terraform plan` before `terraform apply`?", opts:["plan is required to make apply run faster","plan shows exactly what will be created, changed, or destroyed BEFORE anything actually happens, so you can catch a mistake before it's real","plan and apply are the same command with different names","plan only works in read-only cloud accounts"], correct:1, explain:"`plan` is a dry run — it is the infrastructure equivalent of reviewing a diff before merging, catching an unintended change (like an accidental resource deletion) before it actually executes."}
+  ],
+  milestone:"Infrastructure provisioned entirely through version-controlled Terraform code — destroyed and rebuilt successfully from that code alone."
+},
+{
+  n:8, title:"Containers in Production",
+  goal:"Understand container orchestration — what Kubernetes solves, when you actually need it, and the managed alternatives that fit small teams better.",
+  lesson:"<p>docker-compose is great for running a few containers on one machine, but it has no answer for a machine dying, traffic spiking past one machine's capacity, or rolling out a new version with zero downtime. Kubernetes exists to solve exactly that class of problem: given a declarative description of what should be running, it continuously works to make reality match -- restarting crashed containers, spreading load across many machines, and rolling out updates gradually.</p><pre># the shape of a Kubernetes Deployment, conceptually\nreplicas: 3                 # keep 3 copies running, always\nimage: myapp:v2             # the image to run\nstrategy: RollingUpdate      # replace old copies gradually, not all at once</pre><div class=\"callout\"><b>The honest tradeoff:</b> Kubernetes' power comes with real operational complexity -- cluster upgrades, networking concepts (ingress, services), and a genuinely steep learning curve. For a small team serving a handful of client apps, a managed container platform (Cloud Run, Fly.io, ECS) usually delivers most of the benefit (auto-restart, scaling, zero-downtime deploys) with a fraction of the operational burden.</div><p>The right question is never whether Kubernetes is impressive -- it's whether your actual team size and traffic justify the operational cost of running it yourself. Most small teams are better served learning Kubernetes conceptually (this week) while running production on a managed platform.</p>",
+  days:[
+    ["Mon","<b>Why orchestration</b> — the problem past a single docker-compose: scaling, healing, rolling updates."],
+    ["Tue","<b>Kubernetes core concepts</b> — pods, deployments, services, the control plane, at a conceptual level."],
+    ["Wed","<b>Kubernetes hands-on</b> — a minimal local cluster (kind/minikube), deploying your Week-2 app to it."],
+    ["Thu","<b>When NOT to use Kubernetes</b> — honest tradeoffs; managed container platforms (Cloud Run, ECS, Fly.io, Render) for smaller teams."],
+    ["Fri","<b>Choosing your stack</b> — mapping World Shiner / A&amp;A Creations-scale needs to the right level of infra complexity, not the most impressive one."],
+    ["Sat","<b>Build day</b> — deploy a real app to a managed container platform, production-style."],
+    ["Sun","<b>Review + ship. PHASE II milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://kubernetes.io/docs/tutorials/kubernetes-basics/" target="_blank">Kubernetes — official basics tutorial</a>', "conceptual grounding before you touch a real cluster"],
+    ['<a href="https://kind.sigs.k8s.io/" target="_blank">kind — Kubernetes in Docker</a>', "run a real local cluster without cloud cost"],
+    ['<a href="https://fly.io/docs/" target="_blank">Fly.io docs</a>', "a well-designed managed container platform, good middle ground"]
+  ],
+  project:"Deploy your Dockerized app from Week 2 to a real managed container platform (Fly.io, Cloud Run, or ECS) in a production-style setup, AND separately run it on a local Kubernetes cluster (kind/minikube) — so you can compare the operational overhead of each firsthand.",
+  quiz:[
+    {q:"For a small agency serving a handful of client apps, what's usually the honest recommendation over full Kubernetes?", opts:["Kubernetes is always correct regardless of scale","A managed container platform (Cloud Run/Fly.io/ECS) — Kubernetes' operational overhead rarely pays off below a certain scale/team size", "No orchestration at all is ever needed","Kubernetes should be avoided entirely, forever"], correct:1, explain:"Kubernetes solves real problems at scale, but for small teams its operational complexity usually costs more than it saves — managed platforms give most of the benefit with a fraction of the overhead."},
+    {q:"What problem does Kubernetes solve that plain docker-compose cannot?", opts:["Kubernetes makes individual containers start faster","Kubernetes continuously reconciles a cluster of multiple machines toward a desired state — restarting crashed containers, scaling across machines, and rolling out updates with no downtime — none of which compose (single-machine) handles","Kubernetes is just a newer version of docker-compose","There's no real difference, they do the same thing"], correct:1, explain:"docker-compose orchestrates containers on ONE machine. Kubernetes orchestrates across a cluster of many machines and actively keeps reality matching your desired state, including healing failures automatically."},
+    {q:"For a small team running a handful of client apps, why might a managed container platform be the more honest choice over self-managed Kubernetes?", opts:["Kubernetes is objectively worse technology","Kubernetes' real power only pays off at a scale/team-size most small teams haven't reached, while its operational complexity (cluster upgrades, networking) is a real, constant cost regardless of scale","Managed platforms are always free","Kubernetes cannot run production workloads reliably"], correct:1, explain:"This is a judgment about cost versus benefit at a given scale, not a verdict on the technology — Kubernetes' overhead is justified when you actually need its capabilities at scale, and is pure operational tax when you don't."}
+  ],
+  milestone:"PHASE II COMPLETE — a real app running on a managed container platform in production, plus hands-on Kubernetes experience to know the tradeoff firsthand."
+}
+]},
+{cut:"Phase III — Tempering", title:"Hardening the Piece", weeks:[
+{
+  n:9, title:"Monitoring &amp; Observability",
+  goal:"Learn to see inside a running system — logs, metrics, and alerts — so problems get caught before a client does.",
+  lesson:"<p>A production app with no monitoring is a black box: the first sign of a problem is a client complaining, hours or days after it started. The three pillars -- logs (discrete events, what happened), metrics (numbers over time, how much/how often), and traces (the path a single request took through a system) -- exist to turn that black box transparent, each answering a different kind of question.</p><pre>// unstructured (hard to search):\nconsole.log(\"user login failed for \" + email);\n\n// structured (searchable, filterable):\nlogger.warn(\"login_failed\", { email, reason: \"bad_password\", ip: req.ip });</pre><div class=\"callout\"><b>Alert fatigue is a real operational risk, not a minor annoyance:</b> if every minor, self-recovering blip pages someone, people learn to ignore alerts entirely -- and the one alert that actually mattered gets dismissed along with the noise. The discipline is alerting only on things that genuinely require a human action right now.</div><p>Structured logging is the single highest-leverage habit here: a log line that is a searchable, filterable object (not a free-text sentence) is the difference between finding the exact failed request among millions in seconds, versus grepping through raw text and hoping.</p>",
+  days:[
+    ["Mon","<b>The three pillars</b> — logs, metrics, and traces; what each is good for."],
+    ["Tue","<b>Structured logging</b> — moving from console.log to structured, searchable logs."],
+    ["Wed","<b>Error tracking</b> — setting up Sentry (or similar) on a real app, understanding alert fatigue."],
+    ["Thu","<b>Uptime &amp; metrics</b> — uptime monitoring (UptimeRobot/Better Uptime), basic app metrics."],
+    ["Fri","<b>Alerting done right</b> — actionable alerts vs noise, on-call sanity, escalation basics."],
+    ["Sat","<b>Build day</b> — instrument a real production app with logging, error tracking, and uptime monitoring."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.sentry.io/platforms/node/" target="_blank">Sentry — Node.js docs</a>', "the standard error-tracking setup for a Node backend"],
+    ['<a href="https://grafana.com/docs/grafana/latest/getting-started/" target="_blank">Grafana — Getting Started</a>', "for when you outgrow simple dashboards"],
+    ['<a href="https://sre.google/sre-book/monitoring-distributed-systems/" target="_blank">Google SRE Book — Monitoring chapter (free)</a>', "the canonical thinking on what's worth alerting on"]
+  ],
+  project:"Instrument one of your real production apps (customs module, inventory API, or World Shiner) with structured logging, Sentry error tracking, and uptime monitoring with a real alert (email/Slack) wired up.",
+  quiz:[
+    {q:"Why is 'alert fatigue' a real operational risk?", opts:["It's not a real concern","Too many low-value alerts train people to ignore alerts entirely, so the one that matters gets missed", "Alerts cost money per notification","It only affects large teams"], correct:1, explain:"If every minor blip pages someone, real signal drowns in noise — the fix is alerting only on things that require action."},
+    {q:"What is the main advantage of structured logging (logging a searchable object) over a plain text console.log message?", opts:["Structured logs take up less disk space","Structured logs can be reliably searched and filtered by specific fields (like email or error reason) at scale, where plain text requires fragile string matching","There is no real difference","Structured logs run faster"], correct:1, explain:"Once you have thousands or millions of log lines, being able to filter precisely by a field (e.g. all login_failed events for a specific IP) is what makes logs actually useful for debugging — free text requires guessing at exact substrings."},
+    {q:"Why is 'alert fatigue' considered a genuine operational risk rather than just an annoyance?", opts:["It isn't a real risk, it's overstated","Constant low-value alerts train the on-call person to start ignoring alerts generally, which means the one alert that signals a real, urgent problem is likely to be dismissed along with the noise","Alerts cost money to send, so fatigue is purely financial","It only matters for teams larger than 50 people"], correct:1, explain:"Humans habituate to repeated low-value signals. An alerting setup that pages for everything trains its own recipients to stop responding quickly, which defeats the entire purpose of alerting in the first place."}
+  ],
+  milestone:"A real production app with logging, error tracking, and at least one working alert you've personally triggered and received."
+},
+{
+  n:10, title:"Security Hardening",
+  goal:"Close the gaps that turn a working system into a breached one — network security, TLS, dependency risk, and backups.",
+  lesson:"<p>Most real-world breaches are not sophisticated zero-day exploits -- they're an open port that shouldn't be, a dependency with a known vulnerability that was never patched, or a leaked credential that was never rotated. Security hardening is mostly about closing these mundane, well-known gaps systematically, not chasing exotic threats.</p><pre># a minimal, honest security checklist for a production app\n[ ] TLS enabled and auto-renewing (not expired, not self-signed)\n[ ] Only required ports open (close everything else)\n[ ] Dependabot or equivalent scanning dependencies\n[ ] Backups exist AND have been test-restored at least once</pre><div class=\"callout\"><b>An untested backup is not a backup, it is a hope.</b> The only way to know a backup strategy actually works is to have personally restored from it at least once, before an emergency forces you to find out it doesn't.</div><p>TLS/HTTPS deserves special attention because the failure mode is silent: a site that has always worked over HTTP looks fine right up until it's intercepted on a public network. Let's Encrypt made automated, free TLS renewal the default expectation -- there is essentially no excuse left for serving production traffic over plain HTTP today.</p>",
+  days:[
+    ["Mon","<b>Network security</b> — firewalls/security groups, closing unused ports, the principle of minimal exposure."],
+    ["Tue","<b>TLS/HTTPS</b> — how certificates actually work, Let's Encrypt/automated renewal, why HTTP-only is unacceptable in production."],
+    ["Wed","<b>Dependency security</b> — npm audit/Dependabot, understanding CVEs, patching cadence."],
+    ["Thu","<b>Secrets in production</b> — rotation policy, revoking a leaked key fast, incident response basics."],
+    ["Fri","<b>Backups</b> — the 3-2-1 rule, testing restores (a backup you've never restored isn't a backup), database backup automation."],
+    ["Sat","<b>Build day</b> — run a real security audit + set up automated backups on a production app."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://owasp.org/www-project-top-ten/" target="_blank">OWASP Top 10</a>', "the standard checklist, revisited with production-ops context this time"],
+    ['<a href="https://letsencrypt.org/getting-started/" target="_blank">Let\'s Encrypt — Getting Started</a>', "free automated TLS certificates"],
+    ['<a href="https://docs.github.com/en/code-security/dependabot" target="_blank">GitHub Dependabot docs</a>', "automated dependency vulnerability alerts"]
+  ],
+  project:"Run a real security pass on a production app: enable Dependabot, verify TLS auto-renewal, close any unnecessarily open ports, and set up automated database backups with a proven, tested restore.",
+  quiz:[
+    {q:"What makes a backup strategy actually trustworthy?", opts:["Having any backup at all is enough","Regularly testing that you can actually restore from the backup, not just that it exists", "Storing backups in the same location as production","Backing up once and never again"], correct:1, explain:"An untested backup is a hope, not a plan — the only way to know it works is to actually restore from it before you need to."},
+    {q:"What's the most honest way to describe the root cause of most real-world security breaches?", opts:["Highly sophisticated, novel zero-day exploits that no one could have predicted","Mundane, well-known gaps — an unnecessarily open port, an unpatched known vulnerability, a credential that was never rotated after exposure","Purely random bad luck, unrelated to any specific practice","Breaches are almost always caused by the cloud provider itself"], correct:1, explain:"The uncomfortable truth is that most breaches exploit known, preventable gaps rather than exotic techniques — which is exactly why systematic hardening (patching, least privilege, closing unused ports) matters more than chasing rare threats."},
+    {q:"Why is a backup that has never been restored considered unreliable, even if the backup files clearly exist?", opts:["Backup files degrade over time automatically, regardless of testing","The backup PROCESS could be silently broken (corrupted files, wrong data captured, a restore procedure that doesn't actually work) and the only way to know is to have actually restored from it successfully","Cloud storage is inherently unreliable","Untested backups are actually fine, this is an overstated concern"], correct:1, explain:"A backup job can run 'successfully' every night while silently producing unusable files — the only real proof a backup strategy works is a successful, personally-verified restore."}
+  ],
+  milestone:"A production app with verified auto-renewing TLS, active dependency scanning, and a backup you've personally restored successfully."
+},
+{
+  n:11, title:"Scaling &amp; Performance",
+  goal:"Learn what actually breaks first as traffic grows, and the standard tools (caching, load balancing, database scaling) used to fix it before it becomes an incident.",
+  lesson:"<p>Most apps don't fail because of some exotic architecture problem -- they fail because the database wasn't indexed, or every request recomputes something that could have been cached. Scaling is mostly about finding and fixing a small number of real bottlenecks, measured, not guessed at.</p><pre>-- without an index: scans every row (slow at scale)\nSELECT * FROM orders WHERE customer_email = 'x@y.com';\n\n-- after: CREATE INDEX idx_customer_email ON orders(customer_email);\n-- same query now jumps directly to matching rows</pre><div class=\"callout\"><b>Measure before and after, always.</b> Adding caching or an index without measuring the actual improvement means you're guessing whether it helped -- load testing (before and after) is what turns \"I think this is faster\" into \"this cut p95 latency from 800ms to 60ms,\" a claim you can actually defend.</div><p>Horizontal scaling (adding more servers) has a hard prerequisite most people miss: statelessness. If a user's session lives only in one server's memory, a load balancer routing their next request to a DIFFERENT server loses that session entirely -- which is exactly why session/cache state has to live somewhere shared (Redis, a database), not on any one server.</p>",
+  days:[
+    ["Mon","<b>Horizontal vs vertical scaling</b> — tradeoffs, statelessness as a prerequisite for horizontal scaling."],
+    ["Tue","<b>Load balancing</b> — how a load balancer distributes traffic, health checks, sticky sessions."],
+    ["Wed","<b>Caching</b> — Redis fundamentals, cache invalidation strategies, CDN caching for static assets."],
+    ["Thu","<b>Database scaling</b> — read replicas, connection pooling, indexing (the highest-leverage, most-skipped optimization)."],
+    ["Fri","<b>Load testing</b> — using a tool (k6/Artillery) to find your app's actual breaking point before a real spike does."],
+    ["Sat","<b>Build day</b> — add caching to a real app and load-test it before/after."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://redis.io/docs/latest/develop/get-started/" target="_blank">Redis — Get Started</a>', "official docs, the standard caching layer"],
+    ['<a href="https://k6.io/docs/" target="_blank">k6 — load testing docs</a>', "scriptable, developer-friendly load testing"],
+    ['<a href="https://use-the-index-luke.com/" target="_blank">Use The Index, Luke</a>', "the best free resource specifically on database indexing"]
+  ],
+  project:"Add a Redis caching layer to a real app's most expensive endpoint (e.g. a live Google Sheet price lookup), then load-test it with k6 before and after to prove the measured improvement.",
+  quiz:[
+    {q:"Why must an app be stateless to scale horizontally (adding more servers)?", opts:["Statelessness isn't actually required","If session/user state lives only on one server's memory, a request routed to a different server loses that state — horizontal scaling requires state to live somewhere shared (DB/cache)", "Horizontal scaling doesn't involve multiple servers","Stateless apps are always faster regardless of scaling"], correct:1, explain:"With multiple servers behind a load balancer, any server might handle any request — state has to live in a shared place (database, Redis) rather than one server's local memory."},
+    {q:"Why is adding a database index often the single highest-leverage performance fix available?", opts:["Indexes make every query faster with no tradeoffs whatsoever","An index lets the database jump directly to matching rows instead of scanning the entire table, which is a very common, often-overlooked bottleneck that's cheap to fix","Indexes only matter for very small databases","Indexes are purely cosmetic and don't affect query speed"], correct:1, explain:"A missing index on a frequently-queried column is one of the most common real-world performance bugs — it's a full-table scan on every query, and adding the index is usually a one-line fix with an outsized impact."},
+    {q:"Why must an application be stateless (no per-server session memory) to scale horizontally across multiple servers?", opts:["Statelessness isn't actually required for horizontal scaling","With multiple servers behind a load balancer, any request can land on any server — if session state lives only in one server's local memory, a request routed elsewhere loses access to it entirely","Horizontal scaling only ever uses a single server","Stateless apps are automatically faster regardless of architecture"], correct:1, explain:"A load balancer doesn't guarantee a user's requests all hit the same server. Shared state (a database, Redis) makes that irrelevant; server-local state makes it a correctness bug the moment you scale past one machine."}
+  ],
+  milestone:"A measured, load-tested performance improvement (via caching or another fix) on a real production endpoint, with before/after numbers."
+},
+{
+  n:12, title:"Capstone — Production Hardening",
+  goal:"Close the program by taking one of your own real projects and bringing it fully up to the production standard this course covered: containerized, CI/CD'd, monitored, secured, and documented.",
+  lesson:"<p>This week is deliberately not about learning something new -- it's about proving, on one real project, that everything from the last eleven weeks actually composes into a single coherent production setup, rather than living as eleven separate, disconnected skills.</p><div class=\"callout\"><b>What \"production-grade\" actually means, concretely:</b> containerized and provisioned via code (not manual clicks), deployed through an automated pipeline (not a manual upload), observable (you would know within minutes if it broke), hardened (TLS, scanned dependencies, tested backups), and documented well enough that someone else could operate it without you.</div><p>The runbook is the part most people skip and the part that matters most professionally: a page that tells a teammate exactly how to deploy, how to roll back, and how to respond to the two or three most likely ways this specific system breaks. Writing it forces you to notice the steps you have been doing from memory -- which is usually where the real operational risk was hiding the whole time.</p>",
+  days:[
+    ["Mon","<b>Pick the target</b> — choose one real project (World Shiner, customs module, or inventory API) as the capstone subject."],
+    ["Tue","<b>Infra pass</b> — ensure it's containerized and provisioned via IaC (Terraform), not manually clicked infra."],
+    ["Wed","<b>Pipeline pass</b> — full CI/CD: test → build → deploy automatically on merge."],
+    ["Thu","<b>Observability pass</b> — logging, error tracking, uptime monitoring, and one real alert wired up."],
+    ["Fri","<b>Security &amp; scaling pass</b> — TLS verified, dependencies scanned, backups tested, one caching or indexing improvement measured."],
+    ["Sat","<b>Runbook</b> — write a real operational runbook: how to deploy, how to roll back, how to respond to the top 3 likely failure modes."],
+    ["Sun","<b>Program review</b> — what shipped, what's next."]
+  ],
+  resources:[
+    ['<a href="https://sre.google/sre-book/table-of-contents/" target="_blank">Google SRE Book (free)</a>', "for anything you want to go deeper on post-program"],
+    ['<a href="https://www.atlassian.com/incident-management/postmortem" target="_blank">Atlassian — writing a good runbook/postmortem</a>', "structure reference for the capstone runbook"]
+  ],
+  project:"Bring one real project fully to production-grade: containerized + IaC-provisioned, CI/CD'd, monitored, security-hardened, with a written runbook a colleague could follow without you.",
+  quiz:[
+    {q:"What's the real test of whether a runbook is good enough?", opts:["It's long and detailed","Someone else on the team could follow it to deploy, roll back, or respond to an incident without needing to ask you anything", "It's stored in your head, not written down","It only needs to cover the happy path"], correct:1, explain:"A runbook's entire value is removing you as the single point of failure — if a colleague can't follow it without pinging you, it isn't done."},
+    {q:"What is this capstone week actually testing, as opposed to teaching something new?", opts:["A brand new DevOps tool not covered in prior weeks","Whether the skills from the previous eleven weeks genuinely compose into one coherent, working production setup on a real project, rather than remaining separate, disconnected exercises","Pure speed — how fast you can deploy something","Memorizing cloud provider pricing"], correct:1, explain:"Individual skills (Docker, CI/CD, monitoring, security) are each useful alone, but the real test of competence is whether they combine cleanly into one real, operating system — which is exactly what the capstone forces you to prove."},
+    {q:"What specifically makes a runbook valuable, beyond just being a written document?", opts:["Its length — a longer runbook is always a better one","That a colleague could follow it to deploy, roll back, or respond to a likely incident without needing to ask the original author anything","That it is stored in a wiki rather than a text file","That it only needs to describe the happy path, not failure scenarios"], correct:1, explain:"A runbook's entire value is removing a single point of failure (you) from operations — if someone else genuinely cannot follow it unaided, it hasn't achieved its purpose yet, regardless of how detailed it looks."}
+  ],
+  milestone:"CAPSTONE — one real project fully hardened to production standard, with a runbook someone else could operate from."
+}
+]}
+];
+
+/* ============ PROGRESS PERSISTENCE (localStorage) ============ */
+const PROGRESS_KEY = 'foundryProgress_v2';
+function loadCompletedWeeks(){
+  try { return new Set(JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveCompletedWeeks(){
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify([...state.completedWeeks])); } catch(e){}
+}
+
+const state = { currentWeek: 0, completedWeeks: loadCompletedWeeks() };
+const ALL_WEEKS = CURRICULUM.flatMap(c => c.weeks.map(w => ({...w, cut:c.cut})));
+const TOTAL_WEEKS = ALL_WEEKS.length;
+
+function renderSidebar(){
+  const nav = document.getElementById('weekNav');
+  nav.innerHTML = '';
+  CURRICULUM.forEach(group => {
+    const li = document.createElement('li'); li.className = 'cut-group';
+    const label = document.createElement('div'); label.className = 'cut-label'; label.textContent = group.cut;
+    li.appendChild(label);
+    group.weeks.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'week-btn' + (w.n === state.currentWeek ? ' active' : '') + (state.completedWeeks.has(w.n) ? ' done' : '');
+      btn.innerHTML = `<span class="week-num">${state.completedWeeks.has(w.n) ? '' : w.n}</span><span class="week-title-mini">${w.title}</span>`;
+      btn.onclick = () => { state.currentWeek = w.n; renderAll(); window.scrollTo(0,0); };
+      li.appendChild(btn);
+    });
+    nav.appendChild(li);
+  });
+  updateProgressBar();
+}
+function updateProgressBar(){
+  const pct = Math.round((state.completedWeeks.size / TOTAL_WEEKS) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+function renderIntro(){
+  return `
+  <section class="hero-intro">
+    <span class="eyebrow">Course 2 of the Series · 12 Weeks</span>
+    <h1 class="display">The Foundry</h1>
+    <p class="lede">A finished piece is only as good as the furnace it was cast in. This course builds and hardens the infrastructure underneath everything you shipped in Course 1: <b>Phase I</b> gets you fluent in Linux, Docker, and Git at scale, <b>Phase II</b> casts real CI/CD pipelines and cloud infrastructure, <b>Phase III</b> tempers it all with monitoring, security, and scale.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><b>12</b><span>Weeks</span></div>
+      <div class="hero-stat"><b>3</b><span>Phases</span></div>
+      <div class="hero-stat"><b>12</b><span>Shipped Milestones</span></div>
+      <div class="hero-stat"><b>1</b><span>Production-Hardened App</span></div>
+    </div>
+    <button class="start-btn" onclick="state.currentWeek=1; renderAll(); window.scrollTo(0,0);">Begin Week 1 →</button>
+  </section>`;
+}
+function renderWeek(w){
+  const isDone = state.completedWeeks.has(w.n);
+  const idx = ALL_WEEKS.findIndex(x => x.n === w.n);
+  const prev = ALL_WEEKS[idx-1]; const next = ALL_WEEKS[idx+1];
+  const daysHtml = w.days.map(([label, topic]) => `<li class="day-item"><span class="day-label">${label}</span><span class="day-topic">${topic}</span></li>`).join('');
+  const resourcesHtml = w.resources.map(([link, note]) => `<li>${link} — <span style="opacity:.65">${note}</span></li>`).join('');
+  const quizHtml = w.quiz.map((q, qi) => {
+    const optsHtml = q.opts.map((opt, oi) => `<button class="quiz-opt" onclick="answerQuiz(${w.n},${qi},${oi},this)">${opt}</button>`).join('');
+    return `<div class="quiz-card"><div class="q">${qi+1}. ${q.q}</div><div class="quiz-opts" id="quiz-${w.n}-${qi}">${optsHtml}</div><div class="quiz-explain" id="explain-${w.n}-${qi}">${q.explain}</div></div>`;
+  }).join('');
+  return `
+    <div class="week-header">
+      <span class="eyebrow">${w.cut} · Week ${w.n} of 12</span>
+      <h2 class="display">${w.title}</h2>
+      <p class="goal">${w.goal}</p>
+    </div>
+    <div class="section-block"><h3>This Week, In Depth</h3><div class="lesson-block">${w.lesson}</div></div>
+    <div class="section-block"><h3>Daily / Weekly Modules</h3><ul class="day-list">${daysHtml}</ul></div>
+    <div class="section-block"><h3>Resources</h3><ul class="resource-list">${resourcesHtml}</ul></div>
+    <div class="section-block"><h3>Practice Project</h3><div class="project-card"><p>${w.project}</p><div class="ship">→ ship it publicly (GitHub / live URL) before moving on</div></div></div>
+    <div class="section-block"><h3>Check Your Understanding</h3>${quizHtml}</div>
+    <div class="section-block"><h3>Milestone</h3>
+      <div class="milestone-box">
+        <div class="check ${isDone ? 'checked' : ''}" onclick="toggleMilestone(${w.n})"></div>
+        <div class="txt"><b>${isDone ? 'Milestone complete' : 'Mark milestone complete'}</b><p>${w.milestone}</p></div>
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" ${prev ? '' : 'disabled'} onclick="${prev ? `state.currentWeek=${prev.n}; renderAll(); window.scrollTo(0,0);` : ''}">← Week ${prev ? prev.n : ''}</button>
+      <button class="nav-btn" ${next ? '' : 'disabled'} onclick="${next ? `state.currentWeek=${next.n}; renderAll(); window.scrollTo(0,0);` : ''}">Week ${next ? next.n : ''} →</button>
+    </div>`;
+}
+function renderAll(){
+  const main = document.getElementById('main');
+  if (state.currentWeek === 0){ main.innerHTML = renderIntro(); }
+  else { const w = ALL_WEEKS.find(x => x.n === state.currentWeek); main.innerHTML = renderWeek(w); }
+  renderSidebar();
+}
+function toggleMilestone(weekNum){
+  if (state.completedWeeks.has(weekNum)) state.completedWeeks.delete(weekNum); else state.completedWeeks.add(weekNum);
+  saveCompletedWeeks();
+  renderAll();
+}
+function answerQuiz(weekNum, qIdx, optIdx, btnEl){
+  const week = ALL_WEEKS.find(w => w.n === weekNum);
+  const q = week.quiz[qIdx];
+  const container = document.getElementById(`quiz-${weekNum}-${qIdx}`);
+  const buttons = container.querySelectorAll('.quiz-opt');
+  buttons.forEach((b, i) => { b.disabled = true; if (i === q.correct) b.classList.add('correct'); else if (i === optIdx && optIdx !== q.correct) b.classList.add('wrong'); });
+  document.getElementById(`explain-${weekNum}-${qIdx}`).classList.add('show');
+}
+renderAll();
+</script>
+</body>
+</html>

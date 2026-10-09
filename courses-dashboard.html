@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Learning Dashboard — All Courses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF;
+  --bg-sidebar:#F3F3F3;
+  --bg-panel:#F8F8F8;
+  --border:#E1E1E1;
+  --text:#1E1E1E;
+  --text-dim:#6E6E6E;
+  --blue:#007ACC;
+  --blue-bright:#0098FF;
+  --blue-wash:rgba(0,122,204,.08);
+  --green:#1E874B;
+  --green-wash:rgba(30,135,75,.1);
+  --amber:#BF8803;
+  --amber-wash:rgba(191,136,3,.1);
+  --purple:#7A3FE0;
+  --purple-wash:rgba(122,63,224,.08);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'JetBrains Mono', monospace;}
+
+.titlebar{
+  height:34px; background:#EDEDED; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 14px; gap:10px; font-size:12.5px; color:var(--text-dim);
+  position:sticky; top:0; z-index:50;
+}
+.titlebar-dots{display:flex; gap:6px;}
+.titlebar-dots i{width:11px; height:11px; border-radius:50%; display:inline-block;}
+.titlebar-dots i:nth-child(1){background:#FF5F57;}
+.titlebar-dots i:nth-child(2){background:#FEBC2E;}
+.titlebar-dots i:nth-child(3){background:#28C840;}
+.titlebar-title{flex:1; text-align:center; font-weight:500;}
+
+.wrap{max-width:1080px; margin:0 auto; padding:40px 28px 80px;}
+@media (max-width:700px){ .wrap{padding:26px 16px 60px;} }
+
+.header-badge{
+  display:inline-block; font-family:'JetBrains Mono'; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--blue); border:1px solid var(--blue); background:var(--blue-wash); padding:4px 10px; border-radius:3px;
+}
+h1.page-title{font-size:34px; font-weight:800; letter-spacing:-.015em; margin:16px 0 8px;}
+p.page-lede{font-size:15.5px; line-height:1.65; color:var(--text-dim); max-width:65ch; margin:0 0 30px;}
+
+.stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:34px;}
+@media (max-width:700px){ .stat-row{grid-template-columns:1fr 1fr;} }
+.stat-card{border:1px solid var(--border); border-radius:6px; padding:16px 18px; background:var(--bg-panel);}
+.stat-card .num{font-family:'JetBrains Mono'; font-size:26px; font-weight:700; color:var(--blue);}
+.stat-card .label{font-size:12px; color:var(--text-dim); margin-top:4px; letter-spacing:.02em;}
+
+.overall-wrap{margin-bottom:38px;}
+.overall-row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+.overall-row span:first-child{font-size:13px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em;}
+.overall-row span:last-child{font-family:'JetBrains Mono'; font-size:13px; color:var(--text-dim);}
+.bar-track{height:10px; background:#E8E8E8; border-radius:5px; overflow:hidden;}
+.bar-fill{height:100%; background:linear-gradient(90deg,var(--blue),var(--purple)); border-radius:5px; transition:width .5s;}
+
+.filter-row{display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap;}
+.filter-chip{
+  font-family:'JetBrains Mono'; font-size:12px; padding:6px 13px; border-radius:20px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text-dim); cursor:pointer; user-select:none;
+}
+.filter-chip:hover{border-color:var(--blue); color:var(--blue);}
+.filter-chip.active{background:var(--text); color:#fff; border-color:var(--text);}
+
+.section-label{
+  font-family:'JetBrains Mono'; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--text-dim);
+  margin:30px 0 14px; display:flex; align-items:center; gap:10px;
+}
+.section-label::after{content:''; flex:1; height:1px; background:var(--border);}
+
+.course-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+@media (max-width:760px){ .course-grid{grid-template-columns:1fr;} }
+
+.course-card{
+  border:1px solid var(--border); border-radius:8px; background:var(--bg); padding:20px 22px;
+  display:flex; flex-direction:column; gap:12px; transition:border-color .15s, box-shadow .15s;
+}
+.course-card:hover{border-color:var(--card-accent, var(--blue)); box-shadow:0 2px 14px rgba(0,0,0,.06);}
+.course-card.hidden{display:none;}
+.card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.card-kicker{
+  font-family:'JetBrains Mono'; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--card-accent, var(--blue)); background:var(--card-accent-wash, var(--blue-wash));
+  padding:3px 9px; border-radius:3px; display:inline-block;
+}
+.card-type{font-family:'JetBrains Mono'; font-size:11px; color:var(--text-dim);}
+.card-title{font-size:19px; font-weight:700; letter-spacing:-.01em; margin:0;}
+.card-desc{font-size:13.5px; line-height:1.55; color:var(--text-dim); margin:0; flex:1;}
+.card-progress-row{display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-dim); font-family:'JetBrains Mono'; margin-bottom:5px;}
+.card-bar-track{height:7px; background:#E8E8E8; border-radius:4px; overflow:hidden; margin-bottom:14px;}
+.card-bar-fill{height:100%; background:var(--card-accent, var(--blue)); border-radius:4px; transition:width .5s;}
+.card-bottom{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.card-link{
+  display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; color:#fff;
+  background:var(--card-accent, var(--blue)); padding:8px 16px; border-radius:5px; text-decoration:none;
+}
+.card-link:hover{opacity:.88;}
+.card-status{font-size:12px; color:var(--text-dim); font-family:'JetBrains Mono';}
+.card-status.done{color:var(--green); font-weight:600;}
+
+.placeholder-card{
+  border:1.5px dashed var(--border); border-radius:8px; background:var(--bg-panel); padding:22px;
+  display:flex; flex-direction:column; align-items:flex-start; gap:8px; justify-content:center; min-height:150px;
+}
+.placeholder-card .ph-title{font-size:15px; font-weight:600; color:var(--text-dim);}
+.placeholder-card .ph-desc{font-size:13px; line-height:1.55; color:var(--text-dim); max-width:46ch;}
+
+.footnote{margin-top:46px; font-size:12.5px; color:var(--text-dim); border-top:1px solid var(--border); padding-top:18px; line-height:1.6;}
+.footnote code{font-family:'JetBrains Mono'; background:var(--blue-wash); color:var(--blue); padding:1px 5px; border-radius:3px; font-size:.92em;}
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <span class="titlebar-dots"><i></i><i></i><i></i></span>
+  <div class="titlebar-title">Learning Dashboard</div>
+  <div style="width:40px;"></div>
+</div>
+
+<div class="wrap">
+  <span class="header-badge">Command Center</span>
+  <h1 class="page-title">Your Learning Dashboard</h1>
+  <p class="page-lede">Every course built so far, in one place. Progress below is read live from this browser — open a course, make progress, come back here and it updates. Keep all course files in the same folder when you deploy, so the links below work.</p>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <div class="overall-wrap">
+    <div class="overall-row"><span>Overall progress across everything</span><span id="overallText">0 / 0</span></div>
+    <div class="bar-track"><div class="bar-fill" id="overallBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="filter-row" id="filterRow">
+    <div class="filter-chip active" data-filter="all">All courses</div>
+    <div class="filter-chip" data-filter="track">12-week tracks</div>
+    <div class="filter-chip" data-filter="interactive">Interactive fundamentals</div>
+  </div>
+
+  <div class="section-label">The Bench Series — Career Tracks</div>
+  <div class="course-grid" id="trackGrid"></div>
+
+  <div class="section-label">Interactive Fundamentals — Learn to Code, For Real</div>
+  <div class="course-grid" id="fundamentalsGrid"></div>
+
+  <div class="footnote">
+    Progress is stored in this browser's <code>localStorage</code>, scoped per course. It persists across visits on this device/browser, but does not sync across devices — it isn't sent anywhere. If a course shows 0% here but you know you've made progress, make sure this dashboard and that course file are hosted under the exact same domain (e.g. the same GitHub Pages / Vercel project).
+  </div>
+</div>
+
+<script>
+const COURSES = [
+  {
+    id:'bench', group:'track', accent:'#0C8F86', accentWash:'rgba(12,143,134,.08)',
+    kicker:'Course 1 · The Bench', type:'12-week track',
+    title:'Cut, Craft & Setting', file:'course-site.html',
+    desc:'Full-stack web development (React/Node) fused with real freelance/agency business skills — tied directly to running your own agency. Each week now includes a real in-depth lesson plus a 3-question quiz.',
+    storageKey:'benchProgress_v2', total:12, unit:'weeks'
+  },
+  {
+    id:'foundry', group:'track', accent:'#0C8F86', accentWash:'rgba(12,143,134,.08)',
+    kicker:'Course 2 · The Foundry', type:'12-week track',
+    title:'DevOps & Cloud', file:'course-2-devops.html',
+    desc:'Linux, Docker, Git, CI/CD, cloud deployment, Terraform, monitoring, security and scaling — production-hardening skills. Each week now includes a real in-depth lesson plus a 3-question quiz.',
+    storageKey:'foundryProgress_v2', total:12, unit:'weeks'
+  },
+  {
+    id:'loupe', group:'track', accent:'#0C8F86', accentWash:'rgba(12,143,134,.08)',
+    kicker:'Course 3 · The Loupe', type:'12-week track',
+    title:'AI / LLM Integration', file:'course-3-ai-llm.html',
+    desc:'LLM fundamentals, prompting, structured output, RAG, document AI, agents and evals — built toward your real OCR/translation pipeline. Each week now includes a real in-depth lesson plus a 3-question quiz.',
+    storageKey:'loupeProgress_v2', total:12, unit:'weeks'
+  },
+  {
+    id:'atelier', group:'track', accent:'#0C8F86', accentWash:'rgba(12,143,134,.08)',
+    kicker:'Course 4 · The Atelier', type:'12-week track',
+    title:'Advanced React & System Design', file:'course-4-react-systems.html',
+    desc:'Component patterns, state, performance, TypeScript, system design and API design — scaled against a real multi-country architecture. Each week now includes a real in-depth lesson plus a 3-question quiz.',
+    storageKey:'atelierProgress_v2', total:12, unit:'weeks'
+  },
+  {
+    id:'js', group:'interactive', accent:'#007ACC', accentWash:'rgba(0,122,204,.08)',
+    kicker:'JavaScript Fundamentals', type:'49 interactive lessons',
+    title:'JavaScript, From Scratch', file:'js-fundamentals-course.html',
+    desc:'Live code editor, real execution, auto-graded exercises and predict-the-output challenges. Variables through closures, classes, generators and async/await — in depth, industry-ready.',
+    storageKey:'jsFundamentalsProgress_v2', total:49, unit:'lessons'
+  },
+  {
+    id:'python', group:'interactive', accent:'#D6A21E', accentWash:'rgba(214,162,30,.1)',
+    kicker:'Python Fundamentals', type:'48 interactive lessons',
+    title:'Python, From Scratch', file:'python-fundamentals-course.html',
+    desc:'Same genuinely-interactive engine as the JS course, running real Python in your browser via Pyodide. Variables through error handling, files, real OOP and generators — in depth, industry-ready.',
+    storageKey:'pyFundamentalsProgress_v2', total:48, unit:'lessons'
+  }
+];
+
+function getProgressCount(storageKey){
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return 0;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch(e){ return 0; }
+}
+
+function renderStats(){
+  const totalCourses = COURSES.length;
+  let totalItems = 0, totalDone = 0, coursesStarted = 0, coursesComplete = 0;
+  COURSES.forEach(c => {
+    const done = getProgressCount(c.storageKey);
+    totalItems += c.total;
+    totalDone += done;
+    if (done > 0) coursesStarted++;
+    if (done >= c.total) coursesComplete++;
+  });
+  const statRow = document.getElementById('statRow');
+  statRow.innerHTML = `
+    <div class="stat-card"><div class="num">${totalCourses}</div><div class="label">Courses built</div></div>
+    <div class="stat-card"><div class="num">${coursesStarted}</div><div class="label">Courses started</div></div>
+    <div class="stat-card"><div class="num">${coursesComplete}</div><div class="label">Courses completed</div></div>
+    <div class="stat-card"><div class="num">${totalDone}/${totalItems}</div><div class="label">Lessons &amp; weeks done</div></div>
+  `;
+  const pct = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
+  document.getElementById('overallText').textContent = totalDone + ' / ' + totalItems + ' (' + pct + '%)';
+  document.getElementById('overallBar').style.width = pct + '%';
+}
+
+function courseCardHtml(c){
+  const done = getProgressCount(c.storageKey);
+  const pct = Math.round((done / c.total) * 100);
+  const isDone = done >= c.total;
+  return `
+  <div class="course-card" data-group="${c.group}" style="--card-accent:${c.accent}; --card-accent-wash:${c.accentWash};">
+    <div class="card-top">
+      <span class="card-kicker">${c.kicker}</span>
+      <span class="card-type">${c.type}</span>
+    </div>
+    <h3 class="card-title">${c.title}</h3>
+    <p class="card-desc">${c.desc}</p>
+    <div>
+      <div class="card-progress-row"><span>${done} / ${c.total} ${c.unit}</span><span>${pct}%</span></div>
+      <div class="card-bar-track"><div class="card-bar-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="card-bottom">
+      <a class="card-link" href="${c.file}">${done > 0 ? 'Resume' : 'Start'} →</a>
+      <span class="card-status ${isDone ? 'done' : ''}">${isDone ? '✓ Complete' : (done > 0 ? 'In progress' : 'Not started')}</span>
+    </div>
+  </div>`;
+}
+
+function renderCourses(){
+  const trackGrid = document.getElementById('trackGrid');
+  const fundGrid = document.getElementById('fundamentalsGrid');
+  trackGrid.innerHTML = COURSES.filter(c => c.group === 'track').map(courseCardHtml).join('');
+  fundGrid.innerHTML = COURSES.filter(c => c.group === 'interactive').map(courseCardHtml).join('') +
+    `<div class="placeholder-card">
+      <div class="ph-title">+ More on the way</div>
+      <div class="ph-desc">Every real skill from your Master Resume gets the same treatment — live editor, real execution, no bookish reading-only lessons. This tile turns into real courses once that list is in hand.</div>
+    </div>`;
+}
+
+function applyFilter(filter){
+  document.querySelectorAll('.course-card').forEach(card => {
+    const group = card.getAttribute('data-group');
+    card.classList.toggle('hidden', filter !== 'all' && group !== filter);
+  });
+  const trackSection = document.getElementById('trackGrid').previousElementSibling;
+  const fundSection = document.getElementById('fundamentalsGrid').previousElementSibling;
+  trackSection.style.display = (filter === 'all' || filter === 'track') ? '' : 'none';
+  document.getElementById('trackGrid').style.display = (filter === 'all' || filter === 'track') ? '' : 'none';
+  fundSection.style.display = (filter === 'all' || filter === 'interactive') ? '' : 'none';
+  document.getElementById('fundamentalsGrid').style.display = (filter === 'all' || filter === 'interactive') ? '' : 'none';
+}
+
+document.getElementById('filterRow').addEventListener('click', (e) => {
+  const chip = e.target.closest('.filter-chip');
+  if (!chip) return;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  applyFilter(chip.getAttribute('data-filter'));
+});
+
+renderStats();
+renderCourses();
+</script>
+</body>
+</html>

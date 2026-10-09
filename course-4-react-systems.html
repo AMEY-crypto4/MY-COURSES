@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Atelier — 12-Week Advanced React &amp; System Design Curriculum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F7FA;
+  --paper-raised:#FFFFFF;
+  --ink:#101820;
+  --ink-soft:rgba(16,24,32,.64);
+  --ink-faint:rgba(16,24,32,.45);
+  --line:rgba(16,24,32,.13);
+  --grid-dot:rgba(16,24,32,.055);
+  --trace:#0C8F86;
+  --trace-bright:#0FA89C;
+  --trace-wash:rgba(12,143,134,.09);
+  --amber:#C97A1F;
+  --amber-bright:#E0922E;
+  --danger:#B23B2E;
+  --ok:#1E8E5A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0/22px 22px,
+    var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--trace); color:#fff;}
+a{color:var(--trace);}
+.mono{font-family:'IBM Plex Mono', monospace;}
+.display{font-family:'IBM Plex Sans', sans-serif; font-weight:700; letter-spacing:-0.02em;}
+
+.app{display:grid; grid-template-columns:300px 1fr; min-height:100vh;}
+@media (max-width:900px){ .app{grid-template-columns:1fr;} .sidebar{position:relative; height:auto;} }
+
+.sidebar{
+  background:var(--paper-raised);
+  border-right:1px solid var(--line);
+  padding:28px 22px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{margin-bottom:26px;}
+.brand .mark{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--trace); border:1px solid var(--trace); background:var(--trace-wash);
+  padding:4px 9px; border-radius:2px;
+}
+.brand h1{font-family:'IBM Plex Sans'; font-weight:700; font-size:25px; line-height:1.18; margin:14px 0 4px; letter-spacing:-0.015em; color:var(--ink);}
+.brand p{margin:0; font-size:13px; color:var(--ink-soft); line-height:1.55;}
+
+.overall-progress{margin:22px 0 8px;}
+.overall-progress .row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); margin-bottom:7px; text-transform:uppercase; letter-spacing:.08em;}
+.bar-track{height:5px; background:rgba(16,24,32,.08); border-radius:2px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--trace); border-radius:2px; transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* ---- PCB trace rail ---- */
+.cuts{list-style:none; margin:24px 0 0; padding:0 0 0 2px; position:relative;}
+.cut-group{margin-bottom:2px; position:relative; padding-left:20px; border-left:2px solid var(--line);}
+.cut-label{
+  font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--trace); padding:13px 0 9px; opacity:.95; margin-left:-2px; border-left:2px solid var(--trace); padding-left:10px;
+}
+.week-btn{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:none; border:none; color:var(--ink); font-family:'IBM Plex Sans';
+  font-size:14px; padding:8px 6px; border-radius:3px; cursor:pointer; transition:background .15s;
+  position:relative; margin-left:-2px;
+}
+.week-btn::before{
+  content:''; position:absolute; left:-22px; top:50%; width:12px; height:2px; background:var(--line);
+}
+.week-btn:hover{background:rgba(12,143,134,.06);}
+.week-btn.active{background:var(--trace-wash); color:var(--trace); font-weight:600;}
+.week-btn.active::before{background:var(--trace);}
+.week-num{
+  font-family:'IBM Plex Mono'; font-size:11px; width:20px; height:20px; flex:0 0 20px;
+  border:1.5px solid var(--ink-faint); border-radius:3px; background:var(--paper-raised);
+  display:flex; align-items:center; justify-content:center; color:var(--ink-soft); position:relative; z-index:1;
+}
+.week-btn.active .week-num{border-color:var(--trace); color:var(--trace); background:#fff;}
+.week-btn.done .week-num{background:var(--ok); border-color:var(--ok); color:#fff;}
+.week-title-mini{flex:1; font-size:13px; opacity:.92;}
+
+.main{padding:44px 56px 100px; max-width:900px;}
+@media (max-width:700px){ .main{padding:28px 20px 80px;} }
+
+/* ---- Signature corner-bracket frame ---- */
+.hero-intro, .week-header{
+  position:relative; padding:28px 30px 40px; margin-bottom:56px;
+  border:1px solid var(--line); border-radius:2px; background:var(--paper-raised);
+}
+.hero-intro::before, .hero-intro::after, .week-header::before, .week-header::after{
+  content:''; position:absolute; width:16px; height:16px; border-color:var(--trace); border-style:solid; border-width:0;
+}
+.hero-intro::before, .week-header::before{ top:-1px; left:-1px; border-top-width:2px; border-left-width:2px; }
+.hero-intro::after, .week-header::after{ bottom:-1px; right:-1px; border-bottom-width:2px; border-right-width:2px; }
+
+.hero-intro{padding-bottom:36px;}
+.hero-intro .eyebrow{font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:.13em; text-transform:uppercase; color:var(--trace);}
+.hero-intro h1{font-size:42px; font-weight:700; line-height:1.1; margin:14px 0 18px; max-width:14ch; color:var(--ink);}
+.hero-intro p.lede{font-size:16.5px; line-height:1.65; color:var(--ink-soft); max-width:58ch;}
+.hero-stats{display:flex; gap:34px; margin-top:30px; flex-wrap:wrap;}
+.hero-stat b{font-family:'IBM Plex Mono'; font-size:26px; font-weight:600; display:block; color:var(--trace);}
+.hero-stat span{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint);}
+.start-btn{
+  margin-top:30px; display:inline-block; background:var(--trace); color:#fff; border:none;
+  font-family:'IBM Plex Sans'; font-weight:600; font-size:15px; padding:12px 24px; border-radius:3px; cursor:pointer;
+}
+.start-btn:hover{background:var(--trace-bright);}
+
+.week-header{margin-bottom:44px;}
+.week-header .eyebrow{font-family:'IBM Plex Mono'; font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--amber);}
+.week-header h2{font-size:32px; font-weight:700; margin:10px 0 12px; line-height:1.18; color:var(--ink);}
+.week-header .goal{font-size:15.5px; color:var(--ink-soft); line-height:1.62; max-width:62ch; margin-bottom:4px;}
+
+.lesson-block{font-size:15px; line-height:1.7; color:rgba(16,24,32,.88); max-width:66ch;}
+.lesson-block p{margin:0 0 14px;}
+.lesson-block pre{
+  background:#101820; color:#D4D4D4; font-family:'IBM Plex Mono', monospace; font-size:12.8px;
+  padding:14px 16px; border-radius:3px; overflow-x:auto; line-height:1.6; margin:12px 0 16px;
+}
+.lesson-block .callout{
+  border-left:3px solid var(--amber); background:rgba(201,122,31,.08); padding:11px 15px; margin:12px 0 16px;
+  font-size:14px; border-radius:0 3px 3px 0; line-height:1.6;
+}
+.lesson-block .callout b{color:var(--amber-bright);}
+.lesson-block code{font-family:'IBM Plex Mono', monospace; background:var(--trace-wash); color:var(--trace); padding:1px 5px; border-radius:2px; font-size:.93em;}
+
+.section-block{margin-top:40px;}
+.section-block h3{
+  font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--trace); margin-bottom:16px; display:flex; align-items:center; gap:10px;
+}
+.section-block h3::after{content:''; flex:1; height:1px; background:var(--line);}
+
+.day-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+.day-item{
+  display:grid; grid-template-columns:74px 1fr; gap:18px; padding:14px 4px; border-bottom:1px solid var(--line);
+}
+.day-item .day-label{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--ink-faint); padding-top:2px;}
+.day-item .day-topic{font-size:14.5px; line-height:1.6; color:rgba(16,24,32,.86);}
+.day-item .day-topic b{color:var(--ink); font-weight:600;}
+
+.resource-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px;}
+.resource-list li{font-size:14px; line-height:1.5; padding-left:18px; position:relative; color:rgba(16,24,32,.78);}
+.resource-list li::before{content:'▸'; position:absolute; left:0; color:var(--trace); font-size:12px; top:2px;}
+.resource-list a{text-decoration:none; border-bottom:1px solid rgba(12,143,134,.35); font-weight:500;}
+.resource-list a:hover{border-color:var(--trace);}
+
+.project-card{background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:3px; padding:20px 22px;}
+.project-card p{font-size:14.5px; line-height:1.65; color:rgba(16,24,32,.86); margin:0;}
+.project-card .ship{margin-top:12px; font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--amber);}
+
+.quiz-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:3px; padding:22px 24px; margin-bottom:14px;}
+.quiz-card .q{font-weight:600; font-size:15px; margin-bottom:14px; line-height:1.5; color:var(--ink);}
+.quiz-opts{display:flex; flex-direction:column; gap:8px;}
+.quiz-opt{
+  text-align:left; background:var(--paper); border:1px solid var(--line); border-radius:3px;
+  padding:11px 14px; font-family:'IBM Plex Sans'; font-size:13.5px; cursor:pointer; color:var(--ink);
+  transition:all .15s;
+}
+.quiz-opt:hover{border-color:var(--trace);}
+.quiz-opt.correct{background:rgba(30,142,90,.12); border-color:var(--ok); font-weight:600; color:var(--ok);}
+.quiz-opt.wrong{background:rgba(178,59,46,.1); border-color:var(--danger); color:var(--danger);}
+.quiz-explain{font-size:13px; margin-top:12px; color:var(--ink-soft); line-height:1.5; display:none;}
+.quiz-explain.show{display:block;}
+
+.milestone-box{
+  display:flex; align-items:flex-start; gap:16px; background:var(--trace-wash);
+  border:1px solid rgba(12,143,134,.3); border-radius:3px; padding:20px 22px; margin-top:14px;
+}
+.milestone-box .check{
+  width:24px; height:24px; flex:0 0 24px; border-radius:3px; border:2px solid var(--trace);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; margin-top:2px; transition:all .15s; background:#fff;
+}
+.milestone-box .check.checked{background:var(--trace);}
+.milestone-box .check.checked::after{content:'✓'; color:#fff; font-weight:700; font-size:13px;}
+.milestone-box .txt b{display:block; font-size:15px; margin-bottom:5px; color:var(--trace);}
+.milestone-box .txt p{margin:0; font-size:14px; line-height:1.6; color:rgba(16,24,32,.8);}
+
+.nav-buttons{display:flex; justify-content:space-between; margin-top:52px; padding-top:22px; border-top:1px solid var(--line);}
+.nav-btn{
+  background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); font-family:'IBM Plex Sans'; font-size:14px;
+  padding:10px 17px; border-radius:3px; cursor:pointer; display:flex; align-items:center; gap:8px;
+}
+.nav-btn:hover{border-color:var(--trace); color:var(--trace);}
+.nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+::-webkit-scrollbar{width:9px;}
+::-webkit-scrollbar-track{background:var(--paper);}
+::-webkit-scrollbar-thumb{background:rgba(16,24,32,.15); border-radius:99px;}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="mark">◆ The Atelier</span>
+      <h1>Structure Beneath the Surface</h1>
+      <p>Course 4 of the series. The atelier is where a master craftsman moves past single pieces to designing whole collections. This course does that for your code — architecture and system design beyond CRUD, applied to World Shiner's real multi-country scale.</p>
+    </div>
+    <div class="overall-progress">
+      <div class="row"><span>Progress</span><span id="progressPct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>
+    <ul class="cuts" id="weekNav"></ul>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+const CURRICULUM = [
+{cut:"Phase I — Structural Drawings", title:"Advanced Component Craft", weeks:[
+{
+  n:1, title:"Advanced Component Patterns",
+  goal:"Move past basic props/state to the patterns that make large component trees maintainable — composition patterns that scale past a handful of components.",
+  lesson:"<p>A component that starts with three boolean props (<code>isLarge</code>, <code>hasIcon</code>, <code>isOutlined</code>) feels manageable. By the time it has eleven boolean props controlling which combinations of markup render, nobody — including the person who wrote it — can confidently predict what a new combination will look like. This is 'configuration explosion', and it's the single most common way a React component tree becomes unmaintainable. The fix is almost never 'add a twelfth prop'; it's composition.</p><pre>// configuration (fragile — every new case is a new prop)\n&lt;Card isLarge hasIcon iconPosition='left' hasFooter footerAlign='right' /&gt;\n\n// composition (flexible — the caller controls the shape directly)\n&lt;Card&gt;\n  &lt;Card.Icon position='left' /&gt;\n  &lt;Card.Body&gt;...&lt;/Card.Body&gt;\n  &lt;Card.Footer align='right'&gt;...&lt;/Card.Footer&gt;\n&lt;/Card&gt;</pre><p>Compound components (like <code>Card.Icon</code> above) share implicit state through context internally, so the parts coordinate without the caller having to wire anything up manually — that's what separates a 'compound component' from just a bag of unrelated pieces. Render props and headless components take this further: they separate the *behavior* (state, logic, event handling) from the *presentation* entirely, so the same logic can render completely different markup in different places.</p><div class=\"callout\"><b>The real failure mode here runs both directions.</b> Under-composing produces the configuration explosion above. But over-composing — wrapping a component that genuinely only ever has one shape in a compound-component API with four sub-parts — adds indirection a future reader has to untangle for no real flexibility gained. Reach for these patterns when a component actually has multiple legitimate shapes, not by default.</div>",
+  days:[
+    ["Mon","<b>Composition over configuration</b> — why passing components as children beats endless boolean props."],
+    ["Tue","<b>Compound components</b> — building a component family that shares implicit state (e.g. a custom Tabs or Accordion)."],
+    ["Wed","<b>Render props &amp; headless components</b> — separating behavior/logic from presentation entirely."],
+    ["Thu","<b>Slot patterns</b> — flexible composition via named children/slots for complex UI."],
+    ["Fri","<b>When to reach for each pattern</b> — honest tradeoffs; over-engineering a simple component is a real failure mode too."],
+    ["Sat","<b>Build day</b> — refactor a real component from World Shiner or the JWY Calculator using one of these patterns."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.patterns.dev/react/compound-pattern/" target="_blank">Patterns.dev — Compound Components</a>', "clear, current reference with real examples"],
+    ['<a href="https://kentcdodds.com/blog/compound-components-with-react-hooks" target="_blank">Kent C. Dodds — Compound Components with Hooks</a>', "the canonical modern write-up"],
+    ['<a href="https://www.patterns.dev/react/render-props-pattern/" target="_blank">Patterns.dev — Render Props</a>', "when this pattern still earns its complexity"]
+  ],
+  project:"Identify a real component in one of your apps (World Shiner or JWY Calculator) that's grown too configuration-heavy (many boolean props), and refactor it into a compound-component or composition-based design.",
+  quiz:[
+    {q:"What's the main risk of overusing advanced composition patterns?", opts:["They're always strictly better than simple props","Added indirection can make a component family harder to understand for a task that a few simple props would have handled fine", "They make apps slower","React forbids using more than one pattern per app"], correct:1, explain:"Composition patterns solve real complexity problems, but applying them to genuinely simple components adds indirection without payoff — matching the pattern to actual complexity matters."},
+    {q:"What specifically causes 'configuration explosion' in a component?", opts:["Using TypeScript with the component","The component accumulates more and more boolean/variant props over time until the number of valid combinations becomes impossible to reason about", "The component is rendered too many times on one page","The component imports too many external libraries"], correct:1, explain:"Each new boolean prop multiplies the number of possible states. A component with eleven independent booleans has 2,048 theoretical combinations — far more than anyone actually tested or intended to support."},
+    {q:"What makes a set of components a true 'compound component' family rather than just several unrelated components used together?", opts:["They are compound simply because they're imported from the same file","They implicitly share state (commonly via context) so the parts coordinate automatically without the caller wiring that coordination up manually", "They must all be class components","They share only visual styling, not behavior"], correct:1, explain:"The defining feature of compound components is implicit shared state — like a Tabs parent tracking the active tab so its Tab children can read it — without the consumer having to pass that state around by hand."}
+  ],
+  milestone:"A real over-configured component refactored into a cleaner composition-based design, with a documented reason why."
+},
+{
+  n:2, title:"State Management at Scale",
+  goal:"Learn when Context stops being enough, and the modern lightweight alternatives (Zustand, Jotai) plus when heavier tools (Redux Toolkit) actually earn their complexity.",
+  lesson:"<p>Context solves prop-drilling, but it has a specific failure mode at scale: every component that reads a Context value re-renders whenever ANY value inside that Context changes, even the parts of the value the component doesn't actually use. One global <code>AppContext</code> holding user info, theme, and notifications means a new notification arriving re-renders the theme toggle too. This is why 'just put everything in Context' stops working once an app grows past a handful of consumers.</p><pre>// Zustand — a store outside the component tree, components subscribe selectively\nconst useStore = create((set) => ({\n  cart: [],\n  addItem: (item) => set((s) => ({ cart: [...s.cart, item] })),\n}));\n\n// only re-renders when `cart` changes, not on unrelated store updates\nconst cart = useStore((s) => s.cart);</pre><p>Zustand and Jotai solve the re-render problem differently: Zustand uses selector functions so a component only subscribes to the specific slice it reads; Jotai goes further with atomic state, where each piece of state is its own independent unit and components only re-render when the exact atoms they read change. Redux Toolkit is heavier — more boilerplate, a stricter action/reducer model — but that structure is exactly what large teams need when many people touch the same state and need enforced conventions and strong devtools/time-travel debugging.</p><div class=\"callout\"><b>Server state is not the same problem as UI state, and forcing it into the same store is a common mistake.</b> \"Is this modal open\" lives entirely on the client and never goes stale. \"What did the API return for this user's orders\" can go stale the moment the server data changes elsewhere — it needs caching, revalidation, and refetching logic that a generic state store doesn't provide. That's precisely the problem React Query / SWR exist to solve, separately from whatever you use for UI state.</div>",
+  days:[
+    ["Mon","<b>Where Context breaks down</b> — unnecessary re-renders, the 'everything re-renders' problem at scale."],
+    ["Tue","<b>Zustand</b> — a minimal, hook-based global store; when it's the right fit."],
+    ["Wed","<b>Jotai / atomic state</b> — fine-grained, bottom-up state composition, contrasted with top-down stores."],
+    ["Thu","<b>Redux Toolkit</b> — when a more structured, larger-team-friendly tool is actually justified."],
+    ["Fri","<b>Server state vs client state</b> — why data-fetching state (React Query/SWR) is a different problem from UI state, and shouldn't be forced into the same store."],
+    ["Sat","<b>Build day</b> — migrate a real Context-heavy piece of an app to Zustand or Jotai."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.pmnd.rs/zustand/getting-started/introduction" target="_blank">Zustand — official docs</a>', "minimal, current, the right first stop"],
+    ['<a href="https://jotai.org/docs/introduction" target="_blank">Jotai — official docs</a>', "atomic state model, a genuinely different mental model worth learning"],
+    ['<a href="https://tanstack.com/query/latest/docs/framework/react/overview" target="_blank">TanStack Query (React Query) docs</a>', "the standard tool for server-state, distinct from UI state"]
+  ],
+  project:"Migrate a real Context-based global state slice (e.g. from your Course-1 portfolio or JWY Calculator) to Zustand, and separately introduce React Query for any server-fetched data currently managed by hand with useEffect.",
+  quiz:[
+    {q:"Why treat server-fetched data (API responses) as a different kind of state from UI state (like 'is this modal open')?", opts:["There's no real difference, one store fits all","Server state needs caching, revalidation, and staleness handling that UI state doesn't — a tool like React Query solves that specific problem well, while a generic store doesn't", "UI state is always more important","Server state should never be cached"], correct:1, explain:"Server state has a different lifecycle — it can go stale, needs refetching, benefits from caching — which is exactly what dedicated data-fetching libraries handle that generic state stores don't."},
+    {q:"Why does putting many unrelated values into one large Context cause unnecessary re-renders at scale?", opts:["Context never causes re-renders, this is a myth","Every component consuming that Context re-renders when ANY value inside it changes, even if the component only reads a part of the value that didn't change", "Context only works with class components","Large Context objects are automatically cached by React"], correct:1, explain:"Context doesn't track which specific field a consumer reads — it re-renders every consumer on any change to the context value, which becomes expensive once many unrelated pieces of state share one Context."},
+    {q:"When does Redux Toolkit's extra structure (actions, reducers, stricter conventions) actually pay for its added complexity, compared to a lighter tool like Zustand?", opts:["Never — Redux Toolkit is always worse than Zustand","On larger teams where many people touch shared state and benefit from enforced conventions and strong time-travel debugging tools, which matter less for a solo developer or small app", "Only in apps with fewer than 5 components","Redux Toolkit is required for any app using TypeScript"], correct:1, explain:"Redux Toolkit's stricter conventions and devtools are most valuable when many contributors need a predictable, enforced pattern for touching shared state — overhead that's wasted on a small app a single person maintains."}
+  ],
+  milestone:"A real app with UI state and server state cleanly separated into the right tools for each."
+},
+{
+  n:3, title:"Performance Deep-Dive",
+  goal:"Learn to actually measure and fix React performance problems — profiling, memoization done correctly, virtualization, and code-splitting.",
+  lesson:"<p>Performance intuition is frequently wrong. A component that 'feels' slow because it has complex-looking JSX might actually be fast, while a tiny component re-rendering 400 times a second because of a careless state update might be the real bottleneck — and you cannot tell which is which by reading code. The React DevTools Profiler records an actual render and shows a flame graph of what really took time, which is the only reliable starting point.</p><pre>// useMemo/useCallback only help when the cost they avoid\n// is bigger than the cost of the memoization machinery itself\nconst sorted = useMemo(() => expensiveSort(items), [items]); // worth it if expensiveSort is costly\n\nconst label = useMemo(() => `Hello ${name}`, [name]); // NOT worth it — string concat is cheaper than memoizing</pre><p>The most common memoization mistake is applying <code>useMemo</code>/<code>useCallback</code> defensively, everywhere, on the theory that it can only help. It can't — the memoization itself has a cost (comparing dependencies every render), and wrapping a cheap calculation in it adds overhead without saving anything. Virtualization (rendering only the rows currently visible in a long list) and code-splitting (loading only the JS a route actually needs, via <code>React.lazy</code>) solve a different class of problem: not wasted re-renders, but simply too much work or too much bundle up front.</p><div class=\"callout\"><b>Always profile before and after a change, with real numbers.</b> \"This felt faster\" is not evidence. \"Initial render went from 340ms to 60ms on the Profiler, confirmed on three runs\" is. Optimizing without measuring first routinely targets the wrong component entirely — the one that looks complex, not the one that's actually slow.</div>",
+  days:[
+    ["Mon","<b>React DevTools Profiler</b> — recording a real render, reading flame graphs, finding the actual bottleneck (not guessing)."],
+    ["Tue","<b>Memoization</b> — useMemo/useCallback/React.memo, and the common mistake of memoizing things that don't need it."],
+    ["Wed","<b>List virtualization</b> — rendering only visible rows for very large lists (react-window/react-virtual)."],
+    ["Thu","<b>Code splitting</b> — React.lazy + Suspense, route-based splitting, measuring real bundle-size impact."],
+    ["Fri","<b>Image &amp; asset performance</b> — lazy loading, responsive images, the biggest usual real-world wins."],
+    ["Sat","<b>Build day</b> — profile a real app, fix the top 2 measured bottlenecks."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://react.dev/reference/react/useMemo" target="_blank">react.dev — useMemo reference</a>', "official guidance including when NOT to use it"],
+    ['<a href="https://tanstack.com/virtual/latest/docs/introduction" target="_blank">TanStack Virtual docs</a>', "modern list virtualization"],
+    ['<a href="https://web.dev/articles/code-splitting-with-dynamic-imports-in-nextjs" target="_blank">web.dev — Code splitting guide</a>', "practical, measured code-splitting patterns"]
+  ],
+  project:"Profile a real app (World Shiner or JWY Calculator) with React DevTools, identify the two most expensive re-render or bundle-size issues by measurement (not guesswork), and fix them — with before/after numbers.",
+  quiz:[
+    {q:"What's the correct first step before optimizing React performance?", opts:["Add useMemo everywhere defensively","Profile first to find the actual measured bottleneck — optimizing without measuring often targets the wrong thing entirely", "Rewrite the whole app in a different framework","Reduce the number of components regardless of impact"], correct:1, explain:"Performance intuition is frequently wrong — the Profiler shows what's actually slow, which is often not what you'd have guessed."},
+    {q:"Why can applying useMemo/useCallback defensively to every value actually hurt rather than help?", opts:["useMemo always makes code run faster with no downside","Memoization itself has a cost (comparing dependencies each render), so wrapping a cheap calculation in it adds overhead without saving anything meaningful", "useMemo is deprecated in modern React","useCallback only works inside class components"], correct:1, explain:"Memoization trades a recomputation cost for a dependency-comparison cost — that trade is only worth making when the recomputation being avoided is actually expensive."},
+    {q:"What specific problem does list virtualization (react-window/react-virtual) solve that memoization does not?", opts:["It prevents all re-renders of a list forever","It avoids rendering DOM nodes for rows that aren't currently visible on screen, which reduces real rendering work for very large lists regardless of whether re-renders are optimized", "It removes the need for a key prop on list items","It automatically sorts list data"], correct:1, explain:"Memoization can stop unnecessary re-renders, but even an optimized render of 10,000 DOM rows is expensive — virtualization sidesteps that by only ever rendering the rows actually visible in the viewport."}
+  ],
+  milestone:"A real, measured performance improvement (with before/after numbers) on an actual app, found via profiling rather than guesswork."
+},
+{
+  n:4, title:"TypeScript for React",
+  goal:"Add real type safety to your React work — props, state, hooks, and enough generics to type reusable components properly.",
+  lesson:"<p>TypeScript's value in a React app isn't catching typos — it's catching the moment your assumptions about data stop matching reality. The highest-value place to type something is exactly where outside data enters your app: an API response. Everything inside your own components is under your control; what the server actually sends back is not, and that's where silent mismatches cause bugs three components downstream of where the real problem is.</p><pre>// unknown at the boundary, narrowed before use — not trusted blindly\nasync function fetchUser(id: string): Promise&lt;User&gt; {\n  const res = await fetch(`/api/users/${id}`);\n  const data: unknown = await res.json();\n  if (!isUser(data)) throw new Error('Unexpected user shape from API');\n  return data; // now safely typed as User\n}\n\n// a reusable generic component — works for any item type T\nfunction List&lt;T&gt;({ items, renderItem }: { items: T[]; renderItem: (item: T) => React.ReactNode }) {\n  return &lt;ul&gt;{items.map((item, i) => &lt;li key={i}&gt;{renderItem(item)}&lt;/li&gt;)}&lt;/ul&gt;;\n}</pre><p>Typing props and state is largely mechanical once you've done it a few times — the genuinely useful skill is generics, because a generic component (like <code>List&lt;T&gt;</code> above) can be reused for products, orders, or users without ever being rewritten, while still giving full type-checking and autocomplete for whatever type is passed in.</p><div class=\"callout\"><b>A common beginner mistake is typing an API response as exactly what you assume it will be, with no runtime check.</b> TypeScript types disappear at runtime — writing <code>const data = await res.json() as User</code> doesn't verify anything, it just tells the compiler to trust you. If the server's actual shape ever drifts from that assumption, the bug surfaces as a confusing runtime error deep in the UI instead of a clear failure right at the boundary.</div>",
+  days:[
+    ["Mon","<b>TypeScript fundamentals</b> — types vs interfaces, unions, the parts of TS that matter most day to day."],
+    ["Tue","<b>Typing props &amp; components</b> — function component typing, children types, optional/required props done right."],
+    ["Wed","<b>Typing hooks</b> — useState/useReducer with proper generics, typing custom hooks' return values."],
+    ["Thu","<b>Typing API data</b> — modeling real API response shapes, narrowing unknown data safely at the boundary."],
+    ["Fri","<b>Generics basics</b> — writing one genuinely reusable generic component or hook."],
+    ["Sat","<b>Build day</b> — migrate a real JS component/app slice to TypeScript."],
+    ["Sun","<b>Review + ship. PHASE I milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://react-typescript-cheatsheet.netlify.app/" target="_blank">React TypeScript Cheatsheet</a>', "the definitive community reference for React+TS specifically"],
+    ['<a href="https://www.typescriptlang.org/docs/handbook/intro.html" target="_blank">TypeScript Handbook</a>', "official language reference for anything the cheatsheet doesn't cover"]
+  ],
+  project:"Migrate one real component tree from a Course-1 project (or JWY Calculator, if the codebase allows) from JavaScript to TypeScript, with properly typed props, state, and at least one typed API response boundary.",
+  quiz:[
+    {q:"Why type the boundary where external API data enters your app, even if the rest of the app is loosely typed?", opts:["It's not necessary if you trust the API","External data is the one place your own type assumptions can silently be wrong — typing and narrowing it there catches mismatches at the source instead of deep in the UI", "TypeScript requires typing every single variable","API data doesn't need types, only component props do"], correct:1, explain:"The API boundary is where reality (what the server actually sent) meets your assumptions — narrowing and validating there prevents a mismatch from surfacing as a confusing bug three components deep."},
+    {q:"Why does writing `const data = await res.json() as User` NOT actually guarantee that `data` is a valid User at runtime?", opts:["It does guarantee it — 'as User' performs a runtime check","A type assertion ('as User') only tells the TypeScript compiler to trust your claim; it performs no runtime verification, so if the server's actual response shape differs, the mismatch goes undetected until something breaks later", "TypeScript assertions throw an error immediately if wrong","JSON responses are always automatically validated by fetch()"], correct:1, explain:"Type assertions are a compile-time-only construct — they vanish at runtime. Real safety requires an actual runtime check (like a type-guard function) that inspects the real data, not just a claim to the compiler."},
+    {q:"What makes a generic component like `List<T>` more valuable than writing a separate typed list component for each data type?", opts:["Generics are required by React and have no real benefit","One generic component can be reused for any item type while still giving full type-checking and autocomplete for whatever specific type is passed in, avoiding duplicated near-identical components", "Generic components run faster than non-generic ones","Generics eliminate the need to ever type props"], correct:1, explain:"Without generics you'd either duplicate the same list-rendering logic per data type or lose type safety by using `any` — generics give you both reuse and full type safety at once."}
+  ],
+  milestone:"PHASE I COMPLETE — a real component tree migrated to properly-typed TypeScript, including a typed API boundary."
+}
+]},
+{cut:"Phase II — Load-Bearing Walls", title:"System Design Fundamentals", weeks:[
+{
+  n:5, title:"System Design Fundamentals",
+  goal:"Learn to think about a system as a whole — client/server boundaries, caching layers, and the core tradeoffs that show up in every real architecture decision.",
+  lesson:"<p>Every system design decision is really a tradeoff decision, and the first one is where logic should live: client, server, or edge. Validation that only protects UX (like 'this field looks empty') can live on the client. Validation that protects data integrity or security (like 'this user is allowed to see this invoice') must live on the server, because anything running in the browser can be bypassed by anyone who opens devtools — the client is never a trust boundary.</p><pre>// client-side check: UX convenience only, NOT security\nif (!email.includes('@')) showError('Looks invalid');\n\n// server-side check: the actual trust boundary — this is what matters\nif (invoice.ownerId !== session.userId) return res.status(403).send('Forbidden');</pre><p>Caching adds speed at every layer — browser cache, CDN, server-side cache, database query cache — but each layer you add is also a place data can become stale, which is why 'cache everything aggressively' isn't free. The CAP theorem formalizes a related tradeoff for distributed systems: when part of a system can't communicate with another part (a network partition), you must choose between staying available (answering anyway, possibly with stale data) or staying consistent (refusing to answer until you can guarantee correctness) — you cannot have both guaranteed during that partition.</p><div class=\"callout\"><b>Practicing system design in words and diagrams before writing code is a real, trainable skill, not busywork.</b> A one-page design doc forces you to state the client/server split, the caching plan, and the consistency tradeoffs explicitly — which is exactly where unstated assumptions ('I guess we'll just cache that' — for how long? invalidated how?) get caught, before they're baked into code that's expensive to unwind.</div>",
+  days:[
+    ["Mon","<b>Client-server thinking</b> — what belongs on the client vs server vs edge, and why that boundary matters for cost/security/UX."],
+    ["Tue","<b>Caching layers</b> — browser cache, CDN cache, server cache, database cache — where each one earns its place."],
+    ["Wed","<b>Load balancing (conceptual)</b> — how traffic gets distributed across multiple servers, connecting back to Course 2's DevOps material."],
+    ["Thu","<b>Consistency tradeoffs</b> — CAP theorem at a practical level, why 'strongly consistent everywhere' isn't free."],
+    ["Fri","<b>Designing on a whiteboard</b> — practicing describing a system's shape in words/diagrams before writing code."],
+    ["Sat","<b>Build day</b> — write a one-page system design doc for a real feature before building it."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://github.com/donnemartin/system-design-primer" target="_blank">System Design Primer (GitHub)</a>', "the most widely-used free reference for this exact topic"],
+    ['<a href="https://www.hellointerview.com/learn/system-design/in-a-hurry/introduction" target="_blank">Hello Interview — System Design in a Hurry</a>', "concise, practical walkthroughs of core concepts"]
+  ],
+  project:"Write a one-page system design document for a real upcoming feature (e.g. expanding World Shiner to a new country) before writing any code — client/server split, caching plan, and consistency tradeoffs made explicit.",
+  quiz:[
+    {q:"What does the CAP theorem say a distributed system must trade off during a network partition?", opts:["Cost against speed","Consistency against availability — you can't guarantee both simultaneously when parts of the system can't communicate", "Security against usability","Frontend against backend complexity"], correct:1, explain:"CAP theorem: during a network partition, a system must choose between staying fully consistent or staying fully available — it can't guarantee both at once."},
+    {q:"Why is the browser never a valid trust boundary for security-sensitive checks, even if the client also performs that same check for UX purposes?", opts:["Browsers are perfectly secure as long as HTTPS is used","Anything running in the browser can be inspected, modified, or bypassed by the user via devtools, so a check that matters for security or data integrity must be re-enforced on the server regardless of what the client does", "Client-side checks are always faster and therefore always sufficient","Server-side validation is only needed for payment-related features"], correct:1, explain:"A client-side check is a UX convenience the user fully controls and can disable or bypass — only a server-side check, which the user cannot alter, can actually enforce a security or data-integrity rule."},
+    {q:"Why does adding more caching layers (browser, CDN, server, database) always come with a real cost, even though each layer makes things faster?", opts:["Caching has no real cost once implemented","Every cache layer is a place where data can become stale relative to the source of truth, so more layers means more places invalidation logic has to be correctly maintained", "Caching layers always slow systems down","Only one caching layer is technically possible in any system"], correct:1, explain:"Speed from caching is traded against staleness risk — each layer needs its own invalidation strategy, and getting that wrong anywhere in the chain means users can see outdated data."}
+  ],
+  milestone:"A real one-page system design doc written for an actual upcoming feature, before implementation began."
+},
+{
+  n:6, title:"API Design at Scale",
+  goal:"Learn the design decisions that separate an API that scales cleanly from one that becomes a maintenance burden — versioning, pagination, and choosing REST vs alternatives deliberately.",
+  lesson:"<p>Offset pagination (<code>?page=3&amp;limit=20</code>) looks simple but breaks in two specific ways once data is large and changing: the database has to count and skip every prior row on every request (slow at high offsets), and if a row is inserted or deleted while a user is paging through, later pages can skip or repeat items. Cursor pagination fixes both by anchoring to a specific row instead of a position.</p><pre>// offset — recalculates position from scratch every time, drifts under writes\nGET /orders?page=3&limit=20\n\n// cursor — anchored to a specific row, stable even as data changes\nGET /orders?after=order_8f2a91&limit=20</pre><p>GraphQL and tRPC exist to solve real problems with plain REST, but each has a real cost too. GraphQL solves over-fetching/under-fetching (the client asks for exactly the fields it needs) at the cost of caching complexity and a real risk of N+1 database queries if resolvers aren't written carefully. tRPC gives end-to-end type safety for full-stack TypeScript without a separate schema language, but only works cleanly when client and server share one codebase — it's not a general public-API solution the way REST or GraphQL are.</p><div class=\"callout\"><b>API versioning exists because you cannot assume every client has upgraded.</b> If you change a field's meaning or remove one, any client still calling the old shape breaks immediately with no warning. Versioning (a URL prefix like <code>/v2/</code>, or a header) lets you ship a breaking change for new clients while old clients keep working against the version they were built for, until they're migrated deliberately.</div>",
+  days:[
+    ["Mon","<b>REST at scale</b> — resource design, HATEOAS in theory vs practice, honest opinions on when strict REST helps vs hinders."],
+    ["Tue","<b>GraphQL</b> — what problem it actually solves (over/under-fetching), and its real costs (caching complexity, N+1 queries)."],
+    ["Wed","<b>tRPC</b> — end-to-end type safety for full-stack TypeScript apps without a separate schema language."],
+    ["Thu","<b>Pagination &amp; filtering</b> — offset vs cursor pagination, designing filters that scale with data size."],
+    ["Fri","<b>Versioning &amp; rate limiting</b> — how to change an API without breaking existing clients, protecting it from abuse."],
+    ["Sat","<b>Build day</b> — redesign a real API endpoint (e.g. from the inventory price API) with proper pagination and versioning."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://cloud.google.com/apis/design" target="_blank">Google — API Design Guide</a>', "a genuinely well-reasoned, widely-referenced REST design guide"],
+    ['<a href="https://trpc.io/docs" target="_blank">tRPC — official docs</a>', "for full-stack TS apps, a strong alternative to REST/GraphQL"],
+    ['<a href="https://graphql.org/learn/" target="_blank">GraphQL — official learn guide</a>', "to evaluate it honestly against your own use cases"]
+  ],
+  project:"Redesign one real API endpoint (from the inventory price API or JWY ecosystem) with cursor-based pagination, proper filtering, and a versioning strategy — document the before/after and why each choice was made.",
+  quiz:[
+    {q:"Why does cursor-based pagination generally scale better than offset-based pagination for large, frequently-changing datasets?", opts:["Cursor pagination is always simpler to implement","Offset pagination can skip or repeat items when rows are added/removed between requests, and gets slower on large offsets; cursor pagination avoids both problems", "There's no real performance difference","Offset pagination is deprecated and no longer works"], correct:1, explain:"Offset pagination recalculates position by counting rows every time (slow at scale) and can shift under concurrent writes; a cursor anchors to a specific row, avoiding both issues."},
+    {q:"What real cost does GraphQL introduce in exchange for solving over-fetching and under-fetching?", opts:["GraphQL has no real tradeoffs compared to REST","Increased caching complexity and a real risk of N+1 database queries if resolvers for nested fields aren't written carefully", "GraphQL cannot return nested data at all","GraphQL requires abandoning all existing REST endpoints immediately"], correct:1, explain:"Letting clients request arbitrary field combinations makes simple HTTP-level caching much harder, and naive resolver code can trigger a separate database query per item in a list — the N+1 problem."},
+    {q:"Why is API versioning necessary even when you're confident most clients will update quickly?", opts:["Versioning is purely a marketing convention with no technical purpose","You cannot assume every client has upgraded at the moment you ship a breaking change — versioning lets old clients keep working against the shape they were built for while new clients use the updated one", "Unversioned APIs are technically impossible to build","Versioning only matters for public APIs, never for internal ones"], correct:1, explain:"Even internal clients (mobile apps already installed on devices, other services not yet redeployed) can lag behind a server deploy — versioning avoids breaking them the instant the server changes."}
+  ],
+  milestone:"A real API endpoint redesigned with cursor pagination, filtering, and a documented versioning strategy."
+},
+{
+  n:7, title:"Data Modeling for Scale",
+  goal:"Learn the tradeoffs in structuring data for a growing, multi-tenant system — directly relevant to World Shiner's real multi-country, multi-location architecture.",
+  lesson:"<p>Normalization (storing each fact exactly once, referenced by relationships) prevents inconsistency, but it isn't free at read time — a normalized schema often needs several joins to answer a single question. Denormalization (deliberately duplicating some data) trades that write-time discipline for read-time speed. Neither is 'correct' in the abstract; the right choice depends on whether a given piece of data is read far more often than it's written, which is true for most reporting-style data.</p><pre>-- shared schema, shared database — the pragmatic default for most multi-tenant systems\nSELECT * FROM jobs WHERE tenant_id = 'sydney' AND status = 'open';\n\n-- vs. database-per-tenant: full isolation, but N databases to migrate, monitor, and scale individually</pre><p>Multi-tenancy design sits on a spectrum: shared database with a <code>tenant_id</code> column (simplest to operate, query across tenants easily) → schema-per-tenant → full database-per-tenant (strongest isolation, but now every schema migration has to run N times and cross-tenant reporting gets much harder). Most systems should start at the shared-schema end and move right only when a specific requirement — a compliance rule requiring physical data separation, or one tenant's load actually degrading others — justifies the added operational cost.</p><div class=\"callout\"><b>Designing for 'who changed what, when' from day one is far cheaper than bolting it on after the fact.</b> An audit trail added early is just one extra table and a few extra writes. Added after a dispute already happened — 'the price was changed, but by whom, and was it authorized' — it requires reconstructing history that was never captured, which is sometimes simply impossible.</div>",
+  days:[
+    ["Mon","<b>Normalization vs denormalization</b> — when duplicating data on write is the right call for read performance."],
+    ["Tue","<b>Multi-tenancy models</b> — shared database/shared schema vs schema-per-tenant vs database-per-tenant, mapped to World Shiner's per-country needs."],
+    ["Wed","<b>Data partitioning</b> — sharding by tenant/region conceptually, why it matters as data grows."],
+    ["Thu","<b>Schema evolution</b> — migrating a live schema without downtime, backward-compatible changes."],
+    ["Fri","<b>Auditing &amp; history</b> — designing for 'who changed what, when' from the start rather than bolting it on later."],
+    ["Sat","<b>Build day</b> — document World Shiner's actual current data model and propose one concrete improvement."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.citusdata.com/blog/2016/10/03/designing-your-saas-database-for-high-scalability/" target="_blank">Citus — Designing your SaaS database for scalability</a>', "directly relevant to multi-tenant, multi-location design"],
+    ['<a href="https://planetscale.com/blog/safely-making-database-schema-changes" target="_blank">PlanetScale — Safe schema migrations</a>', "practical guidance on zero-downtime schema evolution"]
+  ],
+  project:"Document World Shiner's actual current data model (as it really exists across Sydney/UK/Brisbane/etc.), identify one concrete multi-tenancy or partitioning improvement, and write a migration plan for it (doesn't have to be executed, just designed).",
+  quiz:[
+    {q:"Why is 'shared database, shared schema, with a tenant_id column' often the pragmatic starting point for multi-tenant systems over full database-per-tenant?", opts:["It's always the best choice at any scale, no exceptions","It's simpler to operate and query across tenants, and is usually sufficient until you hit specific scale, isolation, or compliance requirements that justify the added complexity of separate databases", "Database-per-tenant is always better and simpler","Shared schema is only for prototypes, never for production"], correct:1, explain:"Full isolation (database-per-tenant) adds real operational complexity; the shared-schema approach is the pragmatic default until a specific requirement (scale, compliance, noisy-neighbor isolation) justifies the extra cost."},
+    {q:"What determines whether denormalizing (duplicating) a piece of data is the right call for a given table?", opts:["Denormalization is always wrong because it violates normalization rules","Whether that data is read far more often than it's written — if so, the read-speed benefit of duplication can outweigh the write-time cost of keeping copies in sync", "Denormalization is only acceptable for non-production systems","Normalized data is always faster to read than denormalized data"], correct:1, explain:"Denormalization trades write-time consistency effort for read-time speed — it earns its cost specifically when a table is read vastly more than it changes, which describes most reporting/dashboard data."},
+    {q:"Why is it much harder to add an audit trail ('who changed what, when') after a dispute has already occurred than to design it in from the start?", opts:["It's equally easy at any point, timing doesn't matter","Historical change data that was never captured in the first place often cannot be reconstructed after the fact, whereas designing the audit table in from day one costs just an extra table and a few extra writes", "Audit trails are only useful for financial applications","Databases automatically track all historical changes by default"], correct:1, explain:"Without deliberate logging, the information about who changed a given value and when simply doesn't exist anywhere to recover — audit trails have to be designed in proactively, not reconstructed retroactively."}
+  ],
+  milestone:"A real documented data model for World Shiner with one concrete, designed improvement and migration plan."
+},
+{
+  n:8, title:"Real-Time &amp; Offline Patterns",
+  goal:"Learn WebSockets, optimistic UI, and offline-first PWA patterns — directly applicable to World Shiner's job-tracking use case where connectivity across locations isn't guaranteed.",
+  lesson:"<p>Optimistic UI means updating the screen immediately when a user acts, before the server has confirmed anything — the app assumes success and only corrects course if the request actually fails. Done correctly, this makes an app feel instant even over a slow connection. Done without a rollback plan, it lies to the user: the UI shows a change that never actually happened once the request fails silently.</p><pre>// optimistic update WITH rollback — the correct pattern\nconst previous = job.status;\nsetJobStatus(job.id, 'complete'); // update UI immediately\ntry {\n  await api.updateJob(job.id, { status: 'complete' });\n} catch (err) {\n  setJobStatus(job.id, previous); // roll back on real failure\n  showError('Could not save — reverted.');\n}</pre><p>WebSockets keep a persistent connection open so the server can push updates without the client repeatedly asking ('polling') — worth the added connection-management complexity specifically when updates need to feel live (a chat, a shared job board), and not worth it for data that only needs to refresh occasionally. Offline-first patterns (service workers queuing writes made while offline, syncing when connectivity returns) matter for exactly World Shiner's situation: a location with a spotty connection shouldn't lose a job-status update, it should queue it and sync automatically once back online.</p><div class=\"callout\"><b>Offline support creates a conflict-resolution problem that has to be designed, not assumed away.</b> If two locations edit the same job record while both are offline, there is no automatically 'correct' answer for which edit should win when they both reconnect — 'last writer wins', 'merge both changes', and 'flag for manual review' are all legitimate strategies, but picking none of them by default usually means silently losing one location's work.</div>",
+  days:[
+    ["Mon","<b>WebSockets</b> — persistent connections vs polling, when real-time updates are actually worth the complexity."],
+    ["Tue","<b>Optimistic UI</b> — updating the UI before server confirmation, and correctly rolling back on failure."],
+    ["Wed","<b>Offline-first PWA patterns</b> — service workers, background sync, queuing writes made while offline."],
+    ["Thu","<b>Conflict resolution</b> — what happens when two locations edit the same job record while both were offline."],
+    ["Fri","<b>Choosing the right pattern</b> — honest tradeoffs; not every feature needs real-time or offline support."],
+    ["Sat","<b>Build day</b> — add optimistic UI or offline queuing to one real World Shiner interaction."],
+    ["Sun","<b>Review + ship. PHASE II milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://web.dev/learn/pwa" target="_blank">web.dev — Learn PWA</a>', "structured, current PWA course covering service workers and offline patterns"],
+    ['<a href="https://socket.io/docs/v4/" target="_blank">Socket.IO docs</a>', "the standard practical WebSocket library for Node"],
+    ['<a href="https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates" target="_blank">TanStack Query — Optimistic updates guide</a>', "clean, current pattern for optimistic UI with rollback"]
+  ],
+  project:"Add optimistic UI with proper rollback-on-failure to one real World Shiner job-status update interaction, and design (in writing) how conflicting offline edits from two locations would be resolved.",
+  quiz:[
+    {q:"Why is conflict resolution a real design problem for a multi-location offline-capable app like World Shiner?", opts:["It isn't a real problem in practice","Two locations could edit the same job record while both are offline, and when both reconnect, the system has to decide which change wins or how to merge them — this doesn't resolve itself automatically", "The last device to connect always wins by default with no design needed","Offline apps never allow editing, only viewing"], correct:1, explain:"Without an explicit conflict-resolution strategy, simultaneous offline edits from different locations create an ambiguous 'which version is correct' situation that has to be deliberately designed for, not left to chance."},
+    {q:"What makes an optimistic UI update dangerous if it's implemented WITHOUT a rollback plan?", opts:["Optimistic UI is always safe regardless of rollback handling","The UI can show a change as successful when the underlying server request actually failed, effectively lying to the user about what really happened", "Optimistic UI without rollback simply runs slower","It becomes impossible to update the UI at all"], correct:1, explain:"The entire point of optimistic UI is showing success before confirmation — if the real request fails and nothing reverts the UI, the user is shown a false state with no indication anything went wrong."},
+    {q:"Under what circumstance does a WebSocket's added connection-management complexity (over simple polling) actually earn its cost?", opts:["WebSockets are always worth using for any data, regardless of update frequency","Specifically when updates genuinely need to feel live — like a shared job board or chat — where the cost of maintaining a persistent connection is justified by users needing to see changes immediately", "Polling is never an acceptable approach in modern apps","WebSockets are required for any app that fetches data from a server"], correct:1, explain:"For data that only needs to refresh occasionally, simple polling is perfectly adequate and far simpler to operate — WebSockets pay for their complexity specifically when near-instant push updates are the actual requirement."}
+  ],
+  milestone:"PHASE II COMPLETE — a real optimistic UI interaction with rollback, and a written conflict-resolution design for offline multi-location edits."
+}
+]},
+{cut:"Phase III — The Finished Piece", title:"Design Systems &amp; Scale", weeks:[
+{
+  n:9, title:"Micro-Frontends &amp; Monorepos",
+  goal:"Learn to share code cleanly across multiple apps — directly mapped to World Shiner's existing per-country config.js architecture, which is already a proto-monorepo problem.",
+  lesson:"<p>A pattern like World Shiner's shared <code>master.html</code> plus a per-country <code>config.js</code> is already solving the core monorepo problem informally: one piece of shared logic, consumed by multiple deployable variants. The problem with doing this informally is that nothing enforces correctness — there's no tooling verifying that a change to the shared file doesn't break a specific country's build until someone notices in production.</p><pre>repo/\n  apps/\n    sydney/      # consumes @worldshiner/core\n    uk/          # consumes @worldshiner/core\n    brisbane/    # consumes @worldshiner/core\n  packages/\n    core/        # the actual shared logic, versioned, with real dependency tracking</pre><p>A real monorepo tool (Turborepo or Nx) formalizes this: shared logic becomes a proper package with declared dependencies, so the tool knows exactly which apps are affected by a given change and can build/test/deploy only those — not everything, every time. This is the direct fix for the 'did this shared-file change break a country I wasn't even thinking about' risk that an informal shared-file setup carries.</p><div class=\"callout\"><b>Micro-frontends (splitting one large app into independently-deployable pieces) are a further step past a monorepo, and they are not free.</b> They solve a real problem — large teams needing to deploy their piece of a product without coordinating with every other team — but add real runtime complexity (loading multiple independently-built bundles together, keeping shared dependencies in sync across them). For a single small team, a monorepo with shared packages usually captures most of the benefit without that added runtime cost.</div>",
+  days:[
+    ["Mon","<b>Monorepo fundamentals</b> — why teams consolidate multiple apps/packages into one repo, tradeoffs vs separate repos."],
+    ["Tue","<b>Turborepo or Nx</b> — setting up a real monorepo with shared packages and per-app builds."],
+    ["Wed","<b>Sharing code, not just config</b> — extracting World Shiner's shared master.html logic into a proper shared package consumed by each country build."],
+    ["Thu","<b>Micro-frontends (conceptual)</b> — when splitting a large app into independently-deployable pieces earns its complexity, and when it doesn't."],
+    ["Fri","<b>Build &amp; deploy orchestration</b> — building/deploying only what changed in a monorepo, not everything every time."],
+    ["Sat","<b>Build day</b> — prototype migrating World Shiner's master.html + per-country config.js pattern into a real monorepo package structure."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://turbo.build/repo/docs" target="_blank">Turborepo docs</a>', "the most approachable modern JS monorepo tool"],
+    ['<a href="https://nx.dev/getting-started/intro" target="_blank">Nx docs</a>', "more powerful alternative for larger multi-app setups"],
+    ['<a href="https://martinfowler.com/articles/micro-frontends.html" target="_blank">Martin Fowler — Micro Frontends</a>', "the honest, foundational explainer including when NOT to use the pattern"]
+  ],
+  project:"Prototype converting World Shiner's shared master.html + per-country config.js pattern into a real Turborepo/Nx monorepo, with the shared logic extracted into one proper package consumed by each country-specific build.",
+  quiz:[
+    {q:"How does World Shiner's existing master.html + per-country config.js pattern relate to monorepo thinking?", opts:["They're unrelated concepts","It's already solving the same core problem (sharing logic across multiple deployable variants) informally — a monorepo formalizes that sharing with proper tooling, versioning, and build isolation", "Monorepos are only for backend code","The existing pattern should be abandoned entirely, not evolved"], correct:1, explain:"The existing shared-file + per-variant-config approach IS the core monorepo problem in miniature — formalizing it with real tooling gets you proper dependency tracking, isolated builds, and safer shared-code changes."},
+    {q:"What specific risk does an informal shared-file setup (like a hand-maintained master.html) carry that a real monorepo tool (Turborepo/Nx) directly addresses?", opts:["There is no real risk, both approaches are equivalent","Nothing verifies that a change to the shared file doesn't break a specific consuming app until someone notices after deployment — a monorepo tool tracks dependencies so it knows exactly what's affected by a given change", "Monorepo tools only work with backend languages, not JavaScript","Shared files are always slower to load than monorepo packages"], correct:1, explain:"The core gap in an informal setup is the absence of dependency tracking — a real monorepo tool knows which apps consume which shared package, so it can build/test only what a change actually affects, and catch breakage before deploy."},
+    {q:"Why do micro-frontends add real runtime complexity that a plain monorepo with shared packages does not?", opts:["Micro-frontends have no additional complexity compared to monorepos","Micro-frontends require loading multiple independently-built bundles together in the browser and keeping shared dependencies in sync across them at runtime, not just at build time", "Micro-frontends are a deprecated pattern no longer used anywhere","Monorepos cannot share code between apps at all"], correct:1, explain:"A monorepo shares code at build time through packages; micro-frontends go further by composing independently-deployed pieces together live in the browser, which introduces real runtime coordination problems a monorepo alone doesn't have."}
+  ],
+  milestone:"A real working monorepo prototype with World Shiner's shared logic extracted into one consumable package."
+},
+{
+  n:10, title:"Design Systems",
+  goal:"Learn to build a real, reusable component library — formalizing the 'Atelier Rose' design system already in use in the JWY Calculator into something shared and documented.",
+  lesson:"<p>A shared CSS file gives every consuming app the same colors and spacing, but it doesn't tell a developer which component to use for a given situation, or what that component's actual valid states are — that gap is exactly what separates 'shared styles' from a real design system. A design system is tokens (the raw values: this exact teal, this exact spacing scale) PLUS documented, reusable components built from those tokens PLUS the usage guidance that keeps everyone using them the same way.</p><pre>// design tokens — one source of truth, consumed by both design and code\nexport const tokens = {\n  color: { trace: '#0C8F86', amber: '#C97A1F' },\n  space: { sm: '8px', md: '16px', lg: '24px' },\n};\n\n// a documented component built FROM those tokens, not hardcoded values\n&lt;Button variant='primary' size='md'&gt;Save Quote&lt;/Button&gt;</pre><p>Storybook exists to let you build and document components in isolation — seeing every state of a <code>Button</code> (default, hover, disabled, loading) side by side, without needing to navigate the full app to reach each state. That documentation is what actually prevents drift: without it, two developers in two different apps each quietly build their own slightly-different version of 'the primary button' because neither knew the other's version existed.</p><div class=\"callout\"><b>Versioning is what lets a design system evolve without breaking every app that depends on it.</b> If <code>Atelier Rose</code> is extracted into a real versioned package, JWY Calculator can stay on v1.2 while World Shiner adopts v2.0's updated button styles on its own schedule — neither app is forced to update the instant the shared package changes, the way it would be with an unversioned shared file.</div>",
+  days:[
+    ["Mon","<b>What a design system actually is</b> — tokens, components, and documentation, not just a shared CSS file."],
+    ["Tue","<b>Design tokens</b> — extracting colors/spacing/type into a single source of truth consumed by both design and code."],
+    ["Wed","<b>Building a component library</b> — structuring reusable, documented components as a real shared package."],
+    ["Thu","<b>Documentation with Storybook</b> — isolated component development and living documentation."],
+    ["Fri","<b>Versioning &amp; adoption</b> — how a design system evolves without breaking every app that consumes it."],
+    ["Sat","<b>Build day</b> — extract 3-4 real components from Atelier Rose into a documented, versioned shared package."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://storybook.js.org/docs" target="_blank">Storybook docs</a>', "the standard tool for building/documenting a component library in isolation"],
+    ['<a href="https://spectrum.adobe.com/page/design-tokens/" target="_blank">Adobe Spectrum — Design Tokens</a>', "a real, well-documented production design system to study"]
+  ],
+  project:"Extract 3-4 real components from the JWY Calculator's Atelier Rose design system into a standalone, versioned package with Storybook documentation — consumable by other apps in your ecosystem (e.g. World Shiner or A&A Creations).",
+  quiz:[
+    {q:"What separates a real design system from 'a shared CSS file'?", opts:["Nothing, they're the same thing","A real design system includes documented, reusable components with clear usage guidance and versioning — not just shared visual tokens with no structure around how to use them correctly", "A design system must use a specific framework","Shared CSS files are always sufficient at any scale"], correct:1, explain:"Shared styles alone don't prevent misuse or drift — a real design system documents intended usage and evolves through versioning, which is what actually keeps multiple consuming apps consistent over time."},
+    {q:"What specific problem does Storybook's isolated component documentation solve that a shared CSS file alone does not?", opts:["Storybook makes components render faster in production","It lets every state of a component (default, hover, disabled, loading) be seen and tested side by side without navigating the full app, which prevents developers in different apps from unknowingly building duplicate, slightly-different versions of the same component", "Storybook is required for any component library to function at runtime","Storybook replaces the need for design tokens entirely"], correct:1, explain:"Without a documented, visible source of truth for what a component actually looks like in every state, teams working in different apps tend to quietly reinvent the same component rather than discovering and reusing the existing one."},
+    {q:"Why does versioning a shared design-system package matter for apps that consume it?", opts:["Versioning is irrelevant since all apps should always use the newest version immediately","It lets each consuming app (e.g. JWY Calculator vs World Shiner) upgrade to a new version on its own schedule, rather than being forced to absorb every change to the shared package the instant it's published", "Versioning is only a requirement for open-source packages","A versioned package cannot be updated once published"], correct:1, explain:"An unversioned shared file forces every consumer to accept a change immediately and simultaneously; a versioned package lets each app choose when it's ready to adopt a new version, decoupling the shared system's evolution from any one app's release schedule."}
+  ],
+  milestone:"A real versioned, documented component package extracted from Atelier Rose, ready to be consumed by another app."
+},
+{
+  n:11, title:"Accessibility &amp; Internationalization at Scale",
+  goal:"Learn to audit and fix accessibility properly, and design i18n patterns that actually work across World Shiner's real multi-country deployment.",
+  lesson:"<p>The first rule of ARIA, straight from the W3C's own authoring guidance, is: don't use ARIA if native semantic HTML already does the job. A real <code>&lt;button&gt;</code> is already keyboard-focusable, already announced correctly by screen readers, and already fires on both click and Enter/Space — wrapping a <code>&lt;div&gt;</code> in <code>role=\"button\"</code> and reimplementing all of that by hand is extra work that's easy to get subtly wrong, and incorrect ARIA can override correct native behavior, making things worse than doing nothing.</p><pre>&lt;!-- fragile — you now own keyboard handling, focus, and announcement yourself --&gt;\n&lt;div role='button' onclick='submit()'&gt;Submit&lt;/div&gt;\n\n&lt;!-- correct — all of that is already built in, free --&gt;\n&lt;button onclick='submit()'&gt;Submit&lt;/button&gt;\n\n// i18n: never hardcode strings or formatting\nt('cart.itemCount', { count: 3 })  // pluralization handled by the i18n library, not by hand\nnew Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(49.99) // → '49,99 €'</pre><p>Internationalization for a system actually deployed across Sydney, the UK, Brisbane, Melbourne, NZ, Poland, Texas, and Germany is not just translated strings — dates, numbers, and currency all format differently per locale (<code>49.99</code> vs <code>49,99</code>, MM/DD/YYYY vs DD/MM/YYYY), and getting this wrong silently produces wrong-looking or genuinely ambiguous data for real users in real countries, not just a cosmetic issue.</p><div class=\"callout\"><b>An accessibility audit has to prioritize by real impact, not by what's easiest to fix first.</b> A missing alt attribute on a decorative image is a minor issue; a form a screen-reader user cannot submit at all is a blocking one. Tools like axe and Lighthouse surface a long list of findings — the actual skill is triaging that list by how much it actually blocks a real user, not fixing issues in the order the tool happens to list them.</div>",
+  days:[
+    ["Mon","<b>Accessibility audits</b> — running a real audit (axe/Lighthouse) on a production app and prioritizing fixes by real impact."],
+    ["Tue","<b>Keyboard &amp; screen reader support</b> — focus management, ARIA done correctly (and when it's unnecessary)."],
+    ["Wed","<b>i18n architecture</b> — structuring translated strings properly (not hardcoded), pluralization, date/number/currency formatting per locale."],
+    ["Thu","<b>RTL &amp; locale-specific layout</b> — designing components that don't break for right-to-left or differently-formatted locales."],
+    ["Fri","<b>Testing across locales</b> — building a habit of actually testing in more than one language/region, not just assuming."],
+    ["Sat","<b>Build day</b> — run a real a11y audit on World Shiner and fix the top issues; audit currency/date formatting across its actual countries."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.deque.com/axe/" target="_blank">axe DevTools</a>', "the standard automated accessibility auditing tool"],
+    ['<a href="https://www.i18next.com/" target="_blank">i18next docs</a>', "the most widely-used JS i18n library, worth understanding even if you build something lighter"],
+    ['<a href="https://www.w3.org/WAI/ARIA/apg/" target="_blank">W3C — ARIA Authoring Practices Guide</a>', "the authoritative reference for correct ARIA usage"]
+  ],
+  project:"Run a real accessibility audit on World Shiner (or the customs module) with axe/Lighthouse, fix the highest-impact issues, and audit its currency/date formatting across all real deployed countries (Sydney/UK/Brisbane/Melbourne/NZ/Poland/Texas/Germany) for correctness.",
+  quiz:[
+    {q:"Why can adding ARIA attributes to already-semantic HTML sometimes make accessibility worse, not better?", opts:["ARIA never causes problems, more is always better","Incorrect or redundant ARIA can override the correct default behavior that semantic HTML already provided, actively confusing screen readers", "Screen readers ignore ARIA attributes entirely","ARIA only affects visual styling, not screen readers"], correct:1, explain:"The first rule of ARIA is not to use it if native semantic HTML already does the job — misapplied ARIA can override correct native behavior and produce a worse experience than no ARIA at all."},
+    {q:"Why is correctly formatting currency and dates per locale (e.g. Germany vs Texas) more than a cosmetic concern for a real multi-country deployment?", opts:["It is purely cosmetic and has no functional impact","Different locales use genuinely different conventions (comma vs period for decimals, different date orderings), so getting this wrong can produce numbers or dates that are ambiguous or read as factually wrong to a real user in that country", "All countries use identical number and date formats","Currency formatting is handled automatically by the browser with no library needed"], correct:1, explain:"A date written MM/DD in a DD/MM locale, or a decimal separator swapped with a thousands separator, isn't just unpolished — it can be misread as a different number or date entirely, which is a real correctness bug, not a style issue."},
+    {q:"When triaging a long list of accessibility findings from a tool like axe or Lighthouse, what should determine the fix order?", opts:["Fix issues in the exact order the tool lists them, with no judgment applied","Prioritize by actual real-world impact — an issue that completely blocks a screen-reader user from submitting a form matters far more than a minor issue like a missing alt attribute on a decorative image", "Only fix issues flagged as 'critical' by the tool and ignore everything else entirely","Accessibility issues should be fixed in a random order since impact can't be judged"], correct:1, explain:"Automated tools surface everything they can detect, but they don't know which issues actually block a real user from completing a real task — that judgment call is the actual skill in an accessibility audit."}
+  ],
+  milestone:"A real accessibility audit completed with top issues fixed, plus verified correct currency/date formatting across all of World Shiner's actual deployed countries."
+},
+{
+  n:12, title:"Capstone — Architectural Upgrade",
+  goal:"Close the program by proposing and implementing one real architectural upgrade to the World Shiner/JWY ecosystem, backed by a written system design doc using everything from this course.",
+  lesson:"<p>This capstone is deliberately not a new topic — it's proof that eleven weeks of individually-learned skills (composition patterns, state management, performance measurement, TypeScript, system design, API design, data modeling, real-time/offline handling, monorepos, design systems, accessibility/i18n) combine into the actual, hardest skill of this course: proposing and shipping one real architectural change to a live system other people depend on.</p><pre># A one-page design doc is a decision point, not paperwork after the fact\n1. Problem statement — what's actually broken or limiting right now, with evidence\n2. Proposed architecture — the shape of the fix\n3. Tradeoffs considered — what you're giving up, and what alternatives you rejected and why\n4. Migration plan — how you get from current state to proposed state without a big-bang rewrite</pre><p>Writing the doc BEFORE implementing (not after, as a summary) is what makes it valuable: a bad assumption caught on paper costs an edit; the same bad assumption caught after a week of implementation costs that week. For a system other developers are coordinating around — like World Shiner's other-location developers — the doc is also how they get a real chance to raise a concern before, not after, you've committed engineering time to an approach.</p><div class=\"callout\"><b>The capstone explicitly asks you to re-check performance and accessibility (Weeks 3 and 11) after implementing, not just at the end of those original weeks.</b> An architectural change — a new state management approach, a monorepo migration — can easily regress either one silently: a new data-fetching pattern can reintroduce unnecessary re-renders, a new component structure can lose semantic HTML it used to have. Verifying this explicitly, with the same profiling/audit tools from those weeks, is what catches a regression before it ships rather than after.</div>",
+  days:[
+    ["Mon","<b>Pick the upgrade</b> — choose one real, high-value architectural improvement (monorepo migration, state management overhaul, or design-system rollout)."],
+    ["Tue","<b>Write the design doc</b> — problem statement, proposed architecture, tradeoffs considered, migration plan."],
+    ["Wed","<b>Implement — part 1</b> — build the core of the upgrade against a real (or realistic staging) slice of the app."],
+    ["Thu","<b>Implement — part 2</b> — finish implementation, write tests for the new architecture."],
+    ["Fri","<b>Performance &amp; accessibility check</b> — verify the upgrade didn't regress performance or accessibility (Week 3 and Week 11 skills)."],
+    ["Sat","<b>Document &amp; present</b> — write the upgrade up as if presenting it to the independent developers coordinating other World Shiner locations."],
+    ["Sun","<b>Program review</b> — what shipped, what's next."]
+  ],
+  resources:[
+    ['<a href="https://github.com/donnemartin/system-design-primer" target="_blank">System Design Primer (revisit)</a>', "final-week reference for structuring the capstone design doc"]
+  ],
+  project:"Design and implement one real architectural upgrade to the World Shiner/JWY ecosystem (monorepo migration, state management overhaul, or shared design-system rollout), with a written design doc suitable for briefing the independent developers at other locations.",
+  quiz:[
+    {q:"Why write the design doc before implementing, rather than just building the upgrade and explaining it afterward?", opts:["Documentation after the fact is always equally good","Writing the design doc first forces tradeoffs to be reasoned through explicitly, and gives collaborators (like the other location developers) a chance to raise concerns before work is sunk into an approach", "Design docs are only a formality with no real value","Implementation should never be planned in advance"], correct:1, explain:"A design doc written before implementation is a decision point, not just documentation — it's cheaper to change direction on paper than after code is written, especially when other developers depend on the outcome."},
+    {q:"Why does the capstone explicitly require re-checking performance and accessibility after implementing the architectural upgrade, rather than assuming Weeks 3 and 11's earlier work still holds?", opts:["It doesn't actually matter and is just a formality","An architectural change can silently regress either one — a new data-fetching pattern can reintroduce unnecessary re-renders, or a new component structure can lose semantic HTML — so re-verifying with the same tools catches a regression before shipping, not after", "Performance and accessibility never change once initially fixed","Re-checking is only necessary if users specifically complain"], correct:1, explain:"Changing the architecture underneath a feature doesn't guarantee its measured properties stay the same — explicitly re-profiling and re-auditing after the change is what actually confirms nothing was lost."},
+    {q:"What is the actual hardest skill this capstone is designed to prove, beyond the individual topics covered in Weeks 1-11?", opts:["Memorizing the most React APIs","Combining the previously individually-learned skills to propose, justify, and ship one real architectural change to a live system that other people (or other location developers) depend on", "Writing the most lines of code in one week","Avoiding any use of TypeScript in the final project"], correct:1, explain:"Each prior week taught one skill in isolation — the capstone's real test is integrating all of them into a single coherent, justified, shipped decision, which is a fundamentally different (and harder) skill than any one topic alone."}
+  ],
+  milestone:"CAPSTONE — one real architectural upgrade to World Shiner/JWY, implemented and documented in a design doc ready to brief other developers."
+}
+]}
+];
+
+/* ============ PROGRESS PERSISTENCE (localStorage) ============ */
+const PROGRESS_KEY = 'atelierProgress_v2';
+function loadCompletedWeeks(){
+  try { return new Set(JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveCompletedWeeks(){
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify([...state.completedWeeks])); } catch(e){}
+}
+
+const state = { currentWeek: 0, completedWeeks: loadCompletedWeeks() };
+const ALL_WEEKS = CURRICULUM.flatMap(c => c.weeks.map(w => ({...w, cut:c.cut})));
+const TOTAL_WEEKS = ALL_WEEKS.length;
+
+function renderSidebar(){
+  const nav = document.getElementById('weekNav');
+  nav.innerHTML = '';
+  CURRICULUM.forEach(group => {
+    const li = document.createElement('li'); li.className = 'cut-group';
+    const label = document.createElement('div'); label.className = 'cut-label'; label.textContent = group.cut;
+    li.appendChild(label);
+    group.weeks.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'week-btn' + (w.n === state.currentWeek ? ' active' : '') + (state.completedWeeks.has(w.n) ? ' done' : '');
+      btn.innerHTML = `<span class="week-num">${state.completedWeeks.has(w.n) ? '' : w.n}</span><span class="week-title-mini">${w.title}</span>`;
+      btn.onclick = () => { state.currentWeek = w.n; renderAll(); window.scrollTo(0,0); };
+      li.appendChild(btn);
+    });
+    nav.appendChild(li);
+  });
+  updateProgressBar();
+}
+function updateProgressBar(){
+  const pct = Math.round((state.completedWeeks.size / TOTAL_WEEKS) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+function renderIntro(){
+  return `
+  <section class="hero-intro">
+    <span class="eyebrow">Course 4 of the Series · 12 Weeks</span>
+    <h1 class="display">The Atelier</h1>
+    <p class="lede">A single piece proves skill. A whole collection, designed to work together, proves mastery. <b>Phase I</b> sharpens component craft and adds TypeScript. <b>Phase II</b> moves into system design — architecture, APIs, and data modeling at real scale. <b>Phase III</b> applies it directly to World Shiner: monorepos, a real design system, and one shipped architectural upgrade.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><b>12</b><span>Weeks</span></div>
+      <div class="hero-stat"><b>3</b><span>Phases</span></div>
+      <div class="hero-stat"><b>12</b><span>Shipped Milestones</span></div>
+      <div class="hero-stat"><b>1</b><span>Real Architecture Upgrade</span></div>
+    </div>
+    <button class="start-btn" onclick="state.currentWeek=1; renderAll(); window.scrollTo(0,0);">Begin Week 1 →</button>
+  </section>`;
+}
+function renderWeek(w){
+  const isDone = state.completedWeeks.has(w.n);
+  const idx = ALL_WEEKS.findIndex(x => x.n === w.n);
+  const prev = ALL_WEEKS[idx-1]; const next = ALL_WEEKS[idx+1];
+  const daysHtml = w.days.map(([label, topic]) => `<li class="day-item"><span class="day-label">${label}</span><span class="day-topic">${topic}</span></li>`).join('');
+  const resourcesHtml = w.resources.map(([link, note]) => `<li>${link} — <span style="opacity:.65">${note}</span></li>`).join('');
+  const quizHtml = w.quiz.map((q, qi) => {
+    const optsHtml = q.opts.map((opt, oi) => `<button class="quiz-opt" onclick="answerQuiz(${w.n},${qi},${oi},this)">${opt}</button>`).join('');
+    return `<div class="quiz-card"><div class="q">${qi+1}. ${q.q}</div><div class="quiz-opts" id="quiz-${w.n}-${qi}">${optsHtml}</div><div class="quiz-explain" id="explain-${w.n}-${qi}">${q.explain}</div></div>`;
+  }).join('');
+  return `
+    <div class="week-header">
+      <span class="eyebrow">${w.cut} · Week ${w.n} of 12</span>
+      <h2 class="display">${w.title}</h2>
+      <p class="goal">${w.goal}</p>
+    </div>
+    <div class="section-block"><h3>This Week, In Depth</h3><div class="lesson-block">${w.lesson}</div></div>
+    <div class="section-block"><h3>Daily / Weekly Modules</h3><ul class="day-list">${daysHtml}</ul></div>
+    <div class="section-block"><h3>Resources</h3><ul class="resource-list">${resourcesHtml}</ul></div>
+    <div class="section-block"><h3>Practice Project</h3><div class="project-card"><p>${w.project}</p><div class="ship">→ ship it publicly (GitHub / live URL) before moving on</div></div></div>
+    <div class="section-block"><h3>Check Your Understanding</h3>${quizHtml}</div>
+    <div class="section-block"><h3>Milestone</h3>
+      <div class="milestone-box">
+        <div class="check ${isDone ? 'checked' : ''}" onclick="toggleMilestone(${w.n})"></div>
+        <div class="txt"><b>${isDone ? 'Milestone complete' : 'Mark milestone complete'}</b><p>${w.milestone}</p></div>
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" ${prev ? '' : 'disabled'} onclick="${prev ? `state.currentWeek=${prev.n}; renderAll(); window.scrollTo(0,0);` : ''}">← Week ${prev ? prev.n : ''}</button>
+      <button class="nav-btn" ${next ? '' : 'disabled'} onclick="${next ? `state.currentWeek=${next.n}; renderAll(); window.scrollTo(0,0);` : ''}">Week ${next ? next.n : ''} →</button>
+    </div>`;
+}
+function renderAll(){
+  const main = document.getElementById('main');
+  if (state.currentWeek === 0){ main.innerHTML = renderIntro(); }
+  else { const w = ALL_WEEKS.find(x => x.n === state.currentWeek); main.innerHTML = renderWeek(w); }
+  renderSidebar();
+}
+function toggleMilestone(weekNum){
+  if (state.completedWeeks.has(weekNum)) state.completedWeeks.delete(weekNum); else state.completedWeeks.add(weekNum);
+  saveCompletedWeeks();
+  renderAll();
+}
+function answerQuiz(weekNum, qIdx, optIdx, btnEl){
+  const week = ALL_WEEKS.find(w => w.n === weekNum);
+  const q = week.quiz[qIdx];
+  const container = document.getElementById(`quiz-${weekNum}-${qIdx}`);
+  const buttons = container.querySelectorAll('.quiz-opt');
+  buttons.forEach((b, i) => { b.disabled = true; if (i === q.correct) b.classList.add('correct'); else if (i === optIdx && optIdx !== q.correct) b.classList.add('wrong'); });
+  document.getElementById(`explain-${weekNum}-${qIdx}`).classList.add('show');
+}
+renderAll();
+</script>
+</body>
+</html>

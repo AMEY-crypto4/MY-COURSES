@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Loupe — 12-Week AI &amp; LLM Integration Curriculum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F7FA;
+  --paper-raised:#FFFFFF;
+  --ink:#101820;
+  --ink-soft:rgba(16,24,32,.64);
+  --ink-faint:rgba(16,24,32,.45);
+  --line:rgba(16,24,32,.13);
+  --grid-dot:rgba(16,24,32,.055);
+  --trace:#0C8F86;
+  --trace-bright:#0FA89C;
+  --trace-wash:rgba(12,143,134,.09);
+  --amber:#C97A1F;
+  --amber-bright:#E0922E;
+  --danger:#B23B2E;
+  --ok:#1E8E5A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0/22px 22px,
+    var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--trace); color:#fff;}
+a{color:var(--trace);}
+.mono{font-family:'IBM Plex Mono', monospace;}
+.display{font-family:'IBM Plex Sans', sans-serif; font-weight:700; letter-spacing:-0.02em;}
+
+.app{display:grid; grid-template-columns:300px 1fr; min-height:100vh;}
+@media (max-width:900px){ .app{grid-template-columns:1fr;} .sidebar{position:relative; height:auto;} }
+
+.sidebar{
+  background:var(--paper-raised);
+  border-right:1px solid var(--line);
+  padding:28px 22px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{margin-bottom:26px;}
+.brand .mark{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--trace); border:1px solid var(--trace); background:var(--trace-wash);
+  padding:4px 9px; border-radius:2px;
+}
+.brand h1{font-family:'IBM Plex Sans'; font-weight:700; font-size:25px; line-height:1.18; margin:14px 0 4px; letter-spacing:-0.015em; color:var(--ink);}
+.brand p{margin:0; font-size:13px; color:var(--ink-soft); line-height:1.55;}
+
+.overall-progress{margin:22px 0 8px;}
+.overall-progress .row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); margin-bottom:7px; text-transform:uppercase; letter-spacing:.08em;}
+.bar-track{height:5px; background:rgba(16,24,32,.08); border-radius:2px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--trace); border-radius:2px; transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* ---- PCB trace rail ---- */
+.cuts{list-style:none; margin:24px 0 0; padding:0 0 0 2px; position:relative;}
+.cut-group{margin-bottom:2px; position:relative; padding-left:20px; border-left:2px solid var(--line);}
+.cut-label{
+  font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--trace); padding:13px 0 9px; opacity:.95; margin-left:-2px; border-left:2px solid var(--trace); padding-left:10px;
+}
+.week-btn{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:none; border:none; color:var(--ink); font-family:'IBM Plex Sans';
+  font-size:14px; padding:8px 6px; border-radius:3px; cursor:pointer; transition:background .15s;
+  position:relative; margin-left:-2px;
+}
+.week-btn::before{
+  content:''; position:absolute; left:-22px; top:50%; width:12px; height:2px; background:var(--line);
+}
+.week-btn:hover{background:rgba(12,143,134,.06);}
+.week-btn.active{background:var(--trace-wash); color:var(--trace); font-weight:600;}
+.week-btn.active::before{background:var(--trace);}
+.week-num{
+  font-family:'IBM Plex Mono'; font-size:11px; width:20px; height:20px; flex:0 0 20px;
+  border:1.5px solid var(--ink-faint); border-radius:3px; background:var(--paper-raised);
+  display:flex; align-items:center; justify-content:center; color:var(--ink-soft); position:relative; z-index:1;
+}
+.week-btn.active .week-num{border-color:var(--trace); color:var(--trace); background:#fff;}
+.week-btn.done .week-num{background:var(--ok); border-color:var(--ok); color:#fff;}
+.week-title-mini{flex:1; font-size:13px; opacity:.92;}
+
+.main{padding:44px 56px 100px; max-width:900px;}
+@media (max-width:700px){ .main{padding:28px 20px 80px;} }
+
+/* ---- Signature corner-bracket frame ---- */
+.hero-intro, .week-header{
+  position:relative; padding:28px 30px 40px; margin-bottom:56px;
+  border:1px solid var(--line); border-radius:2px; background:var(--paper-raised);
+}
+.hero-intro::before, .hero-intro::after, .week-header::before, .week-header::after{
+  content:''; position:absolute; width:16px; height:16px; border-color:var(--trace); border-style:solid; border-width:0;
+}
+.hero-intro::before, .week-header::before{ top:-1px; left:-1px; border-top-width:2px; border-left-width:2px; }
+.hero-intro::after, .week-header::after{ bottom:-1px; right:-1px; border-bottom-width:2px; border-right-width:2px; }
+
+.hero-intro{padding-bottom:36px;}
+.hero-intro .eyebrow{font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:.13em; text-transform:uppercase; color:var(--trace);}
+.hero-intro h1{font-size:42px; font-weight:700; line-height:1.1; margin:14px 0 18px; max-width:14ch; color:var(--ink);}
+.hero-intro p.lede{font-size:16.5px; line-height:1.65; color:var(--ink-soft); max-width:58ch;}
+.hero-stats{display:flex; gap:34px; margin-top:30px; flex-wrap:wrap;}
+.hero-stat b{font-family:'IBM Plex Mono'; font-size:26px; font-weight:600; display:block; color:var(--trace);}
+.hero-stat span{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint);}
+.start-btn{
+  margin-top:30px; display:inline-block; background:var(--trace); color:#fff; border:none;
+  font-family:'IBM Plex Sans'; font-weight:600; font-size:15px; padding:12px 24px; border-radius:3px; cursor:pointer;
+}
+.start-btn:hover{background:var(--trace-bright);}
+
+.week-header{margin-bottom:44px;}
+.week-header .eyebrow{font-family:'IBM Plex Mono'; font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--amber);}
+.week-header h2{font-size:32px; font-weight:700; margin:10px 0 12px; line-height:1.18; color:var(--ink);}
+.week-header .goal{font-size:15.5px; color:var(--ink-soft); line-height:1.62; max-width:62ch; margin-bottom:4px;}
+
+.lesson-block{font-size:15px; line-height:1.7; color:rgba(16,24,32,.88); max-width:66ch;}
+.lesson-block p{margin:0 0 14px;}
+.lesson-block pre{
+  background:#101820; color:#D4D4D4; font-family:'IBM Plex Mono', monospace; font-size:12.8px;
+  padding:14px 16px; border-radius:3px; overflow-x:auto; line-height:1.6; margin:12px 0 16px;
+}
+.lesson-block .callout{
+  border-left:3px solid var(--amber); background:rgba(201,122,31,.08); padding:11px 15px; margin:12px 0 16px;
+  font-size:14px; border-radius:0 3px 3px 0; line-height:1.6;
+}
+.lesson-block .callout b{color:var(--amber-bright);}
+.lesson-block code{font-family:'IBM Plex Mono', monospace; background:var(--trace-wash); color:var(--trace); padding:1px 5px; border-radius:2px; font-size:.93em;}
+
+.section-block{margin-top:40px;}
+.section-block h3{
+  font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--trace); margin-bottom:16px; display:flex; align-items:center; gap:10px;
+}
+.section-block h3::after{content:''; flex:1; height:1px; background:var(--line);}
+
+.day-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+.day-item{
+  display:grid; grid-template-columns:74px 1fr; gap:18px; padding:14px 4px; border-bottom:1px solid var(--line);
+}
+.day-item .day-label{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--ink-faint); padding-top:2px;}
+.day-item .day-topic{font-size:14.5px; line-height:1.6; color:rgba(16,24,32,.86);}
+.day-item .day-topic b{color:var(--ink); font-weight:600;}
+
+.resource-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px;}
+.resource-list li{font-size:14px; line-height:1.5; padding-left:18px; position:relative; color:rgba(16,24,32,.78);}
+.resource-list li::before{content:'▸'; position:absolute; left:0; color:var(--trace); font-size:12px; top:2px;}
+.resource-list a{text-decoration:none; border-bottom:1px solid rgba(12,143,134,.35); font-weight:500;}
+.resource-list a:hover{border-color:var(--trace);}
+
+.project-card{background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:3px; padding:20px 22px;}
+.project-card p{font-size:14.5px; line-height:1.65; color:rgba(16,24,32,.86); margin:0;}
+.project-card .ship{margin-top:12px; font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--amber);}
+
+.quiz-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:3px; padding:22px 24px; margin-bottom:14px;}
+.quiz-card .q{font-weight:600; font-size:15px; margin-bottom:14px; line-height:1.5; color:var(--ink);}
+.quiz-opts{display:flex; flex-direction:column; gap:8px;}
+.quiz-opt{
+  text-align:left; background:var(--paper); border:1px solid var(--line); border-radius:3px;
+  padding:11px 14px; font-family:'IBM Plex Sans'; font-size:13.5px; cursor:pointer; color:var(--ink);
+  transition:all .15s;
+}
+.quiz-opt:hover{border-color:var(--trace);}
+.quiz-opt.correct{background:rgba(30,142,90,.12); border-color:var(--ok); font-weight:600; color:var(--ok);}
+.quiz-opt.wrong{background:rgba(178,59,46,.1); border-color:var(--danger); color:var(--danger);}
+.quiz-explain{font-size:13px; margin-top:12px; color:var(--ink-soft); line-height:1.5; display:none;}
+.quiz-explain.show{display:block;}
+
+.milestone-box{
+  display:flex; align-items:flex-start; gap:16px; background:var(--trace-wash);
+  border:1px solid rgba(12,143,134,.3); border-radius:3px; padding:20px 22px; margin-top:14px;
+}
+.milestone-box .check{
+  width:24px; height:24px; flex:0 0 24px; border-radius:3px; border:2px solid var(--trace);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; margin-top:2px; transition:all .15s; background:#fff;
+}
+.milestone-box .check.checked{background:var(--trace);}
+.milestone-box .check.checked::after{content:'✓'; color:#fff; font-weight:700; font-size:13px;}
+.milestone-box .txt b{display:block; font-size:15px; margin-bottom:5px; color:var(--trace);}
+.milestone-box .txt p{margin:0; font-size:14px; line-height:1.6; color:rgba(16,24,32,.8);}
+
+.nav-buttons{display:flex; justify-content:space-between; margin-top:52px; padding-top:22px; border-top:1px solid var(--line);}
+.nav-btn{
+  background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); font-family:'IBM Plex Sans'; font-size:14px;
+  padding:10px 17px; border-radius:3px; cursor:pointer; display:flex; align-items:center; gap:8px;
+}
+.nav-btn:hover{border-color:var(--trace); color:var(--trace);}
+.nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+::-webkit-scrollbar{width:9px;}
+::-webkit-scrollbar-track{background:var(--paper);}
+::-webkit-scrollbar-thumb{background:rgba(16,24,32,.15); border-radius:99px;}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="mark">◆ The Loupe</span>
+      <h1>Precision Under Magnification</h1>
+      <p>Course 3 of the series. A jeweller's loupe reveals what the naked eye misses. This course does the same for your data — LLMs as a precision instrument, applied directly to the OCR and translation work you already own.</p>
+    </div>
+    <div class="overall-progress">
+      <div class="row"><span>Progress</span><span id="progressPct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>
+    <ul class="cuts" id="weekNav"></ul>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+const CURRICULUM = [
+{cut:"Phase I — First Magnification", title:"Learning to See", weeks:[
+{
+  n:1, title:"How LLMs Actually Work",
+  goal:"Before writing a single prompt, understand what you're actually working with — tokens, context windows, and the real shape of these models' capabilities and limits.",
+  lesson:"<p>Before writing a single prompt, it helps to know what you are actually talking to. An LLM does not look up facts in a database -- it predicts the next token (a piece of a word) based on patterns learned from enormous amounts of text, one token at a time, each prediction conditioned on everything before it. This single fact explains almost every strength and weakness you will encounter.</p><pre># roughly how generation works, conceptually\nprompt: \"The capital of France is\"\nmodel predicts, token by token: \" Paris\" (high probability) → stops</pre><div class=\"callout\"><b>Why this matters for reliability:</b> because the model is predicting plausible continuations, not retrieving verified facts, it can produce a confident, fluent, well-formatted answer that is simply wrong -- this is not a bug to be patched out, it is the mechanism working exactly as designed. Grounding (RAG, tool use) is how you compensate for it, not a sign something is broken.</div><p>Context window size and token count are not the same as \"how much the model understands\" -- a huge context window can still see degraded recall of a specific detail buried in the middle of a very long document. This is why chunking and retrieval (Week 5) matter even with today's large windows.</p>",
+  days:[
+    ["Mon","<b>Tokens &amp; tokenization</b> — what a token is, why pricing/limits are measured in tokens not words or characters."],
+    ["Tue","<b>Context windows</b> — what fits in one call, why very long documents need chunking, the cost of a full window."],
+    ["Wed","<b>Generation, not lookup</b> — why LLMs predict tokens rather than retrieve facts, and what that implies for reliability."],
+    ["Thu","<b>Capabilities vs limits</b> — where LLMs are genuinely strong (pattern extraction, reformatting, translation-adjacent tasks) vs weak (precise arithmetic, guaranteed factual recall)."],
+    ["Fri","<b>Model tiers</b> — why a 'small/fast' model and a 'large/slow' model exist side by side, and how to choose."],
+    ["Sat","<b>Build day</b> — hands-on exploration in a model playground, no code yet, just building intuition."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.anthropic.com/en/docs/build-with-claude/tokens-and-context-windows" target="_blank">Anthropic — Tokens &amp; context windows</a>', "the concrete mechanics behind pricing and limits"],
+    ['<a href="https://www.anthropic.com/research" target="_blank">Anthropic Research</a>', "for grounding in how these systems are actually built and evaluated"],
+    ['<a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a>', "a real playground to build intuition before writing any code"]
+  ],
+  project:"In a model playground, run 10 varied prompts against the same document (e.g. one of your real invoice texts) and log where the model is reliable vs where it hedges, guesses, or gets facts subtly wrong — this becomes your working sense of the tool's edges.",
+  quiz:[
+    {q:"Why can very long documents cause problems even within a model's stated context window?", opts:["They can't, length never matters","Models can lose precision on details buried deep in a very long context, even if it technically fits — retrieval quality can degrade with length", "Long documents cost nothing extra","Context windows are unlimited"], correct:1, explain:"Fitting in the window and being reliably attended to aren't the same thing — very long inputs can still see degraded recall of buried details."},
+    {q:"Why can an LLM produce a fluent, confident-sounding answer that is simply factually wrong?", opts:["This only happens with poorly-trained models","The model is predicting plausible, well-formed continuations of text, not retrieving verified facts from a database — fluency and correctness are two separate things it does not guarantee together","It never happens with current-generation models","Only small models have this issue"], correct:1, explain:"Generation is pattern completion, not lookup. A model can be extremely fluent while being wrong, because fluency and factual accuracy are produced by the same mechanism but are not the same guarantee."},
+    {q:"Why doesn't a large context window alone guarantee an LLM will reliably use every detail inside it?", opts:["Large context windows guarantee perfect recall of everything inside them","Even within the technical limit, attention to specific details can degrade for information buried deep in a very long input — fitting is not the same as being reliably used","Context windows have no effect on output quality at all","This issue was fully solved years ago"], correct:1, explain:"Fitting inside the context window is a necessary but not sufficient condition for reliable use of that information — this is exactly the gap retrieval-based grounding (RAG) is designed to close."}
+  ],
+  milestone:"A documented log of 10 real prompts against real data, noting exactly where the model was reliable and where it wasn't."
+},
+{
+  n:2, title:"Prompt Engineering",
+  goal:"Learn to write prompts that reliably produce the output you need — structure, examples, and reasoning steps, not just asking nicely.",
+  lesson:"<p>Prompt engineering is not about finding magic phrases -- it is about removing ambiguity. An LLM fills gaps you leave open with its own best guess, so the real skill is noticing which gaps you are leaving, and closing the ones that matter for your task.</p><pre># vague (the model has to guess format, tone, length)\n\"Summarize this invoice.\"\n\n# direct (nothing left to guess)\n\"Summarize this invoice in exactly 3 bullet points: vendor name, total amount in USD, and due date. No other text.\"</pre><div class=\"callout\"><b>Why few-shot examples often beat a long written description:</b> showing 2-3 concrete input→output pairs removes an entire category of ambiguity that even a careful written description can leave open -- the model is matching a demonstrated pattern instead of interpreting a description of one.</div><p>A system prompt exists to separate what never changes (role, constraints, output format) from what changes every call (the actual user input) -- mixing the two together is how prompts become fragile and inconsistent across different inputs.</p>",
+  days:[
+    ["Mon","<b>Clear, direct prompting</b> — being explicit about format, audience, and constraints rather than vague."],
+    ["Tue","<b>Few-shot examples</b> — showing the model 2-3 examples of exactly the input/output pattern you want."],
+    ["Wed","<b>System prompts</b> — separating persistent instructions/role from the per-request user input."],
+    ["Thu","<b>Chain-of-thought</b> — asking the model to reason step by step before answering, when and why it helps."],
+    ["Fri","<b>XML/structured tags</b> — using tags to clearly delineate different parts of a complex prompt."],
+    ["Sat","<b>Build day</b> — rewrite your Week 1 log's weakest prompts using these techniques and re-test."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank">Anthropic — Prompt engineering overview</a>', "the official, current techniques reference"],
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags" target="_blank">Anthropic — Using XML tags</a>', "structuring complex prompts cleanly"],
+    ['<a href="https://learnprompting.org/" target="_blank">Learn Prompting</a>', "broader, model-agnostic prompting patterns"]
+  ],
+  project:"Take your weakest-performing prompts from Week 1 and rewrite them using few-shot examples, XML structuring, and explicit format instructions — measure the concrete improvement in reliability.",
+  quiz:[
+    {q:"Why does giving 2-3 concrete examples (few-shot) often outperform a long written description of what you want?", opts:["Examples are always ignored by the model","A pattern shown directly is easier for the model to match precisely than a pattern only described in prose", "Examples make the prompt shorter","There's no real difference"], correct:1, explain:"Showing the exact input→output shape removes ambiguity that a prose description can leave open to interpretation."},
+    {q:"What is the real purpose of a system prompt, as distinct from the user's per-request input?", opts:["System prompts are purely cosmetic and don't affect behavior","It separates persistent instructions (role, format, constraints) that should apply to every call from the specific input that changes each time, keeping behavior consistent across requests","System prompts are only needed for very long conversations","There's no functional difference between system and user prompts"], correct:1, explain:"Mixing persistent rules into every user message makes behavior inconsistent and bloats every request. A system prompt keeps the stable rules in one place, applied uniformly."},
+    {q:"Why does being explicit about format (e.g. 'exactly 3 bullet points, no other text') improve reliability compared to a vaguer instruction?", opts:["It doesn't actually make a difference","It removes an ambiguity the model would otherwise have to guess at, and a model's guess will not always match what you actually wanted","Explicit formatting instructions make the model respond slower","Vague instructions are always better for creative tasks"], correct:1, explain:"Every gap left in a prompt is filled by the model's own interpretation. Closing the gaps that matter for your specific downstream use (exact format, length, content) is most of what prompt engineering actually is."}
+  ],
+  milestone:"A before/after comparison showing measurably more reliable outputs on the same real task after applying prompt engineering techniques."
+},
+{
+  n:3, title:"Working with LLM APIs",
+  goal:"Move from a playground to real code — calling an LLM API programmatically from Node or Python, with proper error handling and cost awareness.",
+  lesson:"<p>Moving from a playground to real code introduces failure modes a playground never shows you: timeouts, rate limits, and the need to actually handle a bad response instead of just reading it off a screen. Treating an LLM API call like any other unreliable network call -- expecting it to sometimes fail, and coding for that -- is the mindset shift this week is really about.</p><pre>async function callWithRetry(fn, maxRetries = 3) {\n  for (let attempt = 0; attempt < maxRetries; attempt++) {\n    try { return await fn(); }\n    catch (err) {\n      if (attempt === maxRetries - 1) throw err;\n      await sleep(2 ** attempt * 1000); // exponential backoff\n    }\n  }\n}</pre><div class=\"callout\"><b>Common mistake:</b> retrying a rate-limited request immediately in a tight loop. This makes the problem worse, not better -- exponential backoff (waiting longer between each retry) and respecting any retry-after signal the API provides is the correct response.</div><p>Streaming matters for anything user-facing and slow: showing tokens as they arrive feels dramatically faster to a human than waiting silently for the full response, even though the total time to completion is identical either way.</p>",
+  days:[
+    ["Mon","<b>API basics</b> — authentication, the messages format, making your first API call from code."],
+    ["Tue","<b>Streaming</b> — why and when to stream responses instead of waiting for the full completion."],
+    ["Wed","<b>Error handling</b> — rate limits, timeouts, retries with backoff, graceful degradation."],
+    ["Thu","<b>Cost management</b> — token counting before you send, choosing model tier by task, setting budgets/limits."],
+    ["Fri","<b>Multi-turn conversations</b> — managing conversation history/state across multiple calls."],
+    ["Sat","<b>Build day</b> — a small CLI tool that calls the API against real inputs, with proper error handling."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/api/overview" target="_blank">Anthropic API — overview</a>', "official current API reference"],
+    ['<a href="https://docs.claude.com/en/api/rate-limits" target="_blank">Anthropic — rate limits &amp; errors</a>', "the exact retry/backoff behavior to build for"],
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/streaming" target="_blank">Anthropic — streaming responses</a>', "when and how to stream"]
+  ],
+  project:"Build a small Node or Python CLI tool that takes a real text file (e.g. one of your customs invoice extracts) as input, calls the API with proper error handling and retries, and writes structured output to a file.",
+  quiz:[
+    {q:"What's a sound default strategy for handling a rate-limit error from an LLM API?", opts:["Immediately retry as fast as possible in a loop","Retry with exponential backoff, respecting any retry-after signal the API provides", "Give up permanently on any rate limit","Switch providers immediately"], correct:1, explain:"Hammering a rate-limited endpoint makes things worse; exponential backoff spaces out retries and respects the API's own guidance."},
+    {q:"Why does streaming a response token-by-token feel faster to a user, even if the total completion time is the same?", opts:["Streaming actually makes the model generate faster","Streaming shows visible progress immediately instead of a silent wait, which humans perceive as faster even when the total time is unchanged","Streaming is only a cosmetic feature with no perceptual effect","Streaming reduces the actual token count generated"], correct:1, explain:"Perceived speed and actual speed are different things — seeing output appear immediately, even gradually, feels far more responsive than staring at a blank loading state for the same total duration."},
+    {q:"What's wrong with retrying a rate-limited API call immediately, in a tight loop, as fast as possible?", opts:["Nothing, immediate retries are the fastest way to succeed","It makes the rate-limiting problem worse by hammering an endpoint that already signaled it's overloaded, instead of backing off and giving it room to recover","Rate limits don't apply to retried requests","APIs never rate-limit retries"], correct:1, explain:"A rate limit is the API telling you to slow down. Retrying immediately in a loop ignores that signal and can extend or worsen the throttling — exponential backoff is the respectful, effective response."}
+  ],
+  milestone:"A working CLI tool that calls a real LLM API against real data with proper error handling, not just a happy-path demo."
+},
+{
+  n:4, title:"Structured Outputs &amp; Tool Use",
+  goal:"Learn to get reliable, machine-parseable output from an LLM — JSON schemas and tool/function calling — the piece that turns a chatbot into a real backend component.",
+  lesson:"<p>A chatbot that produces nice-sounding prose is a demo. A backend component that reliably produces the exact JSON shape your downstream code expects, every time, is a real piece of infrastructure. The gap between those two is structured output and tool use.</p><pre>// tool schema the model can choose to call\n{\n  name: \"get_exchange_rate\",\n  description: \"Get the current USD to INR exchange rate\",\n  input_schema: { type: \"object\", properties: { date: { type: \"string\" } } }\n}</pre><div class=\"callout\"><b>Why schema validation still matters even with a well-engineered prompt:</b> LLM output is probabilistic, not guaranteed. Even a model that gets the shape right 99% of the time will eventually produce a malformed or subtly wrong response -- a schema library (Zod, Pydantic) is the safety net that catches that 1% before it breaks a downstream system expecting a specific shape.</div><p>Tool use (function calling) takes this further: instead of just asking for JSON, you give the model a defined set of real functions it can choose to call, with real arguments -- turning the model from a text generator into a component that can actually look things up or take action within boundaries you define.</p>",
+  days:[
+    ["Mon","<b>Why structure matters</b> — free-text output is unreliable for downstream code; structured output isn't."],
+    ["Tue","<b>JSON output patterns</b> — prompting for strict JSON, validating and repairing malformed responses."],
+    ["Wed","<b>Tool use / function calling</b> — defining a tool schema, letting the model decide when to call it."],
+    ["Thu","<b>Schema validation</b> — using a schema library (Zod/Pydantic) to guarantee the shape of what comes back."],
+    ["Fri","<b>Combining tool use with real logic</b> — a model that calls your own function, gets a real result, and reasons over it."],
+    ["Sat","<b>Build day</b> — a tool that extracts structured data from a messy real document."],
+    ["Sun","<b>Review + ship. PHASE I milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/tool-use/overview" target="_blank">Anthropic — Tool use overview</a>', "official current tool-use API reference"],
+    ['<a href="https://zod.dev/" target="_blank">Zod docs</a>', "schema validation for structured LLM output (Node)"],
+    ['<a href="https://docs.pydantic.dev/latest/" target="_blank">Pydantic docs</a>', "schema validation for structured LLM output (Python)"]
+  ],
+  project:"Build a tool that takes one of your real messy invoice/document texts and extracts it into strict, schema-validated JSON (line items, totals, dates) — reject and retry on any output that fails validation.",
+  quiz:[
+    {q:"Why validate an LLM's JSON output with a schema library instead of trusting it directly?", opts:["Validation is unnecessary overhead","Even well-prompted models occasionally produce malformed or subtly wrong-shaped output, and downstream code needs a guarantee, not a hope", "JSON output is always perfectly formed","Schema validation makes responses faster"], correct:1, explain:"LLM output is probabilistic — schema validation is the safety net that catches the occasional malformed response before it breaks downstream code."},
+    {q:"Why is tool use (function calling) a meaningful step beyond simply asking for JSON output?", opts:["Tool use and JSON formatting are exactly the same thing","Tool use lets the model choose to call real, defined functions with real arguments mid-conversation, letting it look up live information or trigger actions, not just describe a static shape of data","Tool use is slower and less reliable than plain JSON prompting","Tool use eliminates the need for any prompt engineering"], correct:1, explain:"JSON-shaped output is still just text generation. Tool use lets the model actively invoke real code with real parameters as part of reasoning through a task — a qualitatively different capability."},
+    {q:"If an LLM reliably produces correctly-shaped JSON 99% of the time, why still validate it with a schema library?", opts:["Validation is unnecessary since 99% is already extremely reliable","The remaining small probability of a malformed response still needs to be caught before it reaches downstream code that assumes a specific shape — 99% reliable is not the same as guaranteed","Schema validation makes the model more accurate","JSON output never actually fails validation in practice"], correct:1, explain:"A 1% failure rate, multiplied across enough real calls, will eventually hit production. Schema validation is the deterministic guarantee that probabilistic generation cannot provide on its own."}
+  ],
+  milestone:"PHASE I COMPLETE — a real document reliably extracted into schema-validated structured JSON, with retry-on-failure logic."
+}
+]},
+{cut:"Phase II — Fine Focus", title:"Sharpening the Image", weeks:[
+{
+  n:5, title:"Retrieval-Augmented Generation (RAG)",
+  goal:"Learn how to ground an LLM's answers in your own real documents/data instead of relying purely on what it was trained on.",
+  lesson:"<p>An LLM's training data has a cutoff and knows nothing about your specific, private documents. Retrieval-Augmented Generation (RAG) fixes this not by retraining the model, but by finding the most relevant pieces of YOUR data at query time and handing them to the model as context -- the model then answers using what it was just given, not what it memorized during training.</p><pre># the RAG pipeline, conceptually\nquery → embed query → search vector DB for similar chunks\n      → inject top-matching chunks into the prompt\n      → model answers using ONLY the retrieved chunks as grounding</pre><div class=\"callout\"><b>Chunking strategy is where most real RAG quality problems actually live</b>, not the choice of vector database. Splitting a document by a fixed character count can cut a sentence (or a critical table row) in half, destroying the very meaning you are trying to retrieve. Chunking by logical boundaries (paragraphs, sections) with some overlap between chunks is almost always worth the extra effort.</div><p>An embedding turns a piece of text into a list of numbers (a vector) positioned so that semantically similar text ends up near each other in that numeric space -- \"gemstone price list\" and \"cost sheet for stones\" land close together even though they share almost no exact words, which is exactly what makes semantic search more powerful than old-fashioned keyword matching.</p>",
+  days:[
+    ["Mon","<b>Why RAG</b> — the problem it solves: grounding answers in your specific, current, private data."],
+    ["Tue","<b>Embeddings</b> — what a vector embedding actually represents, semantic similarity search conceptually."],
+    ["Wed","<b>Chunking strategies</b> — splitting documents sensibly (not just by character count), overlap, metadata."],
+    ["Thu","<b>Vector databases</b> — a lightweight option (Chroma/pgvector) for storing and querying embeddings."],
+    ["Fri","<b>Putting it together</b> — retrieve relevant chunks, inject into a prompt, generate a grounded answer."],
+    ["Sat","<b>Build day</b> — a minimal RAG pipeline over a real set of your own documents."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/embeddings" target="_blank">Anthropic — embeddings guidance</a>', "current recommended approach and partner options"],
+    ['<a href="https://www.trychroma.com/" target="_blank">Chroma docs</a>', "simplest real vector database to start with"],
+    ['<a href="https://www.pinecone.io/learn/retrieval-augmented-generation/" target="_blank">Pinecone — RAG explainer</a>', "clear conceptual walkthrough of the full pipeline"]
+  ],
+  project:"Build a minimal RAG pipeline over a real set of your own documents (e.g. your SOP docs for the customs workflow) — a question answered correctly and specifically using only retrieved chunks, not general model knowledge.",
+  quiz:[
+    {q:"What's the core failure mode RAG is designed to prevent?", opts:["Slow response times","The model confidently answering from general training knowledge instead of your specific, current, private documents", "High API costs","Long context windows"], correct:1, explain:"Without retrieval, a model answers from what it learned in training — RAG grounds it in the actual documents you provide, at query time."},
+    {q:"What problem does RAG solve that simply using a larger, more capable model cannot?", opts:["RAG makes the model generate text faster","RAG grounds answers in your own specific, current, private documents — a model's training data has a fixed cutoff and never includes your private data regardless of its size or capability","RAG replaces the need for prompting entirely","A bigger model always knows your private documents automatically"], correct:1, explain:"No amount of general capability substitutes for actually having access to your specific data. RAG supplies that access at query time, independent of which underlying model you use."},
+    {q:"Why does naive chunking (splitting a document by a fixed character count) often hurt RAG quality?", opts:["Fixed character-count chunking is always the best approach","It can cut a sentence, table row, or idea in half across two chunks, destroying the exact meaning that needs to be retrieved intact","Character count has no effect on retrieval quality whatsoever","Chunking is only relevant for very large documents"], correct:1, explain:"A chunk boundary that falls in the middle of a critical sentence or table row can make that chunk nearly useless for retrieval, even though the information is technically present in the document — chunking by logical boundaries avoids this."}
+  ],
+  milestone:"A working RAG pipeline that answers a real question correctly using only your own retrieved documents."
+},
+{
+  n:6, title:"Document AI — LLM-Assisted Extraction",
+  goal:"Apply everything so far directly to the highest-value target: strengthening a real OCR/extraction pipeline (like your customs module parsers) with an LLM correction layer.",
+  lesson:"<p>Rule-based extraction (regex, fixed-position parsing) is fast, cheap, and perfectly predictable -- right up until a document's layout shifts slightly, or OCR introduces noise the rules never anticipated. Rather than replacing rule-based parsing entirely, the highest-leverage move is usually a hybrid: keep the fast, deterministic path for known-good formats, and add an LLM fallback specifically for the cases that already break it.</p><pre># hybrid extraction pipeline, conceptually\ntry ruleBasedParse(document)\nif confidence is low or parsing throws:\n    result = llmAssistedExtract(document, schema)\n    flag result for human review if llm confidence is low</pre><div class=\"callout\"><b>Vision-capable models change the calculus here:</b> sending a PDF page or image directly to a multimodal model skips OCR entirely, which removes an entire class of OCR-noise-induced extraction errors -- worth testing directly against your hardest real documents rather than assuming OCR-then-parse is still the only path.</div><p>The most important design decision in this entire pipeline isn't the extraction method -- it's building in a confidence/review flag so an uncertain extraction is routed to a human instead of silently guessing and shipping a wrong answer to a client.</p>",
+  days:[
+    ["Mon","<b>Where rule-based extraction breaks</b> — reviewing your own real parser bugs (OCR noise, layout variance) as case studies."],
+    ["Tue","<b>LLM as a correction layer</b> — feeding raw OCR text + a schema to an LLM to fix/complete what regex parsing missed."],
+    ["Wed","<b>Vision-capable models</b> — sending an image/PDF page directly to a multimodal model instead of OCR-then-parse."],
+    ["Thu","<b>Hybrid pipelines</b> — combining fast rule-based parsing for known-good formats with LLM fallback for unrecognized ones."],
+    ["Fri","<b>Confidence &amp; review flags</b> — having the model flag its own uncertain extractions for human review rather than guessing silently."],
+    ["Sat","<b>Build day</b> — add an LLM correction/fallback layer to a real extraction pipeline."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/vision" target="_blank">Anthropic — Vision capabilities</a>', "sending images/PDF pages directly to a multimodal model"],
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/pdf-support" target="_blank">Anthropic — PDF support</a>', "native document handling, relevant directly to your invoice pipelines"]
+  ],
+  project:"Add an LLM-assisted fallback layer to a real extraction pipeline you already own (e.g. the customs module's Bangkok/India parsers) — when the rule-based parser fails or produces low-confidence output, the LLM attempts extraction against a strict schema and flags uncertainty instead of guessing.",
+  quiz:[
+    {q:"Why keep the existing rule-based parsers instead of replacing them entirely with an LLM?", opts:["Rule-based parsing is always more accurate","For well-understood, consistent formats, rule-based parsing is faster, cheaper, and more predictable — the LLM adds the most value on the messy/unrecognized cases it was already failing on", "LLMs cannot process invoices at all","Rule-based code is required by law"], correct:1, explain:"A hybrid approach plays to each method's strength: deterministic speed and cost for known formats, LLM flexibility for the edge cases that broke the rules."},
+    {q:"Why keep rule-based parsing for known-good document formats instead of routing everything through an LLM?", opts:["Rule-based parsing is always more accurate than an LLM in every case","For consistent, well-understood formats, rule-based parsing is faster, cheaper, and fully predictable — the LLM's value is concentrated on the messy cases that already break the rules","LLMs cannot process structured documents at all","It's required for legal compliance"], correct:1, explain:"A hybrid approach plays to each method's actual strength: deterministic speed for the easy, common case, and LLM flexibility reserved for the harder cases where it adds real value."},
+    {q:"What is the single most important design element in an LLM-assisted extraction pipeline handling real client documents?", opts:["Using the single most expensive model available for every document","A confidence/review flag that routes uncertain extractions to a human instead of silently shipping a possibly-wrong answer","Processing documents as fast as technically possible","Avoiding all use of rule-based parsing"], correct:1, explain:"Speed and cost matter, but the single biggest risk in a client-facing extraction pipeline is a silently wrong answer — a review flag for low-confidence cases is what prevents that from reaching a client unnoticed."}
+  ],
+  milestone:"A real extraction pipeline upgraded with an LLM fallback/correction layer, tested against actual documents that previously caused parsing failures."
+},
+{
+  n:7, title:"Agents &amp; Multi-Step Tool Use",
+  goal:"Learn to build an LLM-driven agent that plans and executes multi-step workflows using tools, rather than a single prompt-in/answer-out call.",
+  lesson:"<p>A single prompt-in, answer-out call is not an agent -- it is a function call. An agent is defined by a loop: the model reasons about what to do next, calls a tool, observes the real result, and reasons again, continuing until the task is actually done, not just until one response is generated.</p><pre># the agent loop, conceptually\nwhile not done:\n    thought = model.reason(task, history)\n    if thought.wants_tool:\n        result = call_tool(thought.tool_name, thought.args)\n        history.append(result)\n    else:\n        done = true</pre><div class=\"callout\"><b>Guardrails are not optional polish, they are the core safety mechanism:</b> an agent can be confidently wrong about which action to take next. Limiting what it can actually DO (read-only access by default, explicit confirmation before anything destructive or irreversible) bounds the real-world damage of a wrong decision, which is categorically different from bounding the damage of a wrong sentence in a chatbot response.</div><p>Tool descriptions matter more than most people expect: a vague or ambiguous description of what a tool does is the single most common reason an agent picks the wrong tool, or the right tool with the wrong arguments.</p>",
+  days:[
+    ["Mon","<b>What makes something an 'agent'</b> — the loop of reasoning, tool call, observe result, reason again."],
+    ["Tue","<b>Designing tool sets</b> — writing clear tool descriptions the model can reliably choose between."],
+    ["Wed","<b>Multi-step planning</b> — letting the model break a task into steps and execute them in sequence."],
+    ["Thu","<b>Guardrails</b> — limiting what an agent can actually do (read-only vs write access), human-in-the-loop confirmation for risky actions."],
+    ["Fri","<b>Failure handling</b> — what happens when a tool call fails mid-task, retry vs abort logic."],
+    ["Sat","<b>Build day</b> — a small agent that completes a real multi-step task using 2-3 tools."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview" target="_blank">Anthropic — Agents &amp; tool use</a>', "official patterns for building agentic workflows"],
+    ['<a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank">Anthropic Engineering — Building Effective Agents</a>', "practical guidance on when agents help vs add unnecessary complexity"]
+  ],
+  project:"Build a small agent (2-3 tools) that completes a real multi-step task end to end — for example: read a real invoice, look up a translation dictionary tool, and produce a formatted output — without you manually orchestrating each step.",
+  quiz:[
+    {q:"Why give an agent explicit guardrails (e.g. read-only access, confirmation before writes) rather than full autonomy?", opts:["Guardrails aren't necessary in practice","An agent can make confident mistakes; limiting what it can actually do bounds the damage from a wrong decision", "It makes the agent slower for no benefit","Agents cannot make mistakes"], correct:1, explain:"Agents reason probabilistically and can be confidently wrong — guardrails cap the blast radius of a bad decision, especially for anything that writes or sends data."},
+    {q:"What specifically distinguishes an 'agent' from a single prompt-in, answer-out LLM call?", opts:["Agents always use a larger, more expensive model","An agent runs a loop of reasoning, taking an action (a tool call), observing the real result, and reasoning again — continuing until the task is actually complete, not stopping after one response","There is no real difference, it's just marketing terminology","Agents never use tools, only plain text reasoning"], correct:1, explain:"The defining feature is the loop: reason, act, observe, repeat. A single call that returns one answer, however good, is not doing this multi-step reasoning-and-acting cycle."},
+    {q:"Why does a vague or ambiguous tool description tend to cause real problems in an agent's behavior?", opts:["Tool descriptions have no effect on an agent's tool choice","An ambiguous description is the most common reason an agent selects the wrong tool, or the right tool with incorrect arguments, since the description is the only information it has to decide with","Agents never read tool descriptions at all","Longer tool descriptions always perform worse"], correct:1, explain:"The model's only information about what a tool does and when to use it is the description you give it — an ambiguous description directly translates into ambiguous, unreliable tool-selection behavior."}
+  ],
+  milestone:"A working multi-step agent that completes a real task using multiple tools, with at least one guardrail in place."
+},
+{
+  n:8, title:"Evaluation &amp; Reliability",
+  goal:"Learn to actually measure whether your LLM-powered feature works — evals, hallucination handling, and fallback logic — before trusting it with real client data.",
+  lesson:"<p>\"It worked when I tried it\" is not a reliability measurement -- it is an anecdote. A handful of manual tests cannot reveal a feature's actual failure rate, or which categories of input reliably break it. An eval set -- a collection of real inputs paired with known-correct answers, checked systematically -- is what turns a feeling into an actual number.</p><pre># the shape of a minimal eval\nevalSet = [\n  { input: realInvoice1, expected: { total: 4500, currency: \"USD\" } },\n  { input: realInvoice2, expected: { total: 1200, currency: \"EUR\" } },\n  // ... 20+ real, representative examples\n];\nscore = evalSet.filter(e => matches(run(e.input), e.expected)).length / evalSet.length;</pre><div class=\"callout\"><b>What \"good enough\" means is task-specific, not universal.</b> 85% accuracy might be perfectly fine for a feature with a human-review step before anything client-facing happens, and completely unacceptable for one that acts autonomously on the result. Define the bar before you measure, based on what happens downstream if the output is wrong.</div><p>Hallucination -- a confident, fluent, wrong answer -- is reduced, not eliminated, by grounding (RAG), lower temperature, and explicit citation requirements. The honest engineering response to a residual error rate you cannot fully eliminate is a fallback: route low-confidence outputs to a human instead of shipping them silently.</p>",
+  days:[
+    ["Mon","<b>Why evals matter</b> — 'it worked when I tried it' isn't a reliability measure; systematic testing is."],
+    ["Tue","<b>Building a small eval set</b> — a set of real inputs with known-correct outputs to test against."],
+    ["Wed","<b>Measuring accuracy</b> — exact match vs fuzzy scoring, what 'good enough' means for your specific task."],
+    ["Thu","<b>Handling hallucination</b> — techniques to reduce confident-but-wrong output (grounding, citations, lower temperature)."],
+    ["Fri","<b>Fallback logic</b> — what happens when confidence is low: human review queue, not silent failure."],
+    ["Sat","<b>Build day</b> — build an eval set for your Week 6 extraction pipeline and measure its real accuracy."],
+    ["Sun","<b>Review + ship. PHASE II milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/test-and-evaluate/develop-tests" target="_blank">Anthropic — Developing test cases</a>', "official guidance on building eval sets for LLM features"],
+    ['<a href="https://hamel.dev/blog/posts/evals/" target="_blank">Hamel Husain — Your AI Product Needs Evals</a>', "widely-referenced practical guide to building real eval pipelines"]
+  ],
+  project:"Build a 20-example eval set from real documents for your Week 6 extraction pipeline, measure its actual accuracy against known-correct answers, and add fallback-to-human-review logic for anything below a confidence threshold.",
+  quiz:[
+    {q:"What's the risk of trusting an LLM feature just because it 'looked right' in a handful of manual tests?", opts:["There's no risk if it worked a few times","A few manual checks don't reveal failure rate or edge-case behavior — a small number of anecdotal successes can hide a meaningfully high real-world error rate", "Manual testing is always sufficient","LLMs never fail once they've worked once"], correct:1, explain:"Anecdotal testing has no statistical power — a systematic eval set is what actually tells you the real accuracy rate and where it breaks."},
+    {q:"Why is a handful of manual spot-checks insufficient to claim an LLM feature is 'reliable'?", opts:["Manual spot-checks are actually the gold standard for reliability testing","A small number of anecdotal successes reveals nothing about the real failure rate or which categories of input reliably break the feature — only a systematic eval set over many real examples does that","LLM features cannot be tested at all","Manual testing is sufficient as long as you try at least 5 examples"], correct:1, explain:"A handful of successful tries has no statistical power — the feature could still fail on 20% of real-world inputs that simply weren't in your small sample. An eval set over many representative examples is what reveals the actual rate."},
+    {q:"Why is the bar for 'good enough' accuracy task-specific rather than one universal number?", opts:["There is one universal acceptable accuracy threshold for all LLM features","What counts as acceptable depends on what happens downstream if the output is wrong — a feature with human review before anything client-facing can tolerate more error than one acting fully autonomously","Accuracy thresholds don't matter if the model is expensive enough","All LLM features require 100% accuracy to ship"], correct:1, explain:"The cost of an error is what should set the bar — a feature with a safety net (human review) can tolerate a higher error rate than one whose output acts directly on real client data with no check."}
+  ],
+  milestone:"PHASE II COMPLETE — a measured accuracy score on a real eval set, with human-review fallback wired in for low-confidence cases."
+}
+]},
+{cut:"Phase III — Precision Setting", title:"Mounting the Instrument", weeks:[
+{
+  n:9, title:"LLM App Architecture",
+  goal:"Learn the backend patterns real production AI features need — queuing, caching, and rate management — so an LLM feature behaves like a reliable service, not a fragile demo.",
+  lesson:"<p>A demo calls an LLM synchronously and waits. A production feature has to account for the fact that LLM calls are sometimes slow, sometimes rate-limited, and sometimes genuinely fail -- and that one feature's usage should never be able to exhaust the budget or block every other user.</p><pre># sync (blocks the request) vs async (does not)\n// sync: user waits for the full LLM response before anything else happens\nconst result = await callLLM(input);\n\n// async: request returns immediately, LLM call happens in a background job\nqueue.add('extract-invoice', { invoiceId });\nrespond(202, { status: \"processing\" });</pre><div class=\"callout\"><b>Caching an LLM response is only safe when the task is deterministic enough that the same input should always produce an acceptably similar output.</b> Caching a creative or highly context-dependent response can silently return a stale or wrong answer -- know which category your feature falls into before adding a cache layer.</div><p>Per-feature and per-user rate/cost limits are not paranoia, they are the difference between a bug in one feature costing a few dollars versus accidentally exhausting your entire month's API budget in an afternoon because of a retry loop gone wrong.</p>",
+  days:[
+    ["Mon","<b>Request patterns</b> — sync vs async LLM calls, when a user needs to wait vs when a job can run in the background."],
+    ["Tue","<b>Queuing</b> — job queues for LLM calls that might be slow, retryable, or need rate-limiting."],
+    ["Wed","<b>Caching LLM responses</b> — when it's safe to cache (deterministic-enough tasks) and when it isn't."],
+    ["Thu","<b>Rate &amp; cost control</b> — per-user/per-feature limits, so one workflow can't blow the whole budget."],
+    ["Fri","<b>Fallback providers</b> — designing for a provider outage or degraded response without the whole feature going down."],
+    ["Sat","<b>Build day</b> — wrap a real LLM feature in a proper job-queue architecture."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.bullmq.io/" target="_blank">BullMQ docs</a>', "the standard Node job-queue library, good fit for LLM call orchestration"],
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/batch-processing" target="_blank">Anthropic — Batch processing</a>', "official pattern for high-volume, non-realtime LLM workloads at lower cost"]
+  ],
+  project:"Wrap a real LLM feature from earlier weeks (e.g. the extraction fallback layer) in a proper background job queue with retries, so it no longer blocks the main request/response cycle.",
+  quiz:[
+    {q:"When is it appropriate to run an LLM call as a background job instead of a synchronous request?", opts:["Always, synchronous calls should never be used","When the user doesn't need the result instantly and the task can tolerate a short delay — freeing the main request from waiting on a slow, sometimes-unreliable external call", "Never, background jobs add unnecessary complexity","Only for very cheap models"], correct:1, explain:"If the workflow can tolerate a short delay, moving the LLM call off the request path avoids tying up user-facing latency to an external service's response time."},
+    {q:"Why does a single feature need its own per-feature or per-user rate/cost limit, separate from the overall API account limit?", opts:["It doesn't, one account-wide limit is always enough","Without a per-feature cap, a bug (like a runaway retry loop) in one feature could exhaust the entire shared budget and degrade or block every other feature using the same API account","Per-feature limits are purely a billing convenience with no safety benefit","Rate limits can only ever be set at the account level, never per feature"], correct:1, explain:"A shared account-wide limit means one feature's bug becomes everyone's outage. A per-feature limit contains the blast radius of exactly that kind of failure to the one feature that caused it."},
+    {q:"Why is caching an LLM response only safe for certain kinds of tasks?", opts:["Caching LLM responses is never safe under any circumstances","Caching works well for deterministic-enough tasks where the same input should produce an acceptably similar output, but can silently return a stale or wrong answer for creative or highly context-dependent tasks","Caching always improves accuracy regardless of the task","LLM responses cannot technically be cached"], correct:1, explain:"A cache assumes repeated inputs deserve the same output. That assumption holds for many extraction/classification-style tasks but breaks for tasks where context or creativity should legitimately produce a different answer each time."}
+  ],
+  milestone:"A real LLM feature running through a proper background job queue with retry logic, not blocking the main app."
+},
+{
+  n:10, title:"Multi-Language &amp; Translation with LLMs",
+  goal:"Directly extend your real Polish-translation customs work — comparing rule-based dictionary translation against LLM-assisted translation, and knowing when each is the right tool.",
+  lesson:"<p>A fixed dictionary-based translation approach is fast and perfectly consistent, but brittle: any phrasing it was not explicitly built to handle falls straight through. An LLM-assisted fallback can handle novel phrasing a fixed dictionary never anticipated -- but it introduces a new risk a dictionary never had: it might \"helpfully\" translate something that was never supposed to be translated at all.</p><pre># the constraint that matters most here\nprompt: \"Translate this invoice line to Polish.\nDO NOT translate grading shorthand (e.g. VVS2, D-Cut, SI1) --\nkeep these exactly as written, they are international trade standard terms.\"</pre><div class=\"callout\"><b>Domain-specific fixed terms are the highest-risk failure mode in LLM-assisted translation.</b> A model's default instinct is to translate everything fluently -- explicitly constraining it to preserve fixed terminology exactly is not optional polish, it is the difference between a usable document and one that confuses a trade partner who expects a standard term they recognize.</div><p>A human-review gate before anything translated reaches a real client is the practical safety net for exactly this kind of risk -- it costs a small amount of time and catches the rare case where the model mistranslates or \"corrects\" something it should have left alone.</p>",
+  days:[
+    ["Mon","<b>Rule-based vs LLM translation</b> — reviewing your own real dictionary-based approach (the gemstone Polish templates) as a case study."],
+    ["Tue","<b>Where LLM translation helps</b> — handling novel phrasing/terms the fixed dictionary doesn't cover."],
+    ["Wed","<b>Where it's risky</b> — domain-specific fixed terminology (grading shorthand like VVS2/D-Cut) that must stay untranslated or exact — constraining the model to respect that."],
+    ["Thu","<b>Consistency at scale</b> — keeping terminology consistent across many documents/sessions (glossaries, term-locking)."],
+    ["Fri","<b>Human review workflow</b> — designing the translation feature so a human still signs off before anything client-facing goes out."],
+    ["Sat","<b>Build day</b> — add an LLM-assisted translation fallback for cases your real gemstone dictionary doesn't cover."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank">Anthropic — Prompt engineering (revisit)</a>', "apply constraint-following techniques specifically to terminology-locking"],
+    ['<a href="https://www.nature.com/articles/s41599-023-01750-y" target="_blank">Research on LLM translation quality vs domain terminology (search: LLM domain-specific translation accuracy)</a>', "grounding for where general translation is and isn't reliable"]
+  ],
+  project:"Extend your real customs module's translation logic: when a description doesn't match the existing Polish dictionary template, fall back to an LLM translation constrained to preserve fixed grading shorthand exactly, with the result flagged for human review before it's used in an email.",
+  quiz:[
+    {q:"Why must diamond grading shorthand (VVS2, D-Cut) stay untranslated even in an otherwise-translated line item?", opts:["It's a display bug to avoid","These are internationally standardized trade terms — translating them would make the document less clear/correct, not more, for anyone in the industry", "Untranslated text looks more professional","There's no real reason, it's arbitrary"], correct:1, explain:"Grading shorthand is a recognized international standard in the trade — translating it would actually reduce clarity for anyone reading the document, which is exactly the kind of domain rule an LLM prompt needs to be explicitly constrained to respect."},
+    {q:"What's the main new risk an LLM-assisted translation fallback introduces that a fixed dictionary never had?", opts:["LLM translation is always slower, with no other risk","An LLM's default instinct is to translate fluently and completely, which can lead it to translate fixed domain terminology (like grading shorthand) that was supposed to stay exactly as written","LLM translation cannot handle novel phrasing at all","There is no new risk, LLMs are strictly safer than dictionaries"], correct:1, explain:"A dictionary only ever does exactly what it was built to do — it cannot accidentally over-translate. An LLM's fluency is a double-edged sword: left unconstrained, it will apply that fluency even to terms that must stay fixed."},
+    {q:"Why is a human-review gate particularly important for LLM-assisted translation of client-facing documents?", opts:["Human review is unnecessary once the prompt is well-constrained","It catches the rare case where the model mistranslates or incorrectly 'corrects' fixed terminology before it reaches a real client, at a small cost in time","Human review replaces the need for prompt engineering entirely","Translation tasks never actually fail once properly prompted"], correct:1, explain:"Even a well-constrained prompt carries residual risk, because generation is still probabilistic. A review gate is a cheap, practical safety net for exactly the rare failure case that would otherwise reach a client unnoticed."}
+  ],
+  milestone:"A real translation fallback that correctly handles novel phrasing while preserving fixed domain terminology, flagged for human review."
+},
+{
+  n:11, title:"Cost, Privacy &amp; Production Concerns",
+  goal:"Learn the parts of shipping AI features that aren't about the model at all — client data privacy, cost discipline, and choosing the right model tier for each task.",
+  lesson:"<p>Shipping an AI feature responsibly involves decisions that have nothing to do with the model itself: what client data is actually leaving your system when you call a third-party API, what it will really cost at your actual volume (not a rough guess), and whether you are using the cheapest model that still clears your accuracy bar from Week 8's evals.</p><pre># a real cost model, not a guess\ncostPerCall = (inputTokens * inputPricePerToken) + (outputTokens * outputPricePerToken);\nmonthlyCost = costPerCall * callsPerDay * 30;\n// compare this number against a smaller/cheaper model tier before committing</pre><div class=\"callout\"><b>Right-sizing the model is a real cost lever most people skip.</b> Using the largest, most capable model for every task -- including simple, well-defined ones -- often wastes money and adds latency with no measurable accuracy benefit for that specific task. Match model tier to task difficulty, not habit.</div><p>Data privacy is not an abstract compliance checkbox when real client invoices or business data are involved -- know exactly what data leaves your system, where it goes, and whether your client would be comfortable knowing that, before you ship the feature, not after.</p>",
+  days:[
+    ["Mon","<b>Data privacy</b> — what it means to send client invoice/business data to a third-party API, data retention policies, when NOT to send something."],
+    ["Tue","<b>Client-facing transparency</b> — being honest with clients about where AI is used in a workflow you build for them."],
+    ["Wed","<b>Cost modeling</b> — estimating real monthly cost for an LLM feature at your actual volume before shipping it."],
+    ["Thu","<b>Right-sizing models</b> — using a smaller/cheaper model for simple tasks, reserving the largest model for genuinely hard ones."],
+    ["Fri","<b>Vendor lock-in awareness</b> — designing your integration layer so switching providers later isn't a rewrite."],
+    ["Sat","<b>Build day</b> — write a real cost/privacy assessment for one of your shipped LLM features."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.anthropic.com/legal/privacy" target="_blank">Anthropic — Privacy Policy</a>', "read the actual current terms rather than assuming"],
+    ['<a href="https://docs.claude.com/en/docs/about-claude/pricing" target="_blank">Anthropic — Pricing</a>', "current model tier costs, for real cost modeling"]
+  ],
+  project:"Write a real cost and data-privacy assessment for one LLM feature you've shipped in this course: estimated monthly cost at real volume, what client data leaves your system and where, and whether the model tier in use is the cheapest one that still meets the accuracy bar from Week 8's evals.",
+  quiz:[
+    {q:"Why right-size the model (using a cheaper/smaller one where possible) instead of always using the most capable model available?", opts:["Cheaper models are always better quality","Using the largest model for every task, including simple ones, wastes cost and often adds latency with no accuracy benefit for that specific task", "Model choice never affects cost", "It's purely a stylistic preference"], correct:1, explain:"Task difficulty should drive model choice — simple, well-defined tasks often perform just as well on a smaller, cheaper, faster model."},
+    {q:"Why design your LLM integration layer to avoid vendor lock-in (e.g. isolating provider-specific calls behind your own interface)?", opts:["Vendor lock-in is not a real concern in practice","If a better-suited or cheaper model/provider becomes available later, an isolated integration layer lets you switch without a full rewrite of every feature that calls an LLM","It has no benefit, every provider's API is identical","It only matters if you plan to stop using AI entirely"], correct:1, explain:"The AI landscape changes quickly — pricing, capability, and the best-fit provider for a task can all shift. An integration layer that isolates provider-specific details is what keeps switching a configuration change instead of a rewrite."},
+    {q:"What is the practical first step before shipping an AI feature that processes real client data?", opts:["Skipping any privacy review since it slows down shipping","Knowing exactly what client data leaves your system, where it goes, and whether the client would be comfortable knowing that — before shipping, not after","Privacy only matters for features that store data permanently","Using the most expensive model to guarantee privacy"], correct:1, explain:"Privacy risk is created the moment data leaves your system to a third party, regardless of model cost or quality — knowing and being honest about that flow is a prerequisite for responsible shipping, not an afterthought."}
+  ],
+  milestone:"A written, honest cost and privacy assessment for a real shipped feature, with a concrete recommendation on model tier."
+},
+{
+  n:12, title:"Capstone — Ship a Real AI Feature",
+  goal:"Close the program by taking one of your real production tools and shipping a genuinely useful AI-assisted feature inside it, end to end, with evals and monitoring proving it works.",
+  lesson:"<p>This final week is not about learning a new AI technique -- it is about proving that everything from the last eleven weeks (prompting, structured output, RAG, agents, evals, cost/privacy discipline) composes into one real, shipped feature inside a tool you actually use, not a standalone demo that never sees real use.</p><div class=\"callout\"><b>The non-negotiable gate before anything ships:</b> a measured eval score (Week 8) proving the feature actually works at an acceptable rate, and a human-review step before anything AI-generated reaches a real client -- full autonomy is something a feature earns over time with a track record, not something it starts with.</div><p>Shipping into a real tool (not a demo) is the part that actually matters professionally: a feature only counts as done when it is handling real inputs, in the workflow it was built for, with the safety nets (eval score, review gate) from this course actually in place -- not described as a plan for later.</p>",
+  days:[
+    ["Mon","<b>Pick the target</b> — choose the highest-value real feature (likely the customs module's extraction/translation, or a CAD order summarizer)."],
+    ["Tue","<b>Design pass</b> — architecture: sync vs async, caching, fallback, guardrails, all applying Weeks 9-11."],
+    ["Wed","<b>Build pass</b> — implement the feature against real data."],
+    ["Thu","<b>Eval pass</b> — build a proper eval set (Week 8 style) and measure real accuracy before calling it done."],
+    ["Fri","<b>Review workflow</b> — make sure a human reviews/approves before anything AI-touched reaches a client."],
+    ["Sat","<b>Ship</b> — deploy it into the real tool, not a demo."],
+    ["Sun","<b>Program review</b> — what shipped, what's next."]
+  ],
+  resources:[
+    ['<a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank">Anthropic Engineering — Building Effective Agents (revisit)</a>', "final-week checklist read before shipping"]
+  ],
+  project:"Ship one real, useful AI-assisted feature inside an existing production tool of yours (e.g. LLM-assisted extraction/translation fallback in the customs module), with a measured eval score and a human-review gate before anything reaches a real client.",
+  quiz:[
+    {q:"What's the single most important gate before an AI-assisted feature touches real client communication?", opts:["Making the UI look polished","A human review step before anything AI-generated reaches the client, until the feature's measured accuracy has proven itself over time", "Using the most expensive model available","None — full automation from day one is always the goal"], correct:1, explain:"Even a well-evaluated feature should earn full autonomy over time — a human-review gate is the responsible default for anything client-facing until real-world accuracy is proven."},
+    {q:"What is this capstone week primarily testing, as distinct from teaching a new AI technique?", opts:["A brand-new prompting technique not covered earlier","Whether the skills from the previous eleven weeks (prompting, RAG, structured output, evals, cost/privacy discipline) genuinely combine into one real, shipped feature inside an actual tool, not a standalone demo","Which LLM provider is objectively the best","Pure prompt-writing speed"], correct:1, explain:"Each individual skill (prompting, RAG, evals) is useful alone, but the real test of competence is whether they combine cleanly into one real, operating feature — which is exactly what the capstone forces you to prove."},
+    {q:"Why should an AI feature's full autonomy be something it earns over time rather than something it starts with?", opts:["Autonomy should always be granted immediately for efficiency","A feature's real-world accuracy can only be proven with a track record over actual use; starting with a human-review gate limits the damage from the errors that are statistically expected before that track record exists","Autonomy has no bearing on risk once an eval score exists","Human review is only needed for the very first week of a feature's life"], correct:1, explain:"An eval score measures accuracy on a known test set, not a guarantee of flawless real-world performance — a review gate is the responsible bridge between a promising eval score and genuinely proven reliability over time."}
+  ],
+  milestone:"CAPSTONE — a real AI-assisted feature shipped inside a real production tool, with a measured eval score and a human-review gate in place."
+}
+]}
+];
+
+/* ============ PROGRESS PERSISTENCE (localStorage) ============ */
+const PROGRESS_KEY = 'loupeProgress_v2';
+function loadCompletedWeeks(){
+  try { return new Set(JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveCompletedWeeks(){
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify([...state.completedWeeks])); } catch(e){}
+}
+
+const state = { currentWeek: 0, completedWeeks: loadCompletedWeeks() };
+const ALL_WEEKS = CURRICULUM.flatMap(c => c.weeks.map(w => ({...w, cut:c.cut})));
+const TOTAL_WEEKS = ALL_WEEKS.length;
+
+function renderSidebar(){
+  const nav = document.getElementById('weekNav');
+  nav.innerHTML = '';
+  CURRICULUM.forEach(group => {
+    const li = document.createElement('li'); li.className = 'cut-group';
+    const label = document.createElement('div'); label.className = 'cut-label'; label.textContent = group.cut;
+    li.appendChild(label);
+    group.weeks.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'week-btn' + (w.n === state.currentWeek ? ' active' : '') + (state.completedWeeks.has(w.n) ? ' done' : '');
+      btn.innerHTML = `<span class="week-num">${state.completedWeeks.has(w.n) ? '' : w.n}</span><span class="week-title-mini">${w.title}</span>`;
+      btn.onclick = () => { state.currentWeek = w.n; renderAll(); window.scrollTo(0,0); };
+      li.appendChild(btn);
+    });
+    nav.appendChild(li);
+  });
+  updateProgressBar();
+}
+function updateProgressBar(){
+  const pct = Math.round((state.completedWeeks.size / TOTAL_WEEKS) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+function renderIntro(){
+  return `
+  <section class="hero-intro">
+    <span class="eyebrow">Course 3 of the Series · 12 Weeks</span>
+    <h1 class="display">The Loupe</h1>
+    <p class="lede">A loupe doesn't replace the jeweller's eye — it sharpens it. This course treats LLMs the same way: applied precisely, on top of skill you already have. <b>Phase I</b> builds real fluency with prompting, APIs, and structured output. <b>Phase II</b> applies it directly to your own OCR/extraction and translation pipelines. <b>Phase III</b> makes it production-grade: architecture, cost, privacy, and a real shipped feature.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><b>12</b><span>Weeks</span></div>
+      <div class="hero-stat"><b>3</b><span>Phases</span></div>
+      <div class="hero-stat"><b>12</b><span>Shipped Milestones</span></div>
+      <div class="hero-stat"><b>1</b><span>Real AI Feature Shipped</span></div>
+    </div>
+    <button class="start-btn" onclick="state.currentWeek=1; renderAll(); window.scrollTo(0,0);">Begin Week 1 →</button>
+  </section>`;
+}
+function renderWeek(w){
+  const isDone = state.completedWeeks.has(w.n);
+  const idx = ALL_WEEKS.findIndex(x => x.n === w.n);
+  const prev = ALL_WEEKS[idx-1]; const next = ALL_WEEKS[idx+1];
+  const daysHtml = w.days.map(([label, topic]) => `<li class="day-item"><span class="day-label">${label}</span><span class="day-topic">${topic}</span></li>`).join('');
+  const resourcesHtml = w.resources.map(([link, note]) => `<li>${link} — <span style="opacity:.65">${note}</span></li>`).join('');
+  const quizHtml = w.quiz.map((q, qi) => {
+    const optsHtml = q.opts.map((opt, oi) => `<button class="quiz-opt" onclick="answerQuiz(${w.n},${qi},${oi},this)">${opt}</button>`).join('');
+    return `<div class="quiz-card"><div class="q">${qi+1}. ${q.q}</div><div class="quiz-opts" id="quiz-${w.n}-${qi}">${optsHtml}</div><div class="quiz-explain" id="explain-${w.n}-${qi}">${q.explain}</div></div>`;
+  }).join('');
+  return `
+    <div class="week-header">
+      <span class="eyebrow">${w.cut} · Week ${w.n} of 12</span>
+      <h2 class="display">${w.title}</h2>
+      <p class="goal">${w.goal}</p>
+    </div>
+    <div class="section-block"><h3>This Week, In Depth</h3><div class="lesson-block">${w.lesson}</div></div>
+    <div class="section-block"><h3>Daily / Weekly Modules</h3><ul class="day-list">${daysHtml}</ul></div>
+    <div class="section-block"><h3>Resources</h3><ul class="resource-list">${resourcesHtml}</ul></div>
+    <div class="section-block"><h3>Practice Project</h3><div class="project-card"><p>${w.project}</p><div class="ship">→ ship it publicly (GitHub / live URL) before moving on</div></div></div>
+    <div class="section-block"><h3>Check Your Understanding</h3>${quizHtml}</div>
+    <div class="section-block"><h3>Milestone</h3>
+      <div class="milestone-box">
+        <div class="check ${isDone ? 'checked' : ''}" onclick="toggleMilestone(${w.n})"></div>
+        <div class="txt"><b>${isDone ? 'Milestone complete' : 'Mark milestone complete'}</b><p>${w.milestone}</p></div>
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" ${prev ? '' : 'disabled'} onclick="${prev ? `state.currentWeek=${prev.n}; renderAll(); window.scrollTo(0,0);` : ''}">← Week ${prev ? prev.n : ''}</button>
+      <button class="nav-btn" ${next ? '' : 'disabled'} onclick="${next ? `state.currentWeek=${next.n}; renderAll(); window.scrollTo(0,0);` : ''}">Week ${next ? next.n : ''} →</button>
+    </div>`;
+}
+function renderAll(){
+  const main = document.getElementById('main');
+  if (state.currentWeek === 0){ main.innerHTML = renderIntro(); }
+  else { const w = ALL_WEEKS.find(x => x.n === state.currentWeek); main.innerHTML = renderWeek(w); }
+  renderSidebar();
+}
+function toggleMilestone(weekNum){
+  if (state.completedWeeks.has(weekNum)) state.completedWeeks.delete(weekNum); else state.completedWeeks.add(weekNum);
+  saveCompletedWeeks();
+  renderAll();
+}
+function answerQuiz(weekNum, qIdx, optIdx, btnEl){
+  const week = ALL_WEEKS.find(w => w.n === weekNum);
+  const q = week.quiz[qIdx];
+  const container = document.getElementById(`quiz-${weekNum}-${qIdx}`);
+  const buttons = container.querySelectorAll('.quiz-opt');
+  buttons.forEach((b, i) => { b.disabled = true; if (i === q.correct) b.classList.add('correct'); else if (i === optIdx && optIdx !== q.correct) b.classList.add('wrong'); });
+  document.getElementById(`explain-${weekNum}-${qIdx}`).classList.add('show');
+}
+renderAll();
+</script>
+</body>
+</html>

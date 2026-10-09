@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bench — 12-Week Full-Stack &amp; Agency Curriculum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F7FA;
+  --paper-raised:#FFFFFF;
+  --ink:#101820;
+  --ink-soft:rgba(16,24,32,.64);
+  --ink-faint:rgba(16,24,32,.45);
+  --line:rgba(16,24,32,.13);
+  --grid-dot:rgba(16,24,32,.055);
+  --trace:#0C8F86;
+  --trace-bright:#0FA89C;
+  --trace-wash:rgba(12,143,134,.09);
+  --amber:#C97A1F;
+  --amber-bright:#E0922E;
+  --danger:#B23B2E;
+  --ok:#1E8E5A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0/22px 22px,
+    var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--trace); color:#fff;}
+a{color:var(--trace);}
+.mono{font-family:'IBM Plex Mono', monospace;}
+.display{font-family:'IBM Plex Sans', sans-serif; font-weight:700; letter-spacing:-0.02em;}
+
+.app{display:grid; grid-template-columns:300px 1fr; min-height:100vh;}
+@media (max-width:900px){ .app{grid-template-columns:1fr;} .sidebar{position:relative; height:auto;} }
+
+.sidebar{
+  background:var(--paper-raised);
+  border-right:1px solid var(--line);
+  padding:28px 22px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{margin-bottom:26px;}
+.brand .mark{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--trace); border:1px solid var(--trace); background:var(--trace-wash);
+  padding:4px 9px; border-radius:2px;
+}
+.brand h1{font-family:'IBM Plex Sans'; font-weight:700; font-size:25px; line-height:1.18; margin:14px 0 4px; letter-spacing:-0.015em; color:var(--ink);}
+.brand p{margin:0; font-size:13px; color:var(--ink-soft); line-height:1.55;}
+
+.overall-progress{margin:22px 0 8px;}
+.overall-progress .row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); margin-bottom:7px; text-transform:uppercase; letter-spacing:.08em;}
+.bar-track{height:5px; background:rgba(16,24,32,.08); border-radius:2px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--trace); border-radius:2px; transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* ---- PCB trace rail ---- */
+.cuts{list-style:none; margin:24px 0 0; padding:0 0 0 2px; position:relative;}
+.cut-group{margin-bottom:2px; position:relative; padding-left:20px; border-left:2px solid var(--line);}
+.cut-label{
+  font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--trace); padding:13px 0 9px; opacity:.95; margin-left:-2px; border-left:2px solid var(--trace); padding-left:10px;
+}
+.week-btn{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:none; border:none; color:var(--ink); font-family:'IBM Plex Sans';
+  font-size:14px; padding:8px 6px; border-radius:3px; cursor:pointer; transition:background .15s;
+  position:relative; margin-left:-2px;
+}
+.week-btn::before{
+  content:''; position:absolute; left:-22px; top:50%; width:12px; height:2px; background:var(--line);
+}
+.week-btn:hover{background:rgba(12,143,134,.06);}
+.week-btn.active{background:var(--trace-wash); color:var(--trace); font-weight:600;}
+.week-btn.active::before{background:var(--trace);}
+.week-num{
+  font-family:'IBM Plex Mono'; font-size:11px; width:20px; height:20px; flex:0 0 20px;
+  border:1.5px solid var(--ink-faint); border-radius:3px; background:var(--paper-raised);
+  display:flex; align-items:center; justify-content:center; color:var(--ink-soft); position:relative; z-index:1;
+}
+.week-btn.active .week-num{border-color:var(--trace); color:var(--trace); background:#fff;}
+.week-btn.done .week-num{background:var(--ok); border-color:var(--ok); color:#fff;}
+.week-title-mini{flex:1; font-size:13px; opacity:.92;}
+
+.main{padding:44px 56px 100px; max-width:900px;}
+@media (max-width:700px){ .main{padding:28px 20px 80px;} }
+
+/* ---- Signature corner-bracket frame ---- */
+.hero-intro, .week-header{
+  position:relative; padding:28px 30px 40px; margin-bottom:56px;
+  border:1px solid var(--line); border-radius:2px; background:var(--paper-raised);
+}
+.hero-intro::before, .hero-intro::after, .week-header::before, .week-header::after{
+  content:''; position:absolute; width:16px; height:16px; border-color:var(--trace); border-style:solid; border-width:0;
+}
+.hero-intro::before, .week-header::before{ top:-1px; left:-1px; border-top-width:2px; border-left-width:2px; }
+.hero-intro::after, .week-header::after{ bottom:-1px; right:-1px; border-bottom-width:2px; border-right-width:2px; }
+
+.hero-intro{padding-bottom:36px;}
+.hero-intro .eyebrow{font-family:'IBM Plex Mono'; font-size:12px; letter-spacing:.13em; text-transform:uppercase; color:var(--trace);}
+.hero-intro h1{font-size:42px; font-weight:700; line-height:1.1; margin:14px 0 18px; max-width:14ch; color:var(--ink);}
+.hero-intro p.lede{font-size:16.5px; line-height:1.65; color:var(--ink-soft); max-width:58ch;}
+.hero-stats{display:flex; gap:34px; margin-top:30px; flex-wrap:wrap;}
+.hero-stat b{font-family:'IBM Plex Mono'; font-size:26px; font-weight:600; display:block; color:var(--trace);}
+.hero-stat span{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint);}
+.start-btn{
+  margin-top:30px; display:inline-block; background:var(--trace); color:#fff; border:none;
+  font-family:'IBM Plex Sans'; font-weight:600; font-size:15px; padding:12px 24px; border-radius:3px; cursor:pointer;
+}
+.start-btn:hover{background:var(--trace-bright);}
+
+.week-header{margin-bottom:44px;}
+.week-header .eyebrow{font-family:'IBM Plex Mono'; font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--amber);}
+.week-header h2{font-size:32px; font-weight:700; margin:10px 0 12px; line-height:1.18; color:var(--ink);}
+.week-header .goal{font-size:15.5px; color:var(--ink-soft); line-height:1.62; max-width:62ch; margin-bottom:4px;}
+
+.lesson-block{font-size:15px; line-height:1.7; color:rgba(16,24,32,.88); max-width:66ch;}
+.lesson-block p{margin:0 0 14px;}
+.lesson-block pre{
+  background:#101820; color:#D4D4D4; font-family:'IBM Plex Mono', monospace; font-size:12.8px;
+  padding:14px 16px; border-radius:3px; overflow-x:auto; line-height:1.6; margin:12px 0 16px;
+}
+.lesson-block .callout{
+  border-left:3px solid var(--amber); background:rgba(201,122,31,.08); padding:11px 15px; margin:12px 0 16px;
+  font-size:14px; border-radius:0 3px 3px 0; line-height:1.6;
+}
+.lesson-block .callout b{color:var(--amber-bright);}
+.lesson-block code{font-family:'IBM Plex Mono', monospace; background:var(--trace-wash); color:var(--trace); padding:1px 5px; border-radius:2px; font-size:.93em;}
+
+.section-block{margin-top:40px;}
+.section-block h3{
+  font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--trace); margin-bottom:16px; display:flex; align-items:center; gap:10px;
+}
+.section-block h3::after{content:''; flex:1; height:1px; background:var(--line);}
+
+.day-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+.day-item{
+  display:grid; grid-template-columns:74px 1fr; gap:18px; padding:14px 4px; border-bottom:1px solid var(--line);
+}
+.day-item .day-label{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--ink-faint); padding-top:2px;}
+.day-item .day-topic{font-size:14.5px; line-height:1.6; color:rgba(16,24,32,.86);}
+.day-item .day-topic b{color:var(--ink); font-weight:600;}
+
+.resource-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px;}
+.resource-list li{font-size:14px; line-height:1.5; padding-left:18px; position:relative; color:rgba(16,24,32,.78);}
+.resource-list li::before{content:'▸'; position:absolute; left:0; color:var(--trace); font-size:12px; top:2px;}
+.resource-list a{text-decoration:none; border-bottom:1px solid rgba(12,143,134,.35); font-weight:500;}
+.resource-list a:hover{border-color:var(--trace);}
+
+.project-card{background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:3px; padding:20px 22px;}
+.project-card p{font-size:14.5px; line-height:1.65; color:rgba(16,24,32,.86); margin:0;}
+.project-card .ship{margin-top:12px; font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--amber);}
+
+.quiz-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:3px; padding:22px 24px; margin-bottom:14px;}
+.quiz-card .q{font-weight:600; font-size:15px; margin-bottom:14px; line-height:1.5; color:var(--ink);}
+.quiz-opts{display:flex; flex-direction:column; gap:8px;}
+.quiz-opt{
+  text-align:left; background:var(--paper); border:1px solid var(--line); border-radius:3px;
+  padding:11px 14px; font-family:'IBM Plex Sans'; font-size:13.5px; cursor:pointer; color:var(--ink);
+  transition:all .15s;
+}
+.quiz-opt:hover{border-color:var(--trace);}
+.quiz-opt.correct{background:rgba(30,142,90,.12); border-color:var(--ok); font-weight:600; color:var(--ok);}
+.quiz-opt.wrong{background:rgba(178,59,46,.1); border-color:var(--danger); color:var(--danger);}
+.quiz-explain{font-size:13px; margin-top:12px; color:var(--ink-soft); line-height:1.5; display:none;}
+.quiz-explain.show{display:block;}
+
+.milestone-box{
+  display:flex; align-items:flex-start; gap:16px; background:var(--trace-wash);
+  border:1px solid rgba(12,143,134,.3); border-radius:3px; padding:20px 22px; margin-top:14px;
+}
+.milestone-box .check{
+  width:24px; height:24px; flex:0 0 24px; border-radius:3px; border:2px solid var(--trace);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; margin-top:2px; transition:all .15s; background:#fff;
+}
+.milestone-box .check.checked{background:var(--trace);}
+.milestone-box .check.checked::after{content:'✓'; color:#fff; font-weight:700; font-size:13px;}
+.milestone-box .txt b{display:block; font-size:15px; margin-bottom:5px; color:var(--trace);}
+.milestone-box .txt p{margin:0; font-size:14px; line-height:1.6; color:rgba(16,24,32,.8);}
+
+.nav-buttons{display:flex; justify-content:space-between; margin-top:52px; padding-top:22px; border-top:1px solid var(--line);}
+.nav-btn{
+  background:var(--paper-raised); border:1px solid var(--line); color:var(--ink); font-family:'IBM Plex Sans'; font-size:14px;
+  padding:10px 17px; border-radius:3px; cursor:pointer; display:flex; align-items:center; gap:8px;
+}
+.nav-btn:hover{border-color:var(--trace); color:var(--trace);}
+.nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+::-webkit-scrollbar{width:9px;}
+::-webkit-scrollbar-track{background:var(--paper);}
+::-webkit-scrollbar-thumb{background:rgba(16,24,32,.15); border-radius:99px;}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="mark">◆ The Bench</span>
+      <h1>Cut, Craft &amp; Setting</h1>
+      <p>A 12-week path from raw code to a running agency — built the way a stone is worked: cut, faceted, polished, set.</p>
+    </div>
+    <div class="overall-progress">
+      <div class="row"><span>Progress</span><span id="progressPct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>
+    <ul class="cuts" id="weekNav"></ul>
+  </nav>
+
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const CURRICULUM = [
+{cut:"Cut I — Foundation", title:"The Rough Stone", weeks:[
+{
+  n:1, title:"Web Foundations",
+  goal:"Learn the raw material everything else is built from: semantic HTML, CSS layout systems, and version control. By Sunday you'll have a live, responsive one-page site pushed to GitHub.",
+  lesson:"<p>HTML and CSS are not the easy part to rush through -- they are the foundation everything else sits on, and sloppy habits here compound for years. Semantic HTML (using <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;button&gt;</code> instead of a <code>&lt;div&gt;</code> for everything) is not pedantry: it is what lets a screen reader, a search engine, and your own future self actually understand the structure of a page without reading every class name.</p><pre>&lt;!-- avoid: everything is a meaningless div --&gt;\n&lt;div class=\"nav\"&gt;&lt;div onclick=\"...\"&gt;Submit&lt;/div&gt;&lt;/div&gt;\n\n&lt;!-- prefer: elements that describe what they ARE --&gt;\n&lt;nav&gt;&lt;button type=\"submit\"&gt;Submit&lt;/button&gt;&lt;/nav&gt;</pre><div class=\"callout\"><b>Flexbox vs Grid, the fast rule:</b> Flexbox is one-dimensional -- a single row OR a single column that needs to distribute or align. Grid is two-dimensional -- rows AND columns together, like a true layout. Reaching for the wrong one is the single most common beginner CSS struggle; once this rule clicks, most layout decisions become obvious.</div><p>Git is not just a backup system -- committing in small, meaningful chunks (not one giant \"final version\" commit) is what makes a project's history actually useful later, when you need to find exactly when and why something changed.</p>",
+  days:[
+    ["Mon","<b>HTML5 semantics</b> — document structure, headings, landmarks, forms, accessibility basics (alt text, labels)."],
+    ["Tue","<b>CSS fundamentals</b> — box model, specificity, the cascade, custom properties (variables)."],
+    ["Wed","<b>Flexbox</b> — build 3 real layouts (navbar, card row, sidebar) using only flex."],
+    ["Thu","<b>CSS Grid</b> — build a magazine-style layout; know when to reach for grid vs flex."],
+    ["Fri","<b>Responsive design</b> — media queries, mobile-first workflow, fluid typography (clamp())."],
+    ["Sat","<b>Git &amp; GitHub</b> — init, commit, branch, push, pull requests, .gitignore, GitHub Pages deploy."],
+    ["Sun","<b>Review + ship</b> — polish and deploy your first static page. Rest."]
+  ],
+  resources:[
+    ['<a href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank">MDN — HTML reference</a>', "the canonical spec-backed reference, not a tutorial you finish once"],
+    ['<a href="https://web.dev/learn/css" target="_blank">web.dev — Learn CSS</a>', "Google's free structured CSS course, exercises included"],
+    ['<a href="https://flexboxfroggy.com/" target="_blank">Flexbox Froggy</a>', "20-minute game that cements flexbox faster than reading docs"],
+    ['<a href="https://cssgridgarden.com/" target="_blank">Grid Garden</a>', "same idea, for CSS Grid"],
+    ['<a href="https://docs.github.com/en/get-started" target="_blank">GitHub Docs — Get Started</a>', "official git/GitHub walkthrough"]
+  ],
+  project:"Build and deploy a single-page personal/portfolio landing site — hero, about, contact — fully responsive, using Grid + Flexbox, no frameworks. Push it to GitHub and deploy via GitHub Pages.",
+  quiz:[
+    {q:"Which CSS layout system is generally better for two-dimensional layouts (rows AND columns at once)?", opts:["Flexbox","CSS Grid","Floats","Tables"], correct:1, explain:"Flexbox is one-dimensional (a row OR a column); Grid natively handles both axes together."},
+    {q:"What does `git add .` followed by `git commit -m \"msg\"` do?", opts:["Deletes staged files","Stages all changes then records a snapshot with a message","Pushes to GitHub","Creates a new branch"], correct:1, explain:"`add` stages changes; `commit` saves a snapshot of the staged changes locally with a message."},
+    {q:"Why does writing semantic HTML (nav, main, button) matter beyond just making the page work visually?", opts:["It has no real effect, divs work identically","It gives the page's structure real meaning that screen readers, search engines, and other developers can understand without reading every class name","Semantic tags make pages load faster automatically","It's only relevant for government websites"], correct:1, explain:"A `<div>` tells nothing about what it is; a `<nav>` or `<button>` tells assistive technology, search engines, and future developers exactly what role that piece of the page plays — this has real accessibility and maintainability value beyond appearance."}
+  ],
+  milestone:"Ship a live, responsive portfolio page deployed on GitHub Pages, with the repo pushed and a clean commit history."
+},
+{
+  n:2, title:"JavaScript Core",
+  goal:"Move from static pages to interactive ones. Master modern JS syntax, the DOM, and asynchronous code — the three things every framework sits on top of.",
+  lesson:"<p>Every framework (React included) is JavaScript underneath. The habits you build here -- how you think about async code, how comfortable you are with array methods, how you reason about the DOM -- directly determine how fast React (next week) actually clicks for you, or how much it feels like memorizing magic.</p><pre>// callbacks → promises → async/await is one evolution, not three unrelated things\nfetchData(function(result) { ... });               // callback\nfetchData().then(result => { ... });                // promise\nconst result = await fetchData();                   // async/await (same mechanics, linear-looking)</pre><div class=\"callout\"><b>Common mistake:</b> forgetting that <code>fetch()</code> does not throw on an HTTP error status (like a 404 or 500) -- it only throws on a true network failure. You have to check <code>response.ok</code> yourself, or your error handling will silently miss failed requests that technically \"succeeded\" at the network level.</div><p><code>.reduce()</code> is the array method beginners understand latest and use least, despite being one of the most powerful -- it collapses an array into a single accumulated value (a sum, a grouped object, a flattened list), and once it clicks, a surprising number of \"how do I transform this data\" problems become one line.</p>",
+  days:[
+    ["Mon","<b>ES6+ syntax</b> — let/const, arrow functions, template literals, destructuring, spread/rest."],
+    ["Tue","<b>Arrays &amp; objects</b> — map/filter/reduce/find, object methods, JSON."],
+    ["Wed","<b>The DOM</b> — querySelector, event listeners, event delegation, creating/removing elements."],
+    ["Thu","<b>Async JS I</b> — callbacks, Promises, .then/.catch, promise chaining."],
+    ["Fri","<b>Async JS II</b> — async/await, try/catch, the Fetch API, calling a real public API."],
+    ["Sat","<b>Build day</b> — a small interactive app (see project) using vanilla JS only."],
+    ["Sun","<b>Review + ship</b> — refactor, comment, push."]
+  ],
+  resources:[
+    ['<a href="https://javascript.info/" target="_blank">javascript.info</a>', "the best free deep-dive on modern JS, front to back"],
+    ['<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide" target="_blank">MDN JavaScript Guide</a>', "reference-grade explanations for anything javascript.info glosses over"],
+    ['<a href="https://github.com/public-apis/public-apis" target="_blank">Public APIs list</a>', "free APIs to practice fetch() against"],
+    ['<a href="https://eloquentjavascript.net/" target="_blank">Eloquent JavaScript (free book)</a>', "for depth on how JS actually works under the hood"]
+  ],
+  project:"Build a weather-lookup or currency-converter app in vanilla JS that fetches live data from a public API, handles loading/error states, and updates the DOM without a page reload.",
+  quiz:[
+    {q:"What's the key difference between `Promise.then()` and `async/await`?", opts:["They do fundamentally different things","await is only syntactic sugar over the same Promise mechanics, easier to read","then() is faster","await cannot handle errors"], correct:1, explain:"async/await is built on Promises — same mechanics, more readable, linear-looking control flow."},
+    {q:"What does `array.reduce()` fundamentally do?", opts:["Removes duplicate items","Filters an array","Collapses an array into a single accumulated value","Sorts an array"], correct:2, explain:"reduce() walks the array building up one accumulated result — a sum, an object, a flattened list, etc."},
+    {q:"Why doesn't fetch() throw an error for an HTTP 404 or 500 response?", opts:["fetch() actually does throw for any non-200 status","fetch() only rejects on a true network failure (e.g. no connection); a 404/500 is still a completed HTTP response, so you must check response.ok yourself","404 and 500 responses are impossible with fetch()","This behavior was changed in the latest JavaScript spec"], correct:1, explain:"fetch() treats receiving ANY HTTP response, even an error status, as a successful network operation. Catching only errors (via .catch or try/catch) misses HTTP-level failures entirely unless you explicitly check response.ok or response.status."}
+  ],
+  milestone:"A working vanilla-JS app that fetches real data from an API and handles loading and error states gracefully."
+},
+{
+  n:3, title:"React Fundamentals",
+  goal:"Learn the component model that most modern frontend work is built on: components, props, state, and the core hooks.",
+  lesson:"<p>React's core idea is deceptively simple: describe what the UI should look like for a given state, and let React figure out how to update the actual page when that state changes. The mental shift from \"manually update the DOM when something happens\" (vanilla JS) to \"just change the state and describe the new UI\" (React) is the single biggest adjustment in this transition.</p><pre>// vanilla JS: YOU manually find and update the DOM\ndocument.getElementById('count').textContent = count;\n\n// React: you just describe what it should render for the current state\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  return &lt;button onClick={() => setCount(count + 1)}&gt;{count}&lt;/button&gt;;\n}</pre><div class=\"callout\"><b>Common mistake:</b> mutating state directly (<code>state.push(item)</code>) instead of using the setter with a new value/array. React decides whether to re-render by checking if the state reference changed -- mutating the same object in place means React may not notice anything happened at all.</div><p>Lifting state up (moving shared state to the nearest common parent of the components that need it) is the first real architecture decision you will face in React -- getting comfortable with it now avoids the much more painful \"prop drilling five levels deep\" problem later.</p>",
+  days:[
+    ["Mon","<b>Why React</b> — component thinking, JSX, Vite project setup."],
+    ["Tue","<b>Components &amp; props</b> — composition, children, conditional rendering, lists + keys."],
+    ["Wed","<b>State</b> — useState, controlled forms, lifting state up."],
+    ["Thu","<b>Effects</b> — useEffect, dependency arrays, fetching data on mount, cleanup functions."],
+    ["Fri","<b>Component architecture</b> — splitting UI sensibly, prop drilling and why it hurts."],
+    ["Sat","<b>Build day</b> — a multi-component React app (see project)."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://react.dev/learn" target="_blank">react.dev — official Learn track</a>', "current, correct, and free — start here over any older course"],
+    ['<a href="https://vitejs.dev/guide/" target="_blank">Vite guide</a>', "the standard modern React project setup"],
+    ['<a href="https://www.youtube.com/@ThePrimeagen" target="_blank">The Primeagen (YouTube)</a>', "sharp, no-fluff commentary on JS/React patterns and pitfalls"]
+  ],
+  project:"Rebuild your Week-2 app in React with proper component decomposition (at least 4 components), controlled forms, and useEffect-driven data fetching.",
+  quiz:[
+    {q:"What triggers a React component to re-render?", opts:["Refreshing the browser only","A change in its state or props","Scrolling the page","Nothing, React never re-renders"], correct:1, explain:"React re-renders a component when its own state changes or the props passed into it change."},
+    {q:"Why is a `key` prop required when rendering a list?", opts:["It's just for styling","It lets React efficiently track which items changed, were added, or removed","It sorts the list","It's optional and does nothing"], correct:1, explain:"Keys give React a stable identity per list item so it can diff efficiently instead of re-rendering everything."},
+    {q:"Why does calling state.push(item) directly on a React state array often fail to trigger a re-render, even though the array's contents did change?", opts:["push() is not a real array method in React","React checks whether the state reference itself changed to decide whether to re-render; mutating the same array in place keeps the same reference, so React may not detect anything happened","React always re-renders regardless of what changed","push() throws an error inside React components"], correct:1, explain:"React's change detection is based on reference comparison, not deep inspection of contents. Always create a new array/object (e.g. [...state, item]) and pass it to the setter, so React sees a genuinely new reference and knows to re-render."}
+  ],
+  milestone:"A cleanly-componentized React app with controlled forms and at least one data-fetching effect."
+},
+{
+  n:4, title:"React Advanced + Styling + Deploy",
+  goal:"Round out the frontend skillset: routing for multi-page apps, Context for shared state, Tailwind for fast styling, and your first real deployment. Close Cut I with a live portfolio v2.",
+  lesson:"<p>This week is about the gap between \"a React app that works on my machine\" and \"a React app a real visitor can actually reach, with real navigation and shared state.\" React Router and Context solve two different problems that both show up the moment an app grows past one page or one component tree: routing solves \"which screen is the user on,\" Context solves \"how does deeply nested UI access shared state without passing it through ten intermediate components.\"</p><pre>// Context removes the need to pass a prop through every layer\nconst ThemeContext = createContext('light');\n\nfunction App() {\n  return &lt;ThemeContext.Provider value=\"dark\"&gt;&lt;DeepChild /&gt;&lt;/ThemeContext.Provider&gt;;\n}\n\nfunction DeepChild() {\n  const theme = useContext(ThemeContext); // no props passed through any parent\n}</pre><div class=\"callout\"><b>Why this matters:</b> prop drilling (passing a prop through five components that do not actually use it, just to get it to the sixth) is not just ugly -- it makes every intermediate component harder to reuse and refactor, because they are now coupled to data they have no real relationship with.</div><p>Deployment is the step that turns \"I built something\" into \"something exists in the world.\" Environment variables matter here specifically because a value that is fine to hardcode in development (a local API URL) is often wrong or insecure in production -- the separation has to be deliberate, not accidental.</p>",
+  days:[
+    ["Mon","<b>React Router</b> — routes, nested routes, params, navigation."],
+    ["Tue","<b>Context API</b> — global state without prop drilling (theme, auth, cart-style state)."],
+    ["Wed","<b>Tailwind CSS</b> — utility-first styling, config, responsive utilities."],
+    ["Thu","<b>Custom hooks</b> — extracting reusable logic (useFetch, useLocalState patterns)."],
+    ["Fri","<b>Deployment</b> — Vercel or Netlify, environment variables, custom domains."],
+    ["Sat","<b>Build day</b> — assemble Portfolio v2."],
+    ["Sun","<b>Review + ship. Milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://reactrouter.com/en/main/start/tutorial" target="_blank">React Router — official tutorial</a>', "current v6+ syntax"],
+    ['<a href="https://tailwindcss.com/docs/installation" target="_blank">Tailwind CSS docs</a>', "install + utility reference"],
+    ['<a href="https://vercel.com/docs" target="_blank">Vercel docs</a>', "fastest path to a live URL for a React app"]
+  ],
+  project:"Ship Portfolio v2: a multi-page React + Tailwind site (Home / Work / About / Contact) with routing, at least one Context-based global state, and a live Vercel deployment on a clean URL.",
+  quiz:[
+    {q:"What problem does the Context API solve?", opts:["Styling components","Passing state through many nested layers without prop drilling","Making API calls","Routing between pages"], correct:1, explain:"Context lets deeply nested components read shared state directly, skipping manual prop passing at every level."},
+    {q:"What specific problem does prop drilling create beyond being visually messy to write?", opts:["Prop drilling has no real downside, it's purely a style preference","Intermediate components end up coupled to data they don't actually use, just to pass it along, which makes them harder to reuse or refactor independently","Prop drilling makes an app run slower at runtime","Prop drilling is a syntax error in modern React"], correct:1, explain:"A component receiving a prop it never uses, purely to forward it, becomes entangled with data it has no real relationship with — that coupling is what makes later refactors and reuse harder, not just the extra typing."},
+    {q:"Why does separating environment variables (dev vs production config) matter when deploying a React app?", opts:["Environment variables only affect styling, nothing functional","A value that's fine hardcoded in development (like a local API URL) is often wrong or insecure once deployed to production, so the two need deliberate separation","React apps cannot be deployed without environment variables","Environment variables are only relevant for backend apps, never frontend"], correct:1, explain:"Development and production have genuinely different needs — a local-only API URL, a test API key — and conflating them risks shipping broken or insecure configuration to real users."}
+  ],
+  milestone:"CUT I COMPLETE — Portfolio v2 is live on a real URL, uses routing, Tailwind, and at least one custom hook."
+}
+]},
+{cut:"Cut II — Craft", title:"Cutting & Polishing", weeks:[
+{
+  n:5, title:"Backend with Node &amp; Express",
+  goal:"Cross to the other side of the stack. Build a real REST API with authentication — the backbone of every full-stack app you'll build after this.",
+  lesson:"<p>A REST API is a contract: given a request shaped a certain way, it promises a response shaped a certain way, using HTTP verbs and status codes that mean something consistent (GET to read, POST to create, a 404 when something is not found, a 401 when you are not authenticated). Designing clean, predictable endpoints up front saves enormous pain later, when a frontend (or another developer) has to guess what your API actually does.</p><pre>// predictable REST shape\nGET    /api/tasks        → list tasks\nPOST   /api/tasks        → create a task\nGET    /api/tasks/:id    → get one task\nPUT    /api/tasks/:id    → update a task\nDELETE /api/tasks/:id    → delete a task</pre><div class=\"callout\"><b>Why hash passwords instead of encrypting them:</b> encryption is reversible (you can decrypt it back to plaintext); hashing (bcrypt) is deliberately one-way and slow. You never need to recover the original password -- you only need to check if a given input hashes to the same value, which is exactly what bcrypt is built for, and its deliberate slowness is what makes brute-forcing impractical.</div><p>Middleware is the concept that makes Express click: a function that sits between the raw request and your final route handler, able to inspect, modify, log, or block the request before it ever reaches your actual logic -- auth checks, body parsing, and logging are all just middleware.</p>",
+  days:[
+    ["Mon","<b>Node.js basics</b> — the runtime, npm, modules, package.json."],
+    ["Tue","<b>Express</b> — routes, middleware, request/response cycle, error handling."],
+    ["Wed","<b>REST API design</b> — resources, verbs, status codes, designing clean endpoints."],
+    ["Thu","<b>Auth I</b> — password hashing (bcrypt), JWTs, protected routes."],
+    ["Fri","<b>Auth II</b> — refresh tokens, middleware guards, role-based basics."],
+    ["Sat","<b>Build day</b> — a full REST API (see project)."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://expressjs.com/en/guide/routing.html" target="_blank">Express.js — official guide</a>', "routing, middleware, error handling"],
+    ['<a href="https://roadmap.sh/backend" target="_blank">roadmap.sh — Backend path</a>', "visual map of what to learn and in what order"],
+    ['<a href="https://jwt.io/introduction" target="_blank">jwt.io — JWT introduction</a>', "how tokens actually work, not just how to use a library"]
+  ],
+  project:"Build a REST API (Node + Express) for a simple domain — e.g. a job/task tracker relevant to your own work — with signup/login, JWT auth, and full CRUD on one resource.",
+  quiz:[
+    {q:"Why hash passwords with bcrypt instead of storing them as plain text?", opts:["It's faster to store","So a database breach doesn't expose real passwords, and bcrypt resists brute-forcing via salting + slowness", "It makes login faster","It's required by JavaScript"], correct:1, explain:"Hashing (with salting) means even if your database leaks, attackers don't get usable plaintext passwords."},
+    {q:"What is Express middleware, fundamentally?", opts:["A database","A function that runs between the request coming in and the final response, and can modify or block it","A CSS framework","A type of HTTP status code"], correct:1, explain:"Middleware sits in the request/response pipeline — for logging, auth checks, parsing bodies, etc."},
+    {q:"Why is a password hashed (e.g. with bcrypt) rather than encrypted?", opts:["Hashing and encryption are the same thing with different names","Encryption is reversible and meant to be decrypted back; hashing is deliberately one-way and slow, which is exactly what's needed since you only ever need to check a match, never recover the original password","Hashing is faster than encryption, which is the only reason it's used","Passwords are never hashed in real systems, only encrypted"], correct:1, explain:"You never legitimately need to see a user's original password again — you only need to verify a login attempt matches. Hashing's one-way, intentionally-slow nature is designed exactly for that need, and makes brute-forcing a stolen hash impractical."}
+  ],
+  milestone:"A deployed-locally REST API with working JWT auth and full CRUD on at least one resource, tested via Postman/Thunder Client."
+},
+{
+  n:6, title:"Databases",
+  goal:"Learn to model and query data properly — relational (PostgreSQL) and document-based (MongoDB) — and how to talk to either from Node using an ORM/ODM.",
+  lesson:"<p>Choosing between a relational database (PostgreSQL) and a document database (MongoDB) is not about which is \"better\" -- it is about which shape matches your actual data. Relational databases enforce structure and relationships strictly (a line item must belong to a real order; a foreign key guarantees that); document databases let each record have its own flexible shape, which is powerful when your data genuinely varies record to record.</p><pre>-- relational: strict, related tables\nSELECT orders.id, customers.name\nFROM orders\nJOIN customers ON orders.customer_id = customers.id;\n\n// document: each record can have its own shape\n{ _id: 1, name: \"Amey\", tags: [\"vip\"], address: { city: \"Mumbai\" } }</pre><div class=\"callout\"><b>Common mistake:</b> choosing MongoDB purely because it \"feels easier to start with,\" then fighting it later for the exact relational integrity (orders must reference a real, existing customer) that PostgreSQL would have enforced automatically from day one. Choose based on the actual shape and constraints of your data, not initial setup friction.</div><p>An ORM/ODM (Prisma, Mongoose) exists to let you work with real JavaScript objects instead of writing raw SQL or MongoDB query syntax by hand for every operation -- but understanding the raw SQL underneath (Tuesday's lesson) is what lets you debug it when the ORM's generated query does not do what you expected.</p>",
+  days:[
+    ["Mon","<b>Relational modeling</b> — tables, relationships (1:1, 1:many, many:many), normalization basics."],
+    ["Tue","<b>SQL</b> — SELECT/JOIN/WHERE/GROUP BY, writing real queries against sample data."],
+    ["Wed","<b>PostgreSQL + Prisma</b> — schema definition, migrations, querying from Node."],
+    ["Thu","<b>MongoDB</b> — documents, collections, when NoSQL fits better than SQL."],
+    ["Fri","<b>Mongoose</b> — schemas, models, validation, querying from Node."],
+    ["Sat","<b>Build day</b> — wire your Week 5 API to a real persistent database."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.postgresqltutorial.com/" target="_blank">PostgreSQL Tutorial</a>', "clean, example-driven SQL reference"],
+    ['<a href="https://www.prisma.io/docs" target="_blank">Prisma docs</a>', "modern type-safe ORM, current standard for Node + Postgres"],
+    ['<a href="https://www.mongodb.com/docs/manual/tutorial/" target="_blank">MongoDB — official tutorials</a>', "for the document-database side"]
+  ],
+  project:"Replace your Week 5 API's in-memory data with a real PostgreSQL (via Prisma) or MongoDB (via Mongoose) database — with proper schema, relationships, and validation.",
+  quiz:[
+    {q:"When would MongoDB (document DB) typically fit better than PostgreSQL (relational)?", opts:["Never, SQL is always better","When your data is nested/flexible and doesn't need strict relational integrity across many tables","When you need strict transactions across many tables","They're identical, pick either"], correct:1, explain:"Document DBs shine with flexible, nested, evolving schemas; relational DBs shine with strict structure and joins."},
+    {q:"What's the real risk of choosing a database purely because it 'feels easier to start with,' rather than based on your data's actual shape?", opts:["There is no real risk, ease of setup is the only consideration that matters","You may end up fighting the database later for integrity guarantees (like foreign-key relationships) it was never designed to enforce, which the other option would have given you automatically","Easier-to-start databases are always slower in production","Database choice has no long-term consequences either way"], correct:1, explain:"Initial setup friction is a one-time cost; a mismatch between your data's real structure and the database's model is a recurring cost you pay for the life of the project."},
+    {q:"Why is it still valuable to understand raw SQL even when using an ORM like Prisma?", opts:["Raw SQL knowledge is never actually needed once you have an ORM","An ORM generates queries on your behalf, and when a generated query doesn't do what you expected, understanding the underlying SQL is what lets you actually debug it","ORMs do not use SQL at all internally","Learning SQL is only useful for database administrators, not application developers"], correct:1, explain:"An ORM is a convenience layer, not a replacement for understanding what's actually happening — when its abstraction leaks (a slow or wrong query), the underlying SQL knowledge is what lets you diagnose and fix it."}
+  ],
+  milestone:"Your API now persists real data in a proper database with migrations/schema, not in-memory arrays."
+},
+{
+  n:7, title:"Full-Stack Integration &amp; Deployment",
+  goal:"Connect the frontend you built in Cut I to the backend you built this cut. Learn real deployment: environment variables, CORS, and a live production full-stack app.",
+  lesson:"<p>A frontend and backend that both work perfectly in isolation can still fail to talk to each other in production -- usually because of CORS, environment configuration, or an auth flow that worked locally but breaks across two separately-deployed services. This week is about the specific seams where \"it works on my machine\" most often breaks.</p><pre>// Express: explicitly allow your frontend's real origin\napp.use(cors({ origin: \"https://your-frontend.vercel.app\" }));\n\n// NOT this in production:\napp.use(cors({ origin: \"*\" })); // allows literally any site to call your API</pre><div class=\"callout\"><b>Why CORS exists at all:</b> without it, any website could silently make authenticated requests to your API using a logged-in user's browser session. CORS is the browser enforcing that your API explicitly opts in to which origins are allowed to call it -- it is a security boundary, not an annoying obstacle to disable.</div><p>Where you store an auth token matters more than it seems: localStorage is simple but readable by any JavaScript running on the page (including an XSS attack), while an httpOnly cookie is invisible to JavaScript entirely, which is meaningfully safer for anything beyond a learning project.</p>",
+  days:[
+    ["Mon","<b>Connecting front + back</b> — fetch/axios from React to your Express API, handling CORS."],
+    ["Tue","<b>Auth in the frontend</b> — storing tokens, protected routes in React, auth context."],
+    ["Wed","<b>Error &amp; loading states</b> — proper UX for slow/failed requests, optimistic updates."],
+    ["Thu","<b>Environment config</b> — .env files, separating dev/prod config, secrets hygiene."],
+    ["Fri","<b>Deployment</b> — backend on Render/Railway, frontend on Vercel, connecting them in production."],
+    ["Sat","<b>Build day</b> — finish wiring + deploy the full stack."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://render.com/docs" target="_blank">Render docs</a>', "simplest free path to deploy a Node/Express backend"],
+    ['<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank">MDN — CORS explained</a>', "understand this before fighting it in production"],
+    ['<a href="https://12factor.net/config" target="_blank">The Twelve-Factor App — Config</a>', "why secrets/config never belong in code"]
+  ],
+  project:"Take your Week 5–6 API and Cut I React frontend and merge them into one full-stack app, deployed live: React on Vercel, API on Render/Railway, real auth flow working end-to-end in production.",
+  quiz:[
+    {q:"What is CORS, in one line?", opts:["A database query language","A browser security rule that blocks cross-origin requests unless the server explicitly allows them","A CSS layout system","A JavaScript testing framework"], correct:1, explain:"CORS is the browser's cross-origin gatekeeper — your API must send headers explicitly permitting your frontend's origin."},
+    {q:"Why does CORS exist as a browser security mechanism, rather than being purely an inconvenience to bypass?", opts:["CORS has no real security purpose, it's legacy complexity","Without it, any website could use a logged-in user's browser session to silently make authenticated requests to your API — CORS forces your API to explicitly opt in to which origins may call it","CORS only affects which fonts a page can load","CORS is a frontend-only concept with no backend implications"], correct:1, explain:"CORS is the browser's enforcement mechanism for cross-origin trust — treating it as an obstacle to disable (origin: '*') removes a real security boundary rather than fixing an actual problem."},
+    {q:"Why might storing an auth token in an httpOnly cookie be meaningfully safer than storing it in localStorage?", opts:["There is no real safety difference between the two","An httpOnly cookie is inaccessible to JavaScript running on the page, so a cross-site-scripting (XSS) vulnerability elsewhere on the site cannot steal it the way it could steal a token sitting in localStorage","localStorage tokens expire automatically for security","httpOnly cookies cannot be used for authentication at all"], correct:1, explain:"localStorage is readable by any JavaScript that runs on your page, including injected malicious script from an XSS bug. An httpOnly cookie is simply invisible to JavaScript, closing off that entire attack path for the token itself."}
+  ],
+  milestone:"A single full-stack application — real frontend, real backend, real database — live in production with working auth."
+},
+{
+  n:8, title:"Testing, Performance &amp; Security",
+  goal:"Learn what separates a tutorial project from something you'd actually hand to a paying client: basic testing, performance sense, and security hygiene.",
+  lesson:"<p>The gap between a tutorial project and something you would hand to a paying client is mostly invisible at first glance: does it have tests that would catch a regression, does it load reasonably fast on a real connection, and has anyone actually thought about what a malicious or just careless input could do to it. None of this is about adding features -- it is about proving the features you already built actually hold up.</p><pre>// a test that would catch a real regression\ntest('calculates order total correctly', () => {\n  expect(calculateTotal([{price: 10, qty: 2}, {price: 5, qty: 1}])).toBe(25);\n});</pre><div class=\"callout\"><b>Not everything deserves a test.</b> Testing trivial code (a component that just renders static text) wastes effort; testing the logic that would actually cause a real, costly bug if it broke silently (price calculations, auth checks, data transformations) is where tests earn their keep. Be deliberate about what you test, not exhaustive.</div><p>SQL injection and XSS are not exotic, rare attacks -- they are the default outcome of trusting user input without validating or escaping it. Parameterized queries (which your ORM handles for you) and escaping output are not advanced security measures, they are the baseline that makes an app safe to put in front of real users.</p>",
+  days:[
+    ["Mon","<b>Testing basics</b> — unit tests with Vitest/Jest, what's worth testing."],
+    ["Tue","<b>API testing</b> — integration tests for your Express routes (Supertest)."],
+    ["Wed","<b>Frontend performance</b> — lazy loading, memoization, image optimization, Lighthouse audits."],
+    ["Thu","<b>Security basics</b> — input validation, SQL injection/XSS awareness, rate limiting, HTTPS."],
+    ["Fri","<b>Code quality</b> — ESLint/Prettier, meaningful commits, README writing."],
+    ["Sat","<b>Build day</b> — add tests + fix Lighthouse issues on your Week 7 project."],
+    ["Sun","<b>Review + ship. CUT II milestone check.</b>"]
+  ],
+  resources:[
+    ['<a href="https://vitest.dev/guide/" target="_blank">Vitest guide</a>', "fast, modern test runner for JS/React"],
+    ['<a href="https://web.dev/learn/performance" target="_blank">web.dev — Learn Performance</a>', "structured, practical performance course"],
+    ['<a href="https://owasp.org/www-project-top-ten/" target="_blank">OWASP Top 10</a>', "the standard checklist of what to defend against"]
+  ],
+  project:"Add a test suite (frontend + API) to your Week 7 app, run a Lighthouse audit and fix the top 3 issues, and write a proper README a stranger could deploy from.",
+  quiz:[
+    {q:"What is the core idea behind a rate limiter on an API?", opts:["It makes the API faster","It caps how many requests a client can make in a time window, to prevent abuse/brute force","It compresses responses","It's a caching layer"], correct:1, explain:"Rate limiting throttles request volume per client/IP — a basic defense against abuse and brute-force attacks."},
+    {q:"Why is it a mistake to try to test every single piece of code with equal effort?", opts:["Testing everything equally is always the correct, most professional approach","Trivial code (like a component rendering static text) gains little from a test, while logic that would cause a real, costly bug if it broke silently (price calculations, auth checks) is where testing effort actually pays off","Tests should only ever be written for the frontend, never the backend","Writing any tests at all is unnecessary for a client project"], correct:1, explain:"Testing effort is a resource — spending it uniformly means under-testing the genuinely risky logic while over-testing code that was never likely to silently break in a costly way. Being deliberate about what to test matters more than being exhaustive."},
+    {q:"Why are SQL injection and XSS described as attacks that happen 'by default' rather than rare, exotic events?", opts:["They are extremely rare and only affect very old systems","Any input field used in a query or rendered on a page without proper handling is vulnerable by default — safety requires deliberately parameterizing queries and escaping output, not an advanced extra step","Modern frameworks make these attacks impossible automatically, with no effort required","These vulnerabilities only affect sites with poor visual design"], correct:1, explain:"Unvalidated, unescaped user input flowing into a query or into rendered HTML is the literal mechanism of both attacks — they are not edge cases, they are what happens by default unless you deliberately guard against them."}
+  ],
+  milestone:"CUT II COMPLETE — a tested, reasonably secure, performance-checked full-stack app with a client-readable README."
+}
+]},
+{cut:"Cut III — Setting", title:"Mounting the Gem", weeks:[
+{
+  n:9, title:"Freelance &amp; Agency Fundamentals",
+  goal:"Learn the business mechanics that make skill sellable: pricing, scoping, contracts, and invoicing — with an India-specific lens for A&amp;A Creations.",
+  lesson:"<p>The business mechanics of freelancing are a separate skill from the development work itself, and most technically skilled people learn them the expensive way -- a scope that silently grew without a change order, a client who disappeared without paying a deposit, an invoice format that confused a client into delaying payment. A clear scope of work and a basic contract exist specifically to prevent the most common and most costly of these situations before they happen.</p><pre># the 5 clauses every freelance contract needs, at minimum\n1. Scope        — exactly what is and isn't included\n2. Payment      — amount, schedule, late-payment terms\n3. Revisions    — how many rounds are included, what costs extra\n4. IP ownership — who owns the final work, and when (usually: on full payment)\n5. Termination  — what happens if either side wants to stop early</pre><div class=\"callout\"><b>Scope creep is rarely a client acting in bad faith</b> -- it is usually a client who genuinely does not know where the agreed boundary was, because it was never written down clearly. A written scope of work is a tool that protects the relationship, not just your income.</div><p>For India-specific freelance/agency work, GST registration becomes relevant once your turnover crosses the threshold, and even before that, invoices with consistent, professional formatting (your business details, a clear description, payment terms) measurably speed up how quickly clients actually pay.</p>",
+  days:[
+    ["Mon","<b>Pricing models</b> — hourly vs fixed-price vs value-based pricing, and when to use each."],
+    ["Tue","<b>Scoping</b> — writing a scope of work that prevents scope creep before it starts."],
+    ["Wed","<b>Contracts</b> — the 5 clauses every freelance contract needs (scope, payment terms, revisions, IP ownership, termination)."],
+    ["Thu","<b>Invoicing &amp; payments (India)</b> — GST basics for freelancers/agencies, invoice format, payment gateways (Razorpay/UPI), late-payment terms."],
+    ["Fri","<b>Proposal writing</b> — structuring a proposal that reads as a solution, not a menu."],
+    ["Sat","<b>Build day</b> — draft your own contract + proposal templates for A&amp;A Creations."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.bonsai.com/blog/freelance-contract" target="_blank">Bonsai — Freelance contract guide</a>', "clause-by-clause breakdown"],
+    ['<a href="https://cleartax.in/s/gst-for-freelancers" target="_blank">ClearTax — GST for freelancers (India)</a>', "India-specific tax context for freelance/agency invoicing"],
+    ['<a href="https://www.indiehackers.com/" target="_blank">Indie Hackers</a>', "real founder/freelancer stories on pricing and getting clients"]
+  ],
+  project:"Draft a reusable Statement-of-Work template, a 1-page freelance contract, and a GST-compliant invoice template — all branded for A&A Creations.",
+  quiz:[
+    {q:"What's the main risk of pure hourly pricing for the client relationship?", opts:["It's illegal","It can misalign incentives — you're paid more the slower you work, and the client feels that", "It's always more profitable for you","There is no risk"], correct:1, explain:"Hourly billing can make clients nervous about efficiency; value/fixed pricing often builds more trust and can pay better for skilled work."},
+    {q:"Why is scope creep usually better understood as a communication failure rather than a client acting in bad faith?", opts:["Scope creep is always deliberate client dishonesty","A client who asks for 'just one more small thing' often genuinely doesn't know where the agreed boundary was, because it was never written down clearly in the first place","Scope creep cannot be prevented by any contract","Scope creep only happens with inexperienced clients"], correct:1, explain:"Most scope creep happens because the boundary was fuzzy, not because anyone intended to exploit it. A written scope of work removes that ambiguity for both sides, which is why it protects the relationship, not just your income."},
+    {q:"Why does IP ownership typically transfer to the client only upon full payment, rather than immediately upon delivery?", opts:["IP ownership terms have no real legal or practical effect","Tying ownership transfer to full payment gives the freelancer real leverage if a client tries to use the delivered work without paying the remaining balance","Clients always own the work from the moment it's delivered regardless of payment","This clause is purely a formality with no enforcement value"], correct:1, explain:"If ownership transferred on delivery regardless of payment, a client could use or publish the work and simply never pay the remaining balance — tying ownership to full payment is the practical leverage that clause exists to provide."}
+  ],
+  milestone:"A complete, reusable contract + proposal + invoice template set for A&A Creations."
+},
+{
+  n:10, title:"Portfolio, Positioning &amp; Case Studies",
+  goal:"Turn your Cut I–II projects into a portfolio that sells, and pick a clear niche instead of being 'a web developer who does everything.'",
+  lesson:"<p>\"I build websites\" competes with every other developer who can say the same sentence. \"I build catalog and ordering sites for jewellery brands\" competes with almost no one, because it signals specific, relevant expertise to exactly the client who needs it -- and specificity is what actually justifies higher pricing, not broader claimed capability.</p><pre># generic positioning vs specific positioning\n\"Full-stack developer available for projects\"              — competes with thousands\n\"I build catalog + ordering systems for jewellery brands\"   — speaks directly to one buyer's exact problem</pre><div class=\"callout\"><b>A case study is not a project description, it is an argument.</b> \"Built a website using React\" describes what you did. \"This client was losing orders to a confusing checkout; I rebuilt it and simplified the flow\" argues that you solve a specific, valuable problem -- which is what actually gets someone to hire you, not a tech-stack list.</div><p>Social proof (even 2-3 testimonials from small early projects) works because it transfers trust from someone who has already taken the risk of hiring you to someone who has not yet decided to -- it answers the unspoken question \"has this actually worked for someone like me\" before a prospect has to ask it.</p>",
+  days:[
+    ["Mon","<b>Niche selection</b> — why 'websites for local jewellery/SMB businesses' beats 'I build websites'."],
+    ["Tue","<b>Case study writing</b> — problem → approach → result structure, even for practice projects."],
+    ["Wed","<b>Portfolio site v3</b> — rebuild your portfolio around the niche + case studies, not just a project list."],
+    ["Thu","<b>Personal brand</b> — LinkedIn/X presence, the diacrownmedia angle, consistent visual identity."],
+    ["Fri","<b>Social proof</b> — getting your first 2–3 testimonials, even from small/free early projects."],
+    ["Sat","<b>Build day</b> — finish and deploy Portfolio v3."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.designjoy.co/" target="_blank">Design Joy (case study reference)</a>', "example of tight niche + positioning done well"],
+    ['<a href="https://www.indiehackers.com/post/how-i-niched-down-and-tripled-my-rates" target="_blank">Indie Hackers — niching down</a>', "concrete story on the pricing power of a clear niche"]
+  ],
+  project:"Rebuild your portfolio (Portfolio v3) around a specific niche and 2–3 real case studies from your own Cut I/II projects or CAD/World Shiner work, written in problem → approach → result form.",
+  quiz:[
+    {q:"Why does niching down (e.g. 'sites for jewellery brands') often let you charge more, not less?", opts:["It doesn't — broad is always better","A specialist reads as lower-risk and higher-expertise for that specific client's exact problem","Niching is only for hobbyists","Clients always prefer generalists"], correct:1, explain:"Specificity signals expertise in the client's exact context, which reduces perceived risk and justifies higher pricing."},
+    {q:"Why does a specific niche tend to outperform a broad claim in actually winning work, beyond just sounding more focused?", opts:["Broad positioning always wins more clients in practice","A specific niche signals directly relevant expertise to exactly the buyer who has that problem, reducing their perceived risk in hiring you — broad claims compete with everyone and stand out to no one","Niching down is only useful for very experienced developers","Clients never care about relevant experience, only price"], correct:1, explain:"A buyer with a jewellery-brand website problem reads 'sites for jewellery brands' as directly relevant, lower-risk expertise. The same buyer reads a generic claim as undifferentiated — one of many identical options."},
+    {q:"Why does a case study written as 'problem → approach → result' work better than a plain project description?", opts:["It's purely a stylistic preference with no persuasive difference","A plain description states what you did; a problem/approach/result structure argues that you solve a specific, valuable problem — which is what actually convinces a prospect to hire you","Case studies should never mention the client's original problem","Technical stack details always matter more than outcomes to a client"], correct:1, explain:"A prospect isn't persuaded by a list of technologies used — they're persuaded by evidence that you can solve THEIR kind of problem. The problem/approach/result structure makes that argument explicitly instead of leaving it implied."}
+  ],
+  milestone:"Portfolio v3 live: niche-focused, with 2–3 real case studies in problem/approach/result format."
+},
+{
+  n:11, title:"Client Acquisition",
+  goal:"Learn to actually get clients — cold outreach, warm-network leverage (including your existing jewellery-industry contacts), and writing proposals that convert.",
+  lesson:"<p>Generic cold outreach fails for a simple, consistent reason: it reads as mass-sent, and a prospect can tell within one sentence whether a message was actually about their specific business or copy-pasted to fifty other people that same morning. The entire skill of effective outreach is demonstrating, in the first two sentences, that you understand something real and specific about them.</p><pre># generic (gets ignored)\n\"Hi, I build websites, let me know if you need one!\"\n\n# specific (gets a reply)\n\"Hi [name], I noticed [specific business]'s site doesn't show live inventory —\nI build catalog systems for jewellery brands and wanted to share how [X] solved exactly this.\"</pre><div class=\"callout\"><b>A discovery call's real job is uncovering budget and real pain, not just gathering a feature list.</b> \"What features do you want\" gets you a wishlist. \"What's it costing you that this doesn't exist yet\" gets you the actual business reason they would pay to solve it -- which is also what tells you whether this is a real, fundable project or not.</div><p>A retainer relationship (ongoing monthly work) is dramatically more valuable than a string of one-off projects, not just for income stability but because an existing, trusted relationship is far easier to sell additional work into than a brand-new cold prospect.</p>",
+  days:[
+    ["Mon","<b>Lead sources</b> — local SMBs, your existing jewellery-industry network, Upwork/Fiverr vs direct outreach."],
+    ["Tue","<b>Cold outreach</b> — writing a first message that isn't ignored (email/LinkedIn/WhatsApp business)."],
+    ["Wed","<b>Discovery calls</b> — questions that uncover real budget and real pain, not just 'what do you want.'"],
+    ["Thu","<b>Proposal → close</b> — following up without being annoying, handling price objections."],
+    ["Fri","<b>Upselling &amp; retainers</b> — turning a one-off site into an ongoing maintenance/retainer relationship."],
+    ["Sat","<b>Build day</b> — send 10 real outreach messages using your Week 9–10 materials."],
+    ["Sun","<b>Review + ship.</b>"]
+  ],
+  resources:[
+    ['<a href="https://www.smartpassiveincome.com/" target="_blank">Smart Passive Income (blog)</a>', "practical outreach and offer-building content"],
+    ['<a href="https://www.copyhackers.com/blog/cold-email" target="_blank">Copyhackers — cold email frameworks</a>', "study 2–3 real templates, adapt one to your niche"],
+    ['<a href="https://www.copyblogger.com/" target="_blank">Copyblogger</a>', "writing persuasively without sounding salesy"]
+  ],
+  project:"Identify 15 real prospects (local SMBs or jewellery-industry contacts), send 10 personalized outreach messages, and book at least 1 real discovery call.",
+  quiz:[
+    {q:"What's usually the biggest problem with generic cold outreach ('Hi, I build websites, let me know if interested')?", opts:["It's too polite","It shows no specific understanding of that prospect's actual business or problem", "It's too long","It uses too much technical jargon"], correct:1, explain:"Generic pitches read as mass-sent and get ignored; specificity about the prospect's actual situation is what earns a reply."},
+    {q:"Why does a discovery call question like 'what's this costing you by not existing yet' tend to be more useful than 'what features do you want'?", opts:["Both questions are functionally identical","The features question produces a wishlist, while the cost question surfaces the actual business pain driving the purchase decision, which tells you whether the project is real and fundable","Asking about cost is considered rude and should be avoided","Feature questions are always more useful for scoping a project"], correct:1, explain:"A feature wishlist doesn't tell you whether a prospect is actually going to pay to solve their problem. Uncovering the real cost of the status quo reveals the actual motivation and budget reality behind the request."},
+    {q:"Why is an ongoing retainer relationship typically more valuable than a series of one-off projects, beyond just providing steadier income?", opts:["Retainers are not actually more valuable, this is a myth","An existing, trusted relationship is far easier to sell additional work into than cold-acquiring a brand-new prospect each time, which lowers the ongoing cost of winning work","One-off projects always pay better per hour than retainers","Retainers eliminate the need for any client communication"], correct:1, explain:"Acquiring a new client is expensive in time and effort compared to selling more work to an existing, satisfied one — a retainer compounds the value of the trust you've already built, rather than starting the sales process over each time."}
+  ],
+  milestone:"At least one real discovery call booked with a genuine prospect."
+},
+{
+  n:12, title:"Agency Ops, Scale &amp; Capstone Launch",
+  goal:"Close the program by turning everything — dev skill, portfolio, pipeline — into a running agency: A&A Creations, live, with a real pricing structure and a first pitch delivered.",
+  lesson:"<p>This final week is not about learning a new skill — it is about proving that development ability, a positioned portfolio, and a real client-acquisition pipeline (the last eleven weeks) actually combine into something that functions as a real, if small, agency: A&amp;A Creations able to quote, deliver, and get paid for real client work, not just a personal collection of practice projects.</p><div class=\"callout\"><b>Packaging services into 2-3 fixed tiers solves a real sales friction point:</b> a prospect facing a fully custom quote has to wait and wonder; a prospect facing \"Starter / Growth / Custom\" can self-select instantly, which measurably speeds up the decision to buy, even though you can always still quote custom above the published tiers.</div><p>Knowing when to bring in outside help (a designer, a content writer) rather than doing everything yourself is itself a business skill — the honest question is not \"can I learn to do this myself\" but \"does doing this myself, instead of delegating it, actually serve the client or the business better right now.\"</p>",
+  days:[
+    ["Mon","<b>Workflow &amp; tools</b> — project management (Notion/Trello), client communication cadence, file handoff process."],
+    ["Tue","<b>Service packaging</b> — turning custom work into 2–3 fixed packages (e.g. 'SMB starter site', 'jewellery brand site + catalog')."],
+    ["Wed","<b>Delegation &amp; hiring basics</b> — when to bring in help (design/content), briefing a freelancer clearly."],
+    ["Thu","<b>A&amp;A Creations site build</b> — finalize the agency's own site: services, pricing, case studies, contact."],
+    ["Fri","<b>Capstone prep</b> — assemble everything into one real client pitch (deck or one-pager + proposal)."],
+    ["Sat","<b>Capstone day</b> — deliver the pitch to a real prospect."],
+    ["Sun","<b>Program review</b> — what shipped, what's next, plan month 4+."]
+  ],
+  resources:[
+    ['<a href="https://www.notion.so/templates/category/agency" target="_blank">Notion — agency templates</a>', "ready-made client/project tracking boards"],
+    ['<a href="https://www.indiehackers.com/post/pricing-packages-for-agencies" target="_blank">Indie Hackers — agency pricing packages</a>', "how small agencies structure fixed-price tiers"]
+  ],
+  project:"Launch the public A&A Creations site with clear service packages and pricing, and deliver one complete, real client pitch (proposal + contract + invoice, all from your own templates) before the program ends.",
+  quiz:[
+    {q:"Why package services into 2–3 fixed tiers instead of always quoting custom?", opts:["Fixed tiers are illegal to change","It speeds up sales decisions and sets clear client expectations up front, while still allowing custom quotes above them", "Custom pricing is always better","Tiers remove the need for contracts"], correct:1, explain:"Clear packages reduce decision friction for prospects and set expectations, while a custom tier still covers bigger scopes."},
+    {q:"Why does packaging services into 2-3 fixed tiers (rather than only ever quoting fully custom) tend to speed up sales?", opts:["Fixed tiers are required by law for service businesses","A prospect facing clear published tiers can self-select and decide quickly, while a prospect facing an unknown custom quote has to wait and is more likely to hesitate or shop around during that wait","Fixed tiers always generate more revenue per client than custom quotes","Custom quotes are impossible once tiers exist"], correct:1, explain:"Decision friction costs you prospects — every day a prospect waits for a custom quote is a day they might find or consider another option. Clear tiers let the easy cases decide fast, while custom scope remains available for anything bigger."},
+    {q:"What is the honest question to ask before deciding whether to delegate a task (like design or content) rather than do it yourself?", opts:["Whether you are technically capable of learning to do it yourself eventually","Whether doing it yourself, instead of delegating it, actually serves the client or the business better right now — not simply whether you could learn to do it","Whether delegating is always cheaper in the short term","Whether the client would notice who did the work"], correct:1, explain:"Capability to learn something is not the same question as whether learning it right now, instead of delegating, is the best use of your time for this specific client and business stage — conflating the two often leads to false economy."}
+  ],
+  milestone:"CAPSTONE — A&A Creations is live with real service packages, and one complete real-world pitch has been delivered end-to-end."
+}
+]}
+];
+
+/* ============ PROGRESS PERSISTENCE (localStorage) ============ */
+const PROGRESS_KEY = 'benchProgress_v2';
+function loadCompletedWeeks(){
+  try { return new Set(JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveCompletedWeeks(){
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify([...state.completedWeeks])); } catch(e){}
+}
+
+const state = {
+  currentWeek: 1,
+  completedWeeks: loadCompletedWeeks(),
+  answeredQuizzes: {} // weekNum -> Set of question indices answered
+};
+
+const ALL_WEEKS = CURRICULUM.flatMap(c => c.weeks.map(w => ({...w, cut:c.cut})));
+const TOTAL_WEEKS = ALL_WEEKS.length;
+
+/* ============ RENDER: SIDEBAR ============ */
+function renderSidebar(){
+  const nav = document.getElementById('weekNav');
+  nav.innerHTML = '';
+  CURRICULUM.forEach(group => {
+    const li = document.createElement('li');
+    li.className = 'cut-group';
+    const label = document.createElement('div');
+    label.className = 'cut-label';
+    label.textContent = group.cut;
+    li.appendChild(label);
+    group.weeks.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'week-btn' + (w.n === state.currentWeek ? ' active' : '') + (state.completedWeeks.has(w.n) ? ' done' : '');
+      btn.innerHTML = `<span class="week-num">${state.completedWeeks.has(w.n) ? '' : w.n}</span><span class="week-title-mini">${w.title}</span>`;
+      btn.onclick = () => { state.currentWeek = w.n; renderAll(); window.scrollTo(0,0); };
+      li.appendChild(btn);
+    });
+    nav.appendChild(li);
+  });
+  updateProgressBar();
+}
+
+function updateProgressBar(){
+  const pct = Math.round((state.completedWeeks.size / TOTAL_WEEKS) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+/* ============ RENDER: MAIN ============ */
+function renderIntro(){
+  return `
+  <section class="hero-intro">
+    <span class="eyebrow">12-Week Program</span>
+    <h1 class="display">Cut, Craft &amp; Setting</h1>
+    <p class="lede">A stone isn't valuable until it's cut, faceted, polished, and set. This program treats your skills the same way: <b>Cut I</b> gives you raw frontend material, <b>Cut II</b> cuts and polishes it into a full stack, <b>Cut III</b> sets the finished piece into a running agency. Twelve weeks, one day off built into each.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><b>12</b><span>Weeks</span></div>
+      <div class="hero-stat"><b>3</b><span>Cuts / Phases</span></div>
+      <div class="hero-stat"><b>12</b><span>Shipped Milestones</span></div>
+      <div class="hero-stat"><b>1</b><span>Live Agency</span></div>
+    </div>
+    <button class="start-btn" onclick="state.currentWeek=1; renderAll(); window.scrollTo(0,0);">Begin Week 1 →</button>
+  </section>`;
+}
+
+function renderWeek(w){
+  const isDone = state.completedWeeks.has(w.n);
+  const idx = ALL_WEEKS.findIndex(x => x.n === w.n);
+  const prev = ALL_WEEKS[idx-1];
+  const next = ALL_WEEKS[idx+1];
+
+  const daysHtml = w.days.map(([label, topic]) => `
+    <li class="day-item">
+      <span class="day-label">${label}</span>
+      <span class="day-topic">${topic}</span>
+    </li>`).join('');
+
+  const resourcesHtml = w.resources.map(([link, note]) => `<li>${link} — <span style="opacity:.65">${note}</span></li>`).join('');
+
+  const quizHtml = w.quiz.map((q, qi) => {
+    const optsHtml = q.opts.map((opt, oi) => `<button class="quiz-opt" onclick="answerQuiz(${w.n},${qi},${oi},this)">${opt}</button>`).join('');
+    return `
+    <div class="quiz-card">
+      <div class="q">${qi+1}. ${q.q}</div>
+      <div class="quiz-opts" id="quiz-${w.n}-${qi}">${optsHtml}</div>
+      <div class="quiz-explain" id="explain-${w.n}-${qi}">${q.explain}</div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="week-header">
+      <span class="eyebrow">${w.cut} · Week ${w.n} of 12</span>
+      <h2 class="display">${w.title}</h2>
+      <p class="goal">${w.goal}</p>
+    </div>
+
+    <div class="section-block">
+      <h3>This Week, In Depth</h3>
+      <div class="lesson-block">${w.lesson}</div>
+    </div>
+
+    <div class="section-block">
+      <h3>Daily / Weekly Modules</h3>
+      <ul class="day-list">${daysHtml}</ul>
+    </div>
+
+    <div class="section-block">
+      <h3>Resources</h3>
+      <ul class="resource-list">${resourcesHtml}</ul>
+    </div>
+
+    <div class="section-block">
+      <h3>Practice Project</h3>
+      <div class="project-card">
+        <p>${w.project}</p>
+        <div class="ship">→ ship it publicly (GitHub / live URL) before moving on</div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3>Check Your Understanding</h3>
+      ${quizHtml}
+    </div>
+
+    <div class="section-block">
+      <h3>Milestone</h3>
+      <div class="milestone-box">
+        <div class="check ${isDone ? 'checked' : ''}" onclick="toggleMilestone(${w.n})"></div>
+        <div class="txt">
+          <b>${isDone ? 'Milestone complete' : 'Mark milestone complete'}</b>
+          <p>${w.milestone}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" ${prev ? '' : 'disabled'} onclick="${prev ? `state.currentWeek=${prev.n}; renderAll(); window.scrollTo(0,0);` : ''}">← Week ${prev ? prev.n : ''}</button>
+      <button class="nav-btn" ${next ? '' : 'disabled'} onclick="${next ? `state.currentWeek=${next.n}; renderAll(); window.scrollTo(0,0);` : ''}">Week ${next ? next.n : ''} →</button>
+    </div>
+  `;
+}
+
+function renderAll(){
+  const main = document.getElementById('main');
+  if (state.currentWeek === 0){
+    main.innerHTML = renderIntro();
+  } else {
+    const w = ALL_WEEKS.find(x => x.n === state.currentWeek);
+    main.innerHTML = renderWeek(w);
+  }
+  renderSidebar();
+}
+
+/* ============ INTERACTIONS ============ */
+function toggleMilestone(weekNum){
+  if (state.completedWeeks.has(weekNum)) state.completedWeeks.delete(weekNum);
+  else state.completedWeeks.add(weekNum);
+  saveCompletedWeeks();
+  renderAll();
+}
+
+function answerQuiz(weekNum, qIdx, optIdx, btnEl){
+  const week = ALL_WEEKS.find(w => w.n === weekNum);
+  const q = week.quiz[qIdx];
+  const container = document.getElementById(`quiz-${weekNum}-${qIdx}`);
+  const buttons = container.querySelectorAll('.quiz-opt');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === optIdx && optIdx !== q.correct) b.classList.add('wrong');
+  });
+  document.getElementById(`explain-${weekNum}-${qIdx}`).classList.add('show');
+}
+
+/* ============ INIT ============ */
+state.currentWeek = 0; // 0 = intro screen
+renderAll();
+</script>
+</body>
+</html>
