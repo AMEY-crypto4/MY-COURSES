@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="theme-color" content="#007ACC">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>JavaScript Fundamentals — Interactive Course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+:root{
+  --bg:#FFFFFF;
+  --bg-sidebar:#F3F3F3;
+  --bg-panel:#F8F8F8;
+  --border:#E1E1E1;
+  --text:#1E1E1E;
+  --text-dim:#6E6E6E;
+  --blue:#007ACC;
+  --blue-bright:#0098FF;
+  --blue-wash:rgba(0,122,204,.08);
+  --green:#1E874B;
+  --green-wash:rgba(30,135,75,.1);
+  --red:#CD3131;
+  --red-wash:rgba(205,49,49,.08);
+  --amber:#BF8803;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0; height:100%;}
+body{
+  background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;
+  -webkit-font-smoothing:antialiased; display:flex; flex-direction:column; height:100vh; overflow:hidden;
+}
+.mono{font-family:'JetBrains Mono', monospace;}
+button{font-family:'Inter', sans-serif;}
+code{font-family:'JetBrains Mono', monospace; background:var(--blue-wash); color:var(--blue); padding:1px 5px; border-radius:3px; font-size:.92em;}
+
+/* ---------- Title bar ---------- */
+.titlebar{
+  height:34px; flex:0 0 34px; background:#EDEDED; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 10px; gap:10px; font-size:12.5px; color:var(--text-dim);
+}
+.titlebar-dots{display:flex; gap:6px;}
+.titlebar-dots i{width:11px; height:11px; border-radius:50%; display:inline-block;}
+.titlebar-dots i:nth-child(1){background:#FF5F57;}
+.titlebar-dots i:nth-child(2){background:#FEBC2E;}
+.titlebar-dots i:nth-child(3){background:#28C840;}
+.titlebar-title{flex:1; text-align:center; font-weight:500;}
+.hamburger{display:none; background:none; border:none; font-size:18px; cursor:pointer; color:var(--text); padding:4px 8px;}
+@media (max-width:860px){ .hamburger{display:inline-block;} }
+
+/* ---------- App layout ---------- */
+.app{flex:1; display:flex; min-height:0; position:relative;}
+.activitybar{
+  width:46px; flex:0 0 46px; background:var(--bg-sidebar); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; padding-top:10px; gap:6px;
+}
+.activity-icon{
+  width:34px; height:34px; border:none; background:none; border-radius:5px; cursor:pointer;
+  font-size:17px; color:var(--text-dim); display:flex; align-items:center; justify-content:center;
+}
+.activity-icon:hover{color:var(--text); background:rgba(0,0,0,.05);}
+.activity-icon.active{color:var(--blue); border-left:2px solid var(--blue); border-radius:0;}
+@media (max-width:860px){ .activitybar{display:none;} }
+
+.sidebar{
+  width:270px; flex:0 0 270px; background:var(--bg-sidebar); border-right:1px solid var(--border);
+  overflow-y:auto; padding:14px 0;
+}
+.sidebar-header{font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--text-dim); padding:0 16px 10px;}
+.sidebar-tree{padding:0 6px;}
+.folder{margin-bottom:2px;}
+.folder-head{
+  display:flex; align-items:center; gap:6px; padding:6px 8px; font-size:12.5px; font-weight:600; color:var(--text);
+  cursor:pointer; border-radius:4px; user-select:none;
+}
+.folder-head:hover{background:rgba(0,0,0,.04);}
+.folder-chevron{font-size:10px; color:var(--text-dim); width:10px; transition:transform .12s;}
+.folder.collapsed .folder-chevron{transform:rotate(-90deg);}
+.folder-files{padding-left:18px;}
+.folder.collapsed .folder-files{display:none;}
+.file-item{
+  display:flex; align-items:center; gap:7px; padding:5px 8px; font-size:12.5px; color:var(--text-dim);
+  cursor:pointer; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.file-item:hover{background:rgba(0,0,0,.04); color:var(--text);}
+.file-item.active{background:var(--blue-wash); color:var(--blue); font-weight:600;}
+.file-dot{width:7px; height:7px; border-radius:50%; flex:0 0 7px; border:1.5px solid var(--text-dim); background:transparent;}
+.file-item.done .file-dot{background:var(--green); border-color:var(--green);}
+.file-item.active .file-dot{border-color:var(--blue);}
+.file-icon{font-size:12px; flex:0 0 14px; color:var(--amber);}
+.sidebar-overlay{display:none;}
+@media (max-width:860px){
+  .sidebar{position:fixed; top:34px; left:0; bottom:28px; z-index:40; transform:translateX(-100%); transition:transform .18s; box-shadow:2px 0 14px rgba(0,0,0,.15);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay{display:none; position:fixed; top:34px; left:0; right:0; bottom:28px; background:rgba(0,0,0,.25); z-index:39;}
+  .sidebar-overlay.open{display:block;}
+}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.tabbar{
+  height:36px; flex:0 0 36px; background:var(--bg-panel); border-bottom:1px solid var(--border);
+  display:flex; align-items:stretch; overflow-x:auto; overflow-y:hidden;
+}
+.tab{
+  display:flex; align-items:center; gap:8px; padding:0 10px; font-size:12.5px; color:var(--text-dim);
+  border-right:1px solid var(--border); cursor:pointer; white-space:nowrap; background:var(--bg-panel); flex:0 0 auto;
+}
+.tab.active{background:var(--bg); color:var(--text); border-top:2px solid var(--blue); padding-top:2px;}
+.tab .tab-close{opacity:.5; font-size:13px; padding:0 2px;}
+.tab .tab-close:hover{opacity:1; color:var(--red);}
+.tab-empty{display:flex; align-items:center; padding:0 12px; font-size:12.5px; color:var(--text-dim);}
+
+.editor-scroll{flex:1; overflow-y:auto; padding:30px 34px 60px;}
+@media (max-width:700px){ .editor-scroll{padding:18px 16px 48px;} }
+
+/* ---------- Welcome ---------- */
+.welcome{max-width:720px; margin:0 auto;}
+.welcome-badge{
+  display:inline-block; font-family:'JetBrains Mono'; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--blue); border:1px solid var(--blue); background:var(--blue-wash); padding:4px 10px; border-radius:3px;
+}
+.welcome h1{font-size:32px; font-weight:700; margin:16px 0 10px; letter-spacing:-.01em;}
+.welcome p.lede{font-size:15.5px; line-height:1.65; color:var(--text-dim); max-width:60ch;}
+.welcome-steps{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:28px 0;}
+@media (max-width:700px){ .welcome-steps{grid-template-columns:1fr 1fr;} }
+.welcome-step{border:1px solid var(--border); border-radius:5px; padding:14px; background:var(--bg-panel);}
+.welcome-step b{display:block; font-family:'JetBrains Mono'; color:var(--blue); font-size:12px; margin-bottom:6px;}
+.welcome-step span{font-size:13px; color:var(--text-dim); line-height:1.5;}
+.welcome-progress{margin:26px 0;}
+.welcome-progress .row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-dim); margin-bottom:6px;}
+.bar-track{height:7px; background:#E8E8E8; border-radius:4px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--blue); border-radius:4px; transition:width .4s;}
+.btn-primary{
+  background:var(--blue); color:#fff; border:none; font-weight:600; font-size:14.5px; padding:11px 22px;
+  border-radius:4px; cursor:pointer; margin-top:4px;
+}
+.btn-primary:hover{background:var(--blue-bright);}
+.course-map-note{margin-top:14px; font-size:12.5px; color:var(--text-dim); max-width:60ch; line-height:1.6;}
+
+/* ---------- Lesson ---------- */
+.lesson{max-width:800px; margin:0 auto;}
+.lesson-eyebrow{font-family:'JetBrains Mono'; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--amber);}
+.lesson h2{font-size:27px; font-weight:700; margin:10px 0 18px; letter-spacing:-.01em;}
+.concept{font-size:15px; line-height:1.68; color:#333; margin-bottom:16px;}
+.concept p{margin:0 0 10px;}
+.concept ul, .concept ol{margin:0 0 12px; padding-left:22px;}
+.concept li{margin-bottom:5px;}
+.concept pre{
+  background:#1E1E1E; color:#D4D4D4; font-family:'JetBrains Mono', monospace; font-size:12.8px;
+  padding:12px 15px; border-radius:5px; overflow-x:auto; line-height:1.6; margin:10px 0 14px;
+}
+.concept pre code{background:none; color:inherit; padding:0; font-size:1em;}
+.concept .callout{
+  border-left:3px solid var(--amber); background:rgba(191,136,3,.07); padding:9px 13px; margin:10px 0 14px;
+  font-size:14px; border-radius:0 4px 4px 0;
+}
+.concept .callout b{color:var(--amber);}
+.task{
+  background:var(--blue-wash); border:1px solid rgba(0,122,204,.25); border-radius:5px;
+  padding:12px 16px; font-size:14px; line-height:1.6; color:#1a1a1a; margin-bottom:20px;
+}
+.task strong{color:var(--blue);}
+
+.editor-toolbar{display:flex; align-items:center; gap:8px; margin-bottom:0; flex-wrap:wrap;}
+.toolbar-btn{
+  background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;
+  padding:7px 14px; border-radius:4px 4px 0 0; cursor:pointer; display:flex; align-items:center; gap:6px;
+}
+.toolbar-btn.run{background:var(--blue); color:#fff; border-color:var(--blue);}
+.toolbar-btn.run:hover{background:var(--blue-bright);}
+.toolbar-btn:not(.run):hover{background:rgba(0,0,0,.04);}
+.toolbar-spacer{flex:1;}
+
+.CodeMirror{
+  border:1px solid var(--border); font-family:'JetBrains Mono', monospace; font-size:13.5px; height:320px;
+}
+@media (max-width:700px){ .CodeMirror{height:240px;} }
+.CodeMirror-gutters{background:var(--bg-panel); border-right:1px solid var(--border);}
+.cm-s-default .cm-keyword{color:#0000FF;}
+.cm-s-default .cm-string{color:#A31515;}
+.cm-s-default .cm-comment{color:#008000; font-style:italic;}
+.cm-s-default .cm-number{color:#098658;}
+.cm-s-default .cm-def{color:#795E26;}
+.cm-s-default .cm-variable{color:#001080;}
+.cm-s-default .cm-property{color:#001080;}
+.cm-s-default .cm-atom{color:#0000FF;}
+
+.output-panel{border:1px solid var(--border); border-top:none; background:var(--bg-panel); border-radius:0 0 4px 4px; overflow:hidden;}
+.output-section-head{
+  font-family:'JetBrains Mono'; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);
+  padding:8px 14px 4px;
+}
+.output-log{
+  font-family:'JetBrains Mono'; font-size:13px; padding:4px 14px 12px; color:#333; min-height:20px; white-space:pre-wrap; word-break:break-word;
+}
+.output-log .empty{color:var(--text-dim); font-style:italic;}
+.output-log .err{color:var(--red);}
+.test-results{padding:2px 14px 12px; display:flex; flex-direction:column; gap:5px;}
+.test-row{display:flex; align-items:flex-start; gap:8px; font-size:13px; line-height:1.5;}
+.test-row .mark{flex:0 0 16px; font-weight:700;}
+.test-row.pass .mark{color:var(--green);}
+.test-row.fail .mark{color:var(--red);}
+.test-row.fail .detail{color:var(--text-dim); font-size:12px; display:block;}
+.success-banner{
+  margin-top:10px; background:var(--green-wash); border:1px solid rgba(30,135,75,.3); color:var(--green);
+  padding:10px 14px; border-radius:4px; font-size:13.5px; font-weight:600;
+}
+.timeout-banner{
+  margin-top:10px; background:var(--red-wash); border:1px solid rgba(205,49,49,.3); color:var(--red);
+  padding:10px 14px; border-radius:4px; font-size:13.5px;
+}
+.solution-box{margin-top:14px;}
+.solution-toggle{
+  background:none; border:1px dashed var(--border); color:var(--text-dim); font-size:12.5px; padding:7px 12px;
+  border-radius:4px; cursor:pointer;
+}
+.solution-toggle:hover{color:var(--text); border-color:var(--text-dim);}
+.solution-code{
+  display:none; margin-top:10px; background:#1E1E1E; color:#D4D4D4; font-family:'JetBrains Mono', monospace;
+  font-size:13px; padding:14px 16px; border-radius:4px; white-space:pre-wrap; line-height:1.6;
+}
+.solution-code.show{display:block;}
+
+/* ---------- Predict UI ---------- */
+.predict-snippet .CodeMirror{height:auto; min-height:60px;}
+.predict-question{font-size:15px; font-weight:600; margin:18px 0 12px;}
+.predict-options{display:flex; flex-direction:column; gap:8px; margin-bottom:14px;}
+.predict-opt{
+  text-align:left; background:var(--bg-panel); border:1px solid var(--border); border-radius:5px;
+  padding:11px 14px; font-family:'JetBrains Mono'; font-size:13.5px; cursor:pointer; color:var(--text);
+}
+.predict-opt:hover{border-color:var(--blue);}
+.predict-opt.correct{background:var(--green-wash); border-color:var(--green); color:var(--green); font-weight:600;}
+.predict-opt.wrong{background:var(--red-wash); border-color:var(--red); color:var(--red);}
+.predict-explain{display:none; background:var(--blue-wash); border:1px solid rgba(0,122,204,.25); border-radius:5px; padding:13px 16px; font-size:14px; line-height:1.6; margin-bottom:14px;}
+.predict-explain.show{display:block;}
+.run-verify-btn{background:var(--bg); border:1px solid var(--border); font-size:13px; padding:8px 14px; border-radius:4px; cursor:pointer; margin-bottom:14px;}
+.run-verify-btn:hover{border-color:var(--blue); color:var(--blue);}
+
+.lesson-nav{display:flex; justify-content:space-between; margin-top:36px; padding-top:18px; border-top:1px solid var(--border);}
+.nav-btn{
+  background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:13.5px; padding:9px 16px;
+  border-radius:4px; cursor:pointer;
+}
+.nav-btn:hover{border-color:var(--blue); color:var(--blue);}
+.nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+/* ---------- Status bar ---------- */
+.statusbar{
+  height:26px; flex:0 0 26px; background:var(--blue); color:#fff; display:flex; align-items:center;
+  padding:0 14px; font-size:11.5px; font-family:'JetBrains Mono'; justify-content:space-between;
+}
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18); border-radius:99px;}
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <button class="hamburger" id="hamburgerBtn">☰</button>
+  <span class="titlebar-dots"><i></i><i></i><i></i></span>
+  <div class="titlebar-title">JavaScript Fundamentals — Interactive Course</div>
+  <div style="width:70px;"></div>
+</div>
+
+<div class="app">
+  <div class="activitybar">
+    <button class="activity-icon active" id="navExplorer" title="Explorer">🗀</button>
+    <button class="activity-icon" id="navHome" title="Home">⌂</button>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">EXPLORER</div>
+    <div class="sidebar-tree" id="sidebarTree"></div>
+  </div>
+  <div class="main">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="editor-scroll" id="editorScroll"></div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <span id="statusBreadcrumb">Welcome</span>
+  <span id="statusProgress">0 / 49 complete</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
+<script>
+/* ============================================================
+   MODULES & LESSONS
+   ============================================================ */
+const MODULES = [
+  { title: 'Getting Started & How JavaScript Thinks' },
+  { title: 'Operators & Control Flow Mastery' },
+  { title: 'Functions Deep Dive' },
+  { title: 'Strings In Depth' },
+  { title: 'Arrays Mastery' },
+  { title: 'Objects, Map & Set' },
+  { title: 'Error Handling & Debugging' },
+  { title: 'JSON, Modules & Browser APIs' },
+  { title: 'Object-Oriented Programming' },
+  { title: 'Iterators, Generators & Functional Tools' },
+  { title: 'Async, Leveling Up & Capstone' }
+];
+
+const LESSONS = [
+
+// ======================================================================
+// MODULE 0 — Getting Started & How JavaScript Thinks
+// ======================================================================
+{ id:'m1-l1', module:0, file:'01-how-js-runs.js', type:'explore', title:'What Is Code, and How Does JavaScript Actually Run?',
+  concept:'<p>A computer only understands extremely literal, low-level instructions. Code is how you write those instructions in a form a human can read and reason about. JavaScript is the one language every web browser understands natively: it is what makes a page react when you click something, validates a form before it submits, or updates part of a page without reloading it.</p><p>A JavaScript "engine" (like V8, the one inside Chrome and Node.js) reads your code and runs it, generally from top to bottom, one statement at a time. Unlike languages such as Java or C++, there is no separate compile step you manage yourself before running it.</p><div class="callout"><b>How this course actually works:</b> clicking Run below sends your code to a real, sandboxed JavaScript engine running inside your browser, executes it exactly as it would run on any website, and shows whatever your code logs in the Output panel. Every mistake you make here, and every error message you learn to read, is identical to real-world JavaScript development.</div>',
+  task:'',
+  starter:'// This is a comment -- JavaScript ignores it. Comments are notes for humans.\nconsole.log("Hello, world!");\nconsole.log("This line runs second, because it comes second.");\n\n// Add a third console.log() line below with anything you like, then click Run.\n',
+  solution:'console.log("Hello, world!");\nconsole.log("This line runs second, because it comes second.");\nconsole.log("This is the third line.");',
+  tests:[] },
+
+{ id:'m1-l2', module:0, file:'02-console-log-in-depth.js', type:'exercise', title:'console.log() In Depth',
+  concept:'<p><code>console.log()</code> is the single most-used tool in every JavaScript developer’s day, not just for showing a message but for answering the constant real-world question: "what does this variable actually contain right now?" Long before you reach for a real debugger, console.log() is how you check your own assumptions.</p><p>You can hand it several values separated by commas, and it prints them all on one line separated by spaces: <code>console.log("Score:", 90)</code> prints <code>Score: 90</code>. You can also log the result of an expression directly: <code>console.log(2 + 2)</code>.</p><pre>console.log("a", "b", "c");   <span style="color:#6A9955">// a b c</span>\nconsole.log(5 * 5);          <span style="color:#6A9955">// 25</span></pre>',
+  task:'Using the given variables, log name and score as two separate arguments to a single console.log() call (not a template literal). Then log the three numbers 1, 2, 3 as three separate arguments in one console.log() call.',
+  starter:'const name = "Amey";\nconst score = 87;\n\n// log name and score as two separate console.log() arguments\n\n\n// log 1, 2, 3 as three separate console.log() arguments\n\n',
+  solution:'const name = "Amey";\nconst score = 87;\nconsole.log(name, score);\nconsole.log(1, 2, 3);',
+  tests:[
+    { desc:'Logged at least two lines', check:'__logs.length >= 2' },
+    { desc:'One line reads exactly "Amey 87"', check:'__logs.includes("Amey 87")' },
+    { desc:'One line reads exactly "1 2 3"', check:'__logs.includes("1 2 3")' }
+  ]},
+
+{ id:'m1-l3', module:0, file:'03-variables-let-const.js', type:'exercise', title:'Variables: let, const & Dynamic Typing',
+  concept:'<p>Modern JavaScript gives you two ways to create a variable: <code>let</code> (can be reassigned later) and <code>const</code> (cannot be reassigned after it is set). <strong>Default to const</strong> for everything, and only reach for let when you genuinely know the value needs to change later -- this single habit prevents a large category of real bugs, because it is immediately obvious which variables are ever allowed to change.</p><pre>const name = "Amey";     <span style="color:#6A9955">// cannot be reassigned</span>\nlet score = 0;           <span style="color:#6A9955">// can be reassigned</span>\nscore = 10;               <span style="color:#6A9955">// fine, score was declared with let</span></pre><div class="callout"><b>A note on var:</b> you will see an older keyword, <code>var</code>, in a lot of existing JavaScript code. It has confusing scoping rules that let and const were specifically designed to fix (you will see exactly why in the closures lesson later in this course). In new code, there is essentially never a reason to use var.</div><p>JavaScript is <strong>dynamically typed</strong>: the SAME variable (declared with let) can point to a string, then later point to a number, with nothing special required -- the type belongs to the current value, not to the variable itself.</p>',
+  task:'Create a const productName set to "Desk Lamp", a let price set to 899.5, and a const inStock set to true. Then reassign price to the number 850. Finally create a const finalPrice equal to price.',
+  starter:'// Create productName, price, and inStock\n\n\n// Reassign price to 850\n\n\n// Create finalPrice equal to price\n\n',
+  solution:'const productName = "Desk Lamp";\nlet price = 899.5;\nconst inStock = true;\nprice = 850;\nconst finalPrice = price;',
+  tests:[
+    { desc:'productName is the string "Desk Lamp"', check:'productName === "Desk Lamp"' },
+    { desc:'inStock is true', check:'inStock === true' },
+    { desc:'price was reassigned to 850', check:'price === 850' },
+    { desc:'finalPrice matches the reassigned price', check:'finalPrice === 850' }
+  ]},
+
+{ id:'m1-l4', module:0, file:'04-typeof-predict.js', type:'predict', title:'typeof & Dynamic Typing — Predict the Output',
+  concept:'<p>Every value has a type, and the <code>typeof</code> operator reports it as a string. Because JavaScript is dynamically typed, what a <code>let</code> variable currently points to can change, and <code>typeof</code> always reports the CURRENT value’s type -- never a type the variable was "declared" with, because no such declaration exists.</p>',
+  task:'',
+  predict:{
+    snippet:'let x = 10;\nconsole.log(typeof x);\nx = "ten";\nconsole.log(typeof x);\nx = 10.5;\nconsole.log(typeof x);\nx = (10 === 10);\nconsole.log(typeof x);',
+    question:'What does the FOURTH line, after x = (10 === 10), print?',
+    options:['boolean','number','true','string'],
+    correctIndex:0,
+    afterExplain:'x = (10 === 10) first evaluates the comparison 10 === 10, which produces the boolean value true, and THEN stores that boolean in x. So typeof x reports "boolean", not "number". The same variable, x, pointed to a number, then a string, then a different number, then a boolean, across just four lines -- all perfectly legal.'
+  }},
+
+{ id:'m1-l5', module:0, file:'05-comments-readability.js', type:'exercise', title:'Comments & Writing Code Humans Can Read',
+  concept:'<p><code>//</code> starts a single-line comment; <code>/* ... */</code> wraps a comment across multiple lines. Comments exist for the next human who reads the code, which, very often, is you in six months with no memory of why you wrote something a certain way. Good comments explain <em>why</em> a piece of code exists, not just what it does line by line -- the code itself already says what it does.</p><pre><span style="color:#6A9955">/**\n * Returns the price after applying a percentage discount.\n */</span>\nfunction discountPrice(price, percentOff) {\n  return price * (1 - percentOff / 100);\n}</pre><div class="callout"><b>Industry habit:</b> a well-named function plus a short comment above it should let another developer use your function correctly without ever reading its implementation. This single habit is one of the fastest ways to look and work like an experienced engineer.</div>',
+  task:'Write a function circleArea with a short comment directly above it describing what it does. It should take radius and return the area using 3.14159 as an approximation of pi (area = pi * radius * radius).',
+  starter:'// add a short comment here describing what this function does\nfunction circleArea(radius) {\n  // your code here\n}',
+  solution:'// Returns the area of a circle given its radius.\nfunction circleArea(radius) {\n  return 3.14159 * radius * radius;\n}',
+  tests:[
+    { desc:'circleArea(2) is approximately 12.566', check:'Math.abs(circleArea(2) - 12.56636) < 0.01' },
+    { desc:'circleArea(0) === 0', check:'circleArea(0) === 0' }
+  ]},
+
+// ======================================================================
+// MODULE 1 — Operators & Control Flow Mastery
+// ======================================================================
+{ id:'m2-l1', module:1, file:'01-operators-deep-dive.js', type:'exercise', title:'Arithmetic & Comparison Operators Deep Dive',
+  concept:'<p>Arithmetic operators do math: <code>+ - * /</code> are the familiar four. <code>%</code> (modulo) gives you the remainder left over after division -- the classic use is checking if a number is even: <code>n % 2 === 0</code>. <code>**</code> raises to a power: <code>2 ** 10</code> is 1024.</p><div class="callout"><b>The single most important JavaScript rule in this entire course:</b> ALWAYS use <code>===</code> (strict equality) and <code>!==</code>, never <code>==</code> or <code>!=</code>. The loose versions silently convert types before comparing, producing famously confusing results like <code>"" == 0</code> being true. The strict versions compare both value AND type, with no surprises.</p><pre>0 == "0"     <span style="color:#6A9955">// true  -- loose equality converts types (AVOID)</span>\n0 === "0"    <span style="color:#6A9955">// false -- strict equality: a number is never a string</span></pre></div>',
+  task:'Given minutes, create hours (the whole number of hours using Math.floor and division by 60) and remainingMinutes (the leftover minutes using modulo 60). Then create inValidRange, true only if minutes is between 0 and 1440 inclusive, using strict comparisons and &&.',
+  starter:'const minutes = 135;\n// hours: whole hours using Math.floor(minutes / 60)\n\n\n// remainingMinutes: leftover minutes using modulo\n\n\n// inValidRange: true if 0 <= minutes <= 1440\n\n',
+  solution:'const minutes = 135;\nconst hours = Math.floor(minutes / 60);\nconst remainingMinutes = minutes % 60;\nconst inValidRange = minutes >= 0 && minutes <= 1440;',
+  tests:[
+    { desc:'hours equals 2', check:'hours === 2' },
+    { desc:'remainingMinutes equals 15', check:'remainingMinutes === 15' },
+    { desc:'inValidRange is true for 135 minutes', check:'inValidRange === true' }
+  ]},
+
+{ id:'m2-l2', module:1, file:'02-truthiness-predict.js', type:'predict', title:'Truthiness & Short-Circuiting — Predict the Output',
+  concept:'<p><code>&&</code> is only true when both sides are true; <code>||</code> is true if at least one side is true; <code>!</code> flips a boolean. JavaScript also gives every value a <strong>truthiness</strong>: <code>0</code>, <code>""</code> (empty string), <code>null</code>, <code>undefined</code>, and <code>NaN</code> are all "falsy." Everything else, including an empty array <code>[]</code> and empty object <code>{}</code>, is "truthy" (a common surprise coming from other languages).</p><p>JavaScript <strong>short-circuits</strong>: in <code>a && b</code>, if <code>a</code> is already falsy, <code>b</code> is never evaluated. The idiom <code>value || "default"</code> is extremely common for filling in a fallback. The newer <code>??</code> (nullish coalescing) is more precise: it only falls back when the left side is specifically <code>null</code> or <code>undefined</code>, not for other falsy values like 0 or an empty string.</p>',
+  task:'',
+  predict:{
+    snippet:'const username = "";\nconsole.log(username || "guest");\nconst count = 0;\nconsole.log(count ?? "no count");\nconsole.log(Boolean(0), Boolean(""), Boolean([1]), Boolean(null));',
+    question:'What does the SECOND line, console.log(count ?? "no count"), print?',
+    options:['0','no count','false','undefined'],
+    correctIndex:0,
+    afterExplain:'count is 0, which is falsy but is NOT null or undefined -- and ?? only falls back on null/undefined specifically. So count ?? "no count" correctly evaluates to 0 itself. This is exactly why ?? exists: "0 || \\"no count\\"" would have WRONGLY produced "no count", since 0 is falsy under ||.'
+  }},
+
+{ id:'m2-l3', module:1, file:'03-if-else-deep-dive.js', type:'exercise', title:'if / else if / else Deep Dive',
+  concept:'<p><code>if</code> runs a block only when its condition is true. <code>else if</code> checks another condition if the previous ones were false, and <code>else</code> catches everything else. Conditions are checked top to bottom, and the FIRST true one wins -- later ones are never even checked.</p><p>A pattern worth learning early is the <strong>guard clause</strong>: handle the edge case first and return immediately, instead of nesting your main logic inside a deep if/else pyramid.</p><pre><span style="color:#6A9955">// Harder to read: everything nested</span>\nfunction describe(n) {\n  if (n !== null) {\n    if (n >= 0) { return "non-negative"; }\n    else { return "negative"; }\n  } else { return "missing"; }\n}\n\n<span style="color:#6A9955">// Easier to read: guard clauses up front</span>\nfunction describe(n) {\n  if (n === null) return "missing";\n  if (n < 0) return "negative";\n  return "non-negative";\n}</pre>',
+  task:'Write gradeLabel(score) returning "A" for 90 or above, "B" for 80-89, "C" for 70-79, and "F" otherwise. Then write isValidScore(score) using a guard clause that returns false immediately if score is less than 0 or greater than 100, and true otherwise.',
+  starter:'function gradeLabel(score) {\n  // your code here\n}\n\nfunction isValidScore(score) {\n  // use a guard clause: return false immediately if out of range\n}',
+  solution:'function gradeLabel(score) {\n  if (score >= 90) return "A";\n  else if (score >= 80) return "B";\n  else if (score >= 70) return "C";\n  else return "F";\n}\n\nfunction isValidScore(score) {\n  if (score < 0 || score > 100) return false;\n  return true;\n}',
+  tests:[
+    { desc:'gradeLabel(95) === "A"', check:'gradeLabel(95) === "A"' },
+    { desc:'gradeLabel(82) === "B"', check:'gradeLabel(82) === "B"' },
+    { desc:'gradeLabel(71) === "C"', check:'gradeLabel(71) === "C"' },
+    { desc:'gradeLabel(40) === "F"', check:'gradeLabel(40) === "F"' },
+    { desc:'isValidScore(150) === false', check:'isValidScore(150) === false' },
+    { desc:'isValidScore(-5) === false', check:'isValidScore(-5) === false' },
+    { desc:'isValidScore(72) === true', check:'isValidScore(72) === true' }
+  ]},
+
+{ id:'m2-l4', module:1, file:'04-while-loops.js', type:'exercise', title:'while Loops & Loop Control',
+  concept:'<p>A <code>while</code> loop repeats as long as its condition stays true, checked again before every repetition. Use it when you do not know in advance how many times you need to repeat -- unlike a for loop over a fixed range, a while loop can run zero times, run forever (if you are not careful), or run an unpredictable number of times depending on what happens inside it.</p><pre>let count = 0;\nwhile (count < 3) {\n  console.log(count);\n  count++;   <span style="color:#6A9955">// without this line, the loop never ends</span>\n}</pre><div class="callout"><b>The #1 while-loop bug:</b> forgetting to update the variable the condition depends on, which creates an infinite loop that never ends. Every while loop needs something inside it that eventually makes the condition false.</div><p><code>break</code> exits a loop immediately. <code>continue</code> skips straight to the next repetition without running the rest of the loop body.</p>',
+  task:'Write collatzSteps(n), counting how many steps it takes for the classic Collatz sequence to reach 1: while n is not 1, if n is even divide it by 2, otherwise set n to 3*n + 1, and count each step. Return the step count.',
+  starter:'function collatzSteps(n) {\n  let steps = 0;\n  // your while loop here\n  return steps;\n}',
+  solution:'function collatzSteps(n) {\n  let steps = 0;\n  while (n !== 1) {\n    if (n % 2 === 0) {\n      n = n / 2;\n    } else {\n      n = 3 * n + 1;\n    }\n    steps++;\n  }\n  return steps;\n}',
+  tests:[
+    { desc:'collatzSteps(1) === 0 (already at 1)', check:'collatzSteps(1) === 0' },
+    { desc:'collatzSteps(6) === 8', check:'collatzSteps(6) === 8' },
+    { desc:'collatzSteps(27) === 111', check:'collatzSteps(27) === 111' }
+  ]},
+
+{ id:'m2-l5', module:1, file:'05-for-forof.js', type:'exercise', title:'for Loops & for...of Deep Dive',
+  concept:'<p>A classic <code>for</code> loop gives you full control: <code>for (let i = 0; i < 5; i++) { ... }</code> runs its body once per value of i. When you just want to visit every item of an array without managing an index manually, <code>for...of</code> is the cleaner, more modern, idiomatic choice:</p><pre>const names = ["Asha", "Ravi", "Zoe"];\nfor (const name of names) {\n  console.log(name);\n}\n<span style="color:#6A9955">// Asha, Ravi, Zoe -- no index bookkeeping needed</span></pre><p>When you need BOTH the item and its position, combine for...of with <code>.entries()</code>: <code>for (const [index, name] of names.entries())</code>. A loop can also carry an early exit with <code>break</code> the moment you find what you are looking for, which is more efficient than always checking every single item.</p>',
+  task:'Write firstIndexOver(nums, threshold), returning the index of the first number in nums that is strictly greater than threshold, using nums.entries() in a for...of loop and break. If no number qualifies, return -1.',
+  starter:'function firstIndexOver(nums, threshold) {\n  // use for (const [index, value] of nums.entries())\n  return -1;\n}',
+  solution:'function firstIndexOver(nums, threshold) {\n  for (const [index, value] of nums.entries()) {\n    if (value > threshold) return index;\n  }\n  return -1;\n}',
+  tests:[
+    { desc:'Finds the first qualifying index', check:'firstIndexOver([1,5,9,3], 4) === 1' },
+    { desc:'Returns -1 when nothing qualifies', check:'firstIndexOver([1,2,3], 10) === -1' },
+    { desc:'Works when the first item qualifies', check:'firstIndexOver([9,1,1], 5) === 0' }
+  ]},
+
+{ id:'m2-l6', module:1, file:'06-nested-loops.js', type:'exercise', title:'Nested Loops & Loop Patterns',
+  concept:'<p>A loop inside another loop is a <strong>nested loop</strong> -- for every single repetition of the outer loop, the entire inner loop runs start to finish. This is how you work with grid-like data, or compare every item in one list against every item in another.</p><pre>for (let row = 0; row < 3; row++) {\n  let line = "";\n  for (let col = 0; col < 3; col++) {\n    line += `(${row},${col}) `;\n  }\n  console.log(line);\n}</pre><div class="callout"><b>Why this matters:</b> nested loops are the natural first tool for comparing every item against every other item -- a very common real pattern, for example checking a list of orders against a list of valid coupon codes.</div>',
+  task:'Write commonElements(listA, listB), returning an array of every value that appears in BOTH listA and listB, using nested for...of loops. Preserve the order of first appearance in listA, and do not repeat a value twice in the result.',
+  starter:'function commonElements(listA, listB) {\n  const result = [];\n  // nested loops: for each item in listA, check if it appears in listB\n  return result;\n}',
+  solution:'function commonElements(listA, listB) {\n  const result = [];\n  for (const a of listA) {\n    for (const b of listB) {\n      if (a === b && !result.includes(a)) {\n        result.push(a);\n      }\n    }\n  }\n  return result;\n}',
+  tests:[
+    { desc:'Finds the shared values in order of first appearance', check:'JSON.stringify(commonElements([1,2,3,4],[3,4,5])) === JSON.stringify([3,4])' },
+    { desc:'Returns an empty array when nothing overlaps', check:'JSON.stringify(commonElements([1,2],[3,4])) === JSON.stringify([])' },
+    { desc:'Never duplicates a shared value in the result', check:'JSON.stringify(commonElements([1,1,2],[1,2])) === JSON.stringify([1,2])' }
+  ]},
+
+// ======================================================================
+// MODULE 2 — Functions Deep Dive
+// ======================================================================
+{ id:'m3-l1', module:2, file:'01-functions-return.js', type:'exercise', title:'Defining Functions & Returning Multiple Values',
+  concept:'<p>A function is a named, reusable block of instructions. <code>return</code> sends a value back to whoever called the function -- the moment return runs, the function stops immediately, even if there is more code written after it. A function with no return statement gives back <code>undefined</code> automatically.</p><p>JavaScript functions can only directly return ONE value, but that value can be an array or object bundling several related results together, which the caller can then destructure into separate names in one line:</p><pre>function minAndMax(nums) {\n  return [Math.min(...nums), Math.max(...nums)];\n}\n\nconst [lowest, highest] = minAndMax([4, 1, 9, 2]);\n<span style="color:#6A9955">// lowest is 1, highest is 9</span></pre>',
+  task:'Write square(n) returning n multiplied by itself. Then write minMax(nums), returning an array [min, max] using Math.min and Math.max with the spread operator.',
+  starter:'function square(n) {\n  // your code here\n}\n\nfunction minMax(nums) {\n  // return [min, max] as an array\n}',
+  solution:'function square(n) {\n  return n * n;\n}\n\nfunction minMax(nums) {\n  return [Math.min(...nums), Math.max(...nums)];\n}',
+  tests:[
+    { desc:'square(4) === 16', check:'square(4) === 16' },
+    { desc:'square(-3) === 9', check:'square(-3) === 9' },
+    { desc:'minMax returns [min, max] correctly', check:'JSON.stringify(minMax([4,1,9,2])) === JSON.stringify([1,9])' }
+  ]},
+
+{ id:'m3-l2', module:2, file:'02-defaults-destructuring.js', type:'exercise', title:'Parameters, Defaults & Destructuring in Function Signatures',
+  concept:'<p>A parameter can have a default value with <code>=</code> in the signature: <code>function greet(name, greeting = "Hello")</code> -- it is used automatically whenever the caller leaves that argument out. Unlike some languages, JavaScript evaluates a default value FRESH on every single call, so there is no risk of a default being silently shared or mutated across calls.</p><p>A very common, idiomatic modern-JavaScript pattern is <strong>destructuring directly in the parameter list</strong>, pulling specific fields straight out of an object argument, optionally with their own defaults:</p><pre>function describeUser({ name, role = "member" }) {\n  return `${name} (${role})`;\n}\n\ndescribeUser({ name: "Amey" });                 <span style="color:#6A9955">// "Amey (member)"</span>\ndescribeUser({ name: "Amey", role: "admin" });  <span style="color:#6A9955">// "Amey (admin)"</span></pre><div class="callout"><b>Why this matters:</b> real-world JavaScript, especially in frameworks like React, destructures function parameters constantly -- recognizing this pattern instantly is essential, not optional.</div>',
+  task:'Write greet(name, greeting = "Hello") returning a template literal like "Hello, Amey!". Then write describeUser({ name, role = "member" }), destructuring its single object argument directly in the parameter list, returning a template literal like "Amey (member)".',
+  starter:'function greet(name, greeting = "Hello") {\n  // your code here\n}\n\nfunction describeUser({ name, role = "member" }) {\n  // your code here\n}',
+  solution:'function greet(name, greeting = "Hello") {\n  return `${greeting}, ${name}!`;\n}\n\nfunction describeUser({ name, role = "member" }) {\n  return `${name} (${role})`;\n}',
+  tests:[
+    { desc:'greet("Amey") === "Hello, Amey!"', check:'greet("Amey") === "Hello, Amey!"' },
+    { desc:'greet("Amey","Hi") === "Hi, Amey!"', check:'greet("Amey","Hi") === "Hi, Amey!"' },
+    { desc:'describeUser uses the default role when none is given', check:'describeUser({name:"Amey"}) === "Amey (member)"' },
+    { desc:'describeUser uses the given role when provided', check:'describeUser({name:"Amey", role:"admin"}) === "Amey (admin)"' }
+  ]},
+
+{ id:'m3-l3', module:2, file:'03-rest-spread.js', type:'exercise', title:'Rest Parameters & the Spread Operator',
+  concept:'<p>A <strong>rest parameter</strong>, written <code>...args</code> as the last parameter, gathers any number of extra arguments into a real array, letting a function accept any number of inputs: <code>function sumAll(...nums)</code> can be called as <code>sumAll(1,2)</code> or <code>sumAll(1,2,3,4,5)</code>.</p><p>The <strong>spread operator</strong> looks identical (<code>...</code>) but does the opposite: it EXPANDS an array or object out into individual elements, used constantly for copying arrays, merging objects, or passing an array as separate arguments:</p><pre>const nums = [5, 2, 8];\nMath.max(...nums);        <span style="color:#6A9955">// 8 -- spreads the array into separate arguments</span>\nconst copy = [...nums, 10];  <span style="color:#6A9955">// [5, 2, 8, 10] -- a new array</span>\nconst merged = { ...{a:1}, ...{b:2} };  <span style="color:#6A9955">// {a:1, b:2}</span></pre>',
+  task:'Write sumAll(...nums) returning the sum of however many numbers are passed in. Then write addItem(item, basket), returning a BRAND NEW array equal to basket with item appended, using the spread operator (do not mutate the original basket with .push()).',
+  starter:'function sumAll(...nums) {\n  // your code here\n}\n\nfunction addItem(item, basket) {\n  // return a NEW array using the spread operator -- do not mutate basket\n}',
+  solution:'function sumAll(...nums) {\n  return nums.reduce((total, n) => total + n, 0);\n}\n\nfunction addItem(item, basket) {\n  return [...basket, item];\n}',
+  tests:[
+    { desc:'sumAll(1,2,3) === 6', check:'sumAll(1,2,3) === 6' },
+    { desc:'sumAll() === 0', check:'sumAll() === 0' },
+    { desc:'addItem returns a new array with the item appended', check:'JSON.stringify(addItem("x", ["a","b"])) === JSON.stringify(["a","b","x"])' },
+    { desc:'addItem does not mutate the original basket array', check:'(function(){ const original = ["a"]; addItem("b", original); return JSON.stringify(original) === JSON.stringify(["a"]); })()' }
+  ]},
+
+{ id:'m3-l4', module:2, file:'04-arrow-functions-this-predict.js', type:'predict', title:'Arrow Functions & this — Predict the Output',
+  concept:'<p>An arrow function is a shorter way to write a function: <code>const double = n => n * 2;</code>. For a single expression, the result is returned automatically with no explicit return keyword needed.</p><p>The one real, important difference from a regular function is how each handles <code>this</code>. A regular function gets its own <code>this</code>, determined by how it is called. An arrow function does NOT get its own <code>this</code> -- it uses whatever <code>this</code> was already in scope around it when it was created. This single difference is exactly why arrow functions are preferred for short callbacks, but can behave surprisingly inside an object method.</p>',
+  task:'',
+  predict:{
+    snippet:'const counter = {\n  count: 0,\n  incrementRegular: function() {\n    this.count++;\n    return this.count;\n  },\n  incrementArrow: () => {\n    this.count++;\n    return this.count;\n  }\n};\nconsole.log(counter.incrementRegular());\nconsole.log(typeof counter.incrementArrow());',
+    question:'What does the SECOND line, typeof counter.incrementArrow(), print (not what the count becomes)?',
+    options:['number','undefined','object','string'],
+    correctIndex:0,
+    afterExplain:'incrementArrow still runs and still returns a number from "this.count++" -- it does not crash. The surprising part (not asked here, but worth knowing) is that its "this" refers to the surrounding scope, not the counter object, so it increments a DIFFERENT, unintended count. That subtlety is exactly why object methods are usually written as regular functions, and arrow functions are reserved for short standalone callbacks.'
+  }},
+
+{ id:'m3-l5', module:2, file:'05-scope-closures-var-bug-predict.js', type:'predict', title:'Scope, Closures & the Classic var-in-a-Loop Bug — Predict the Output',
+  concept:'<p>A <strong>closure</strong> is a function that remembers the variables from the scope it was created in, even after that outer scope has finished running. This is incredibly useful -- and it is also the source of one of the most famous bugs in JavaScript history, caused by how <code>var</code> handles scope differently from <code>let</code>.</p><p><code>var</code> is function-scoped: ALL iterations of a loop share the exact same <code>var</code> binding. <code>let</code> is block-scoped: every single iteration gets its OWN fresh binding. This difference only matters when a closure (like a function saved for later) captures the loop variable:</p><pre><span style="color:#6A9955">// THE classic bug</span>\nconst funcsVar = [];\nfor (var i = 0; i < 3; i++) {\n  funcsVar.push(() => i);\n}\nconsole.log(funcsVar[0](), funcsVar[1](), funcsVar[2]());\n<span style="color:#6A9955">// 3 3 3 -- all three closures share the SAME final i</span>\n\n<span style="color:#6A9955">// the fix: let</span>\nconst funcsLet = [];\nfor (let j = 0; j < 3; j++) {\n  funcsLet.push(() => j);\n}\nconsole.log(funcsLet[0](), funcsLet[1](), funcsLet[2]());\n<span style="color:#6A9955">// 0 1 2 -- each closure has its own j</span></pre>',
+  task:'',
+  predict:{
+    snippet:'const funcs = [];\nfor (var i = 0; i < 3; i++) {\n  funcs.push(function() { return i; });\n}\nconsole.log(funcs[0](), funcs[1](), funcs[2]());',
+    question:'What does this program print?',
+    options:['3 3 3','0 1 2','0 0 0','undefined undefined undefined'],
+    correctIndex:0,
+    afterExplain:'var is function-scoped, so there is only ONE i shared by every single iteration and every closure saved inside funcs. By the time any of those saved functions actually runs, the loop has already finished and i has already reached 3 -- so all three print 3. Replacing var with let would print 0 1 2 instead, because let creates a brand new i for every iteration, and each closure remembers its OWN value.'
+  }},
+
+{ id:'m3-l6', module:2, file:'06-recursion.js', type:'exercise', title:'Recursion Basics',
+  concept:'<p>A <strong>recursive</strong> function is one that calls itself, solving a smaller version of the same problem each time, until it reaches a <strong>base case</strong> simple enough to answer directly without recursing further. Every recursive function needs two things: a base case that stops the recursion, and a recursive case that makes real progress toward that base case.</p><pre>function factorial(n) {\n  if (n <= 1) return 1;            <span style="color:#6A9955">// base case</span>\n  return n * factorial(n - 1);     <span style="color:#6A9955">// recursive case</span>\n}</pre><div class="callout"><b>Common mistake:</b> forgetting the base case, or writing a recursive call that does not actually move closer to it, which causes infinite recursion and crashes with "Maximum call stack size exceeded." Always ask: "does this call definitely get closer to the base case?"</div>',
+  task:'Write factorial(n) recursively (base case: n <= 1 returns 1). Then write countDown(n), returning an array counting down from n to 1 (for example countDown(4) returns [4, 3, 2, 1]), built recursively rather than with a loop.',
+  starter:'function factorial(n) {\n  // base case, then recursive case\n}\n\nfunction countDown(n) {\n  // base case: n === 0 returns an empty array\n}',
+  solution:'function factorial(n) {\n  if (n <= 1) return 1;\n  return n * factorial(n - 1);\n}\n\nfunction countDown(n) {\n  if (n === 0) return [];\n  return [n, ...countDown(n - 1)];\n}',
+  tests:[
+    { desc:'factorial(5) === 120', check:'factorial(5) === 120' },
+    { desc:'factorial(1) === 1', check:'factorial(1) === 1' },
+    { desc:'factorial(0) === 1', check:'factorial(0) === 1' },
+    { desc:'countDown(4) is [4, 3, 2, 1]', check:'JSON.stringify(countDown(4)) === JSON.stringify([4,3,2,1])' },
+    { desc:'countDown(0) is an empty array', check:'JSON.stringify(countDown(0)) === JSON.stringify([])' }
+  ]},
+
+// ======================================================================
+// MODULE 3 — Strings In Depth
+// ======================================================================
+{ id:'m4-l1', module:3, file:'01-string-indexing-slicing.js', type:'exercise', title:'String Indexing, slice() & Immutability',
+  concept:'<p>A string is a sequence of characters, indexed like an array: <code>text[0]</code> is the first character. <code>.slice(start, end)</code> grabs a sub-section, not including the end position: <code>"hello".slice(1, 3)</code> gives <code>"el"</code>. A negative argument counts from the end: <code>text.slice(-1)</code> is the last character.</p><p>Strings are <strong>immutable</strong>: once created, a string can never be changed in place. Every string method that looks like it "changes" a string -- <code>.toUpperCase()</code>, <code>.replace()</code>, and so on -- actually builds and returns a brand new string, leaving the original untouched.</p><pre>const text = "hello";\nconst loud = text.toUpperCase();\nconsole.log(text);   <span style="color:#6A9955">// still "hello" -- unchanged</span>\nconsole.log(loud);   <span style="color:#6A9955">// "HELLO" -- a new string</span></pre>',
+  task:'Given word = "Javascript", create firstThree (the first 3 characters using slice), lastChar (the last character using slice(-1)), and reversedWord (the whole word reversed -- split into characters, reverse the array, join back into a string).',
+  starter:'const word = "Javascript";\n// firstThree: the first 3 characters\n\n\n// lastChar: the last character, using slice(-1)\n\n\n// reversedWord: the whole word reversed\n\n',
+  solution:'const word = "Javascript";\nconst firstThree = word.slice(0, 3);\nconst lastChar = word.slice(-1);\nconst reversedWord = word.split("").reverse().join("");',
+  tests:[
+    { desc:'firstThree equals "Jav"', check:'firstThree === "Jav"' },
+    { desc:'lastChar equals "t"', check:'lastChar === "t"' },
+    { desc:'reversedWord equals "tpircsavaJ"', check:'reversedWord === "tpircsavaJ"' }
+  ]},
+
+{ id:'m4-l2', module:3, file:'02-string-methods-tour.js', type:'exercise', title:'String Methods Tour',
+  concept:'<p>Strings come with a large set of built-in methods. A few you will use constantly:</p><ul><li><code>.toUpperCase()</code> / <code>.toLowerCase()</code> -- change case</li><li><code>.trim()</code> -- remove whitespace from both ends</li><li><code>.replace(old, new)</code> -- swap the first occurrence of a substring (<code>.replaceAll()</code> swaps every occurrence)</li><li><code>.split(separator)</code> -- break a string into an array of pieces</li><li><code>array.join(sep)</code> -- the reverse: glue an array of strings back together</li><li><code>.includes(sub)</code> -- checks if a substring is present at all, returning a boolean</li></ul><pre>const csvLine = "amey, 27, mumbai";\nconst parts = csvLine.split(",").map(p => p.trim());\n<span style="color:#6A9955">// ["amey", "27", "mumbai"]</span></pre>',
+  task:'Given csvLine = "  Amey@GMAIL.com , 27 , Mumbai  ", split it on commas into an array called parts, trimming whitespace from each piece (use .split() then .map() with .trim()). Then create cleanEmail as parts[0] lowercased.',
+  starter:'const csvLine = "  Amey@GMAIL.com , 27 , Mumbai  ";\n// parts: split on "," then trim each piece\n\n\n// cleanEmail: parts[0] lowercased\n\n',
+  solution:'const csvLine = "  Amey@GMAIL.com , 27 , Mumbai  ";\nconst parts = csvLine.split(",").map(p => p.trim());\nconst cleanEmail = parts[0].toLowerCase();',
+  tests:[
+    { desc:'parts has exactly 3 cleanly-trimmed items', check:'JSON.stringify(parts) === JSON.stringify(["Amey@GMAIL.com", "27", "Mumbai"])' },
+    { desc:'cleanEmail is fully lowercase', check:'cleanEmail === "amey@gmail.com"' }
+  ]},
+
+{ id:'m4-l3', module:3, file:'03-template-literals-deep-dive.js', type:'exercise', title:'Template Literals Deep Dive',
+  concept:'<p>Template literals use backticks instead of quotes, and let you embed any expression directly with <code>${...}</code> -- no messy <code>+</code> concatenation, and you can call methods or do math right inside the braces: <code>`${price * 1.18}`</code>. They also support real multi-line strings without any special escape characters.</p><pre>const price = 1234.5;\nconsole.log(`$${price.toFixed(2)}`);   <span style="color:#6A9955">// $1234.50</span>\n\nconst block = `line one\nline two`;   <span style="color:#6A9955">// a genuine multi-line string</span></pre><p><code>.toFixed(n)</code> rounds a number to n decimal places AND returns it as a string -- the standard way to format currency-like output.</p>',
+  task:'Given name = "Amey" and score = 87.456, create message using a template literal formatted to exactly "Amey scored 87.46 points!" (score rounded to 2 decimal places with toFixed).',
+  starter:'const name = "Amey";\nconst score = 87.456;\n// message should read exactly: "Amey scored 87.46 points!"\n\n',
+  solution:'const name = "Amey";\nconst score = 87.456;\nconst message = `${name} scored ${score.toFixed(2)} points!`;',
+  tests:[ { desc:'message reads exactly "Amey scored 87.46 points!"', check:'message === "Amey scored 87.46 points!"' } ]},
+
+{ id:'m4-l4', module:3, file:'04-reading-errors.js', type:'exercise', title:'Reading Error Messages Like a Pro — Fix the Bug',
+  concept:'<p>Every developer, at every level, hits errors constantly -- that is normal, not a sign of failure. A JavaScript error message tells you the error TYPE (like ReferenceError or TypeError), a MESSAGE describing what went wrong, often naming the exact variable involved, and usually a line number.</p><div class="callout"><b>A real debugging method, not guessing:</b><ol><li>Read the error type and message first -- it often names the exact problem</li><li>Find the line it is complaining about in YOUR code</li><li>Ask: what did I assume about this line that turned out to be false?</li></ol></div><p>The code below has a real bug -- a misspelled variable name, which produces a <code>ReferenceError</code>. Run it, read the message in the Output panel carefully, then fix it.</p>',
+  task:'Click Run, read the error in the Output panel, then fix the code below so calculateArea(5, 10) returns 50 and calculateArea(3, 4) returns 12.',
+  starter:'function calculateArea(width, height) {\n  return width * heigth;\n}\n\nconsole.log(calculateArea(5, 10));',
+  solution:'function calculateArea(width, height) {\n  return width * height;\n}\n\nconsole.log(calculateArea(5, 10));',
+  tests:[
+    { desc:'calculateArea(5, 10) === 50', check:'calculateArea(5, 10) === 50' },
+    { desc:'calculateArea(3, 4) === 12', check:'calculateArea(3, 4) === 12' }
+  ]},
+
+// ======================================================================
+// MODULE 4 — Arrays Mastery
+// ======================================================================
+{ id:'m5-l1', module:4, file:'01-creating-mutating-arrays.js', type:'exercise', title:'Creating, Indexing & Mutating Arrays',
+  concept:'<p>An array is an ordered, <strong>mutable</strong> collection: <code>[1, 2, 3]</code>. "Mutable" means you can change it in place after creating it. The core mutating methods:</p><ul><li><code>.push(x)</code> -- adds x to the end, returns the new length</li><li><code>.pop()</code> -- removes and returns the last item</li><li><code>.unshift(x)</code> -- adds x to the beginning (shifts everything else up)</li><li><code>.splice(index, deleteCount, ...itemsToInsert)</code> -- the Swiss-army-knife method: remove items, insert items, or both, at any position</li></ul><pre>const arr = ["b", "c"];\narr.unshift("a");         <span style="color:#6A9955">// ["a", "b", "c"]</span>\narr.splice(1, 0, "a.5");  <span style="color:#6A9955">// insert "a.5" at index 1, delete nothing</span>\narr.splice(1, 1);          <span style="color:#6A9955">// remove 1 item starting at index 1</span></pre>',
+  task:'Starting from fruits = ["banana", "apple"], push "cherry", then use splice to insert "apricot" at index 0 (deleting 0 items), then sort the array in place with .sort(). Finally pop the last item off and store it in removedFruit.',
+  starter:'const fruits = ["banana", "apple"];\n// push "cherry"\n\n\n// use splice to insert "apricot" at index 0\n\n\n// sort the array in place\n\n\n// pop the last item into removedFruit\n\n',
+  solution:'const fruits = ["banana", "apple"];\nfruits.push("cherry");\nfruits.splice(0, 0, "apricot");\nfruits.sort();\nconst removedFruit = fruits.pop();',
+  tests:[
+    { desc:'fruits ends up correctly sorted after the last pop', check:'JSON.stringify(fruits) === JSON.stringify(["apple", "apricot", "banana"])' },
+    { desc:'removedFruit is the item that was popped off the end', check:'removedFruit === "cherry"' }
+  ]},
+
+{ id:'m5-l2', module:4, file:'02-slice-deep-dive.js', type:'exercise', title:'Array slice() Deep Dive',
+  concept:'<p><code>array.slice(start, end)</code> returns a brand NEW array containing the selected items, leaving the original completely untouched -- this is the key difference from the similarly-named but very different <code>.splice()</code>, which mutates the original. Both start and end are optional; a negative index counts from the end.</p><pre>const nums = [0,1,2,3,4,5,6,7,8,9];\nnums.slice(2, 5);    <span style="color:#6A9955">// [2, 3, 4]</span>\nnums.slice(-3);      <span style="color:#6A9955">// [7, 8, 9] -- last 3 items</span>\nnums.slice();        <span style="color:#6A9955">// a full, independent copy of the whole array</span></pre><div class="callout"><b>slice vs splice, the fastest way to remember it:</b> slice does NOT change the original (safe, read-only); splice DOES change the original (mutates it in place).</div>',
+  task:'Given nums = [10, 20, 30, 40, 50, 60, 70, 80], create lastThree (the final 3 items using slice), middleItems (items at index 2 through 4 inclusive, using slice), and aCopy (a full independent copy of nums made using slice with no arguments).',
+  starter:'const nums = [10, 20, 30, 40, 50, 60, 70, 80];\n// lastThree: the final 3 items\n\n\n// middleItems: index 2 through 4 inclusive\n\n\n// aCopy: a full copy of nums using slice with no arguments\n\n',
+  solution:'const nums = [10, 20, 30, 40, 50, 60, 70, 80];\nconst lastThree = nums.slice(-3);\nconst middleItems = nums.slice(2, 5);\nconst aCopy = nums.slice();',
+  tests:[
+    { desc:'lastThree equals [60, 70, 80]', check:'JSON.stringify(lastThree) === JSON.stringify([60,70,80])' },
+    { desc:'middleItems equals [30, 40, 50]', check:'JSON.stringify(middleItems) === JSON.stringify([30,40,50])' },
+    { desc:'aCopy has the same contents as nums', check:'JSON.stringify(aCopy) === JSON.stringify(nums)' },
+    { desc:'aCopy is a genuinely separate array, not the same array', check:'aCopy !== nums' }
+  ]},
+
+{ id:'m5-l3', module:4, file:'03-map-filter-reduce.js', type:'exercise', title:'map(), filter() & reduce() Deep Dive',
+  concept:'<p>These three methods are the backbone of modern JavaScript array work, and together replace almost every manual loop you would otherwise write to transform data:</p><ul><li><code>array.map(fn)</code> -- transforms EVERY item, returning a new array of the same length</li><li><code>array.filter(fn)</code> -- keeps only the items where fn returns true, returning a new (possibly shorter) array</li><li><code>array.reduce(fn, startValue)</code> -- combines every item into a single final value, carrying an "accumulator" forward through each step</li></ul><pre>const nums = [1, 2, 3, 4, 5];\nconst doubled = nums.map(n => n * 2);              <span style="color:#6A9955">// [2,4,6,8,10]</span>\nconst evens = nums.filter(n => n % 2 === 0);        <span style="color:#6A9955">// [2,4]</span>\nconst total = nums.reduce((sum, n) => sum + n, 0);  <span style="color:#6A9955">// 15</span></pre><div class="callout"><b>Why this matters:</b> chaining these together (.filter().map().reduce()) is the single most common way real JavaScript code processes lists of data -- API results, form inputs, rows from a spreadsheet -- all day, every day.</div>',
+  task:'Given products (an array of objects with name and price), use .filter() to build affordable (only products priced 100 or less), use .map() on affordable to build names (just the name strings), and use .reduce() on the ORIGINAL products array to build totalValue (the sum of every price).',
+  starter:'const products = [\n  { name: "Mouse", price: 25 },\n  { name: "Monitor", price: 300 },\n  { name: "Cable", price: 8 }\n];\n// affordable: products priced 100 or less, using filter\n\n\n// names: the names of the affordable products, using map\n\n\n// totalValue: the sum of every price, using reduce\n\n',
+  solution:'const products = [\n  { name: "Mouse", price: 25 },\n  { name: "Monitor", price: 300 },\n  { name: "Cable", price: 8 }\n];\nconst affordable = products.filter(p => p.price <= 100);\nconst names = affordable.map(p => p.name);\nconst totalValue = products.reduce((sum, p) => sum + p.price, 0);',
+  tests:[
+    { desc:'affordable keeps only products priced 100 or less', check:'JSON.stringify(affordable.map(p=>p.name)) === JSON.stringify(["Mouse","Cable"])' },
+    { desc:'names extracts the affordable product names', check:'JSON.stringify(names) === JSON.stringify(["Mouse","Cable"])' },
+    { desc:'totalValue sums every price in the original list', check:'totalValue === 333' }
+  ]},
+
+{ id:'m5-l4', module:4, file:'04-destructuring-spread-arrays.js', type:'exercise', title:'Array Destructuring & the Spread Operator',
+  concept:'<p><strong>Destructuring</strong> unpacks array items straight into named variables in one line, instead of accessing each by index separately:</p><pre>const [first, second] = ["Amey", "Zoe"];\n<span style="color:#6A9955">// first is "Amey", second is "Zoe"</span>\n\nconst [head, ...rest] = [1, 2, 3, 4];\n<span style="color:#6A9955">// head is 1, rest is [2, 3, 4] -- rest gathers everything else</span></pre><p>You can skip items you do not need with an empty slot, and swap two variables in one line without a temporary variable:</p><pre>let a = 1, b = 2;\n[a, b] = [b, a];   <span style="color:#6A9955">// a is now 2, b is now 1</span></pre>',
+  task:'Given coordinates = [10, 20], destructure it into x and y on one line. Given scores = [95, 80, 72, 60], destructure it into topScore (the first item) and rest (an array of everything else, using rest syntax).',
+  starter:'const coordinates = [10, 20];\n// destructure coordinates into x and y on one line\n\n\nconst scores = [95, 80, 72, 60];\n// destructure scores into topScore and rest (everything else)\n\n',
+  solution:'const coordinates = [10, 20];\nconst [x, y] = coordinates;\n\nconst scores = [95, 80, 72, 60];\nconst [topScore, ...rest] = scores;',
+  tests:[
+    { desc:'x and y were correctly destructured', check:'x === 10 && y === 20' },
+    { desc:'topScore is the first score', check:'topScore === 95' },
+    { desc:'rest contains every score except the first', check:'JSON.stringify(rest) === JSON.stringify([80,72,60])' }
+  ]},
+
+{ id:'m5-l5', module:4, file:'05-sort-min-max.js', type:'exercise', title:'sort() with a Compare Function & Math.min/max',
+  concept:'<p><code>array.sort()</code> sorts IN PLACE (it mutates the original array) and, with no arguments, sorts as if everything were text -- which gives WRONG results for numbers (<code>[10, 2, 1].sort()</code> gives <code>[1, 10, 2]</code>!). Always pass a compare function for numbers: <code>(a, b) => a - b</code> for ascending, <code>(a, b) => b - a</code> for descending.</p><p>For objects, the compare function can look at any field you choose, which is the real power of this pattern:</p><pre>const people = [{name:"Zoe", age:25}, {name:"Ravi", age:19}];\npeople.sort((a, b) => a.age - b.age);   <span style="color:#6A9955">// youngest first</span></pre><p><code>Math.min(...nums)</code> / <code>Math.max(...nums)</code> find the smallest/largest number directly, using the spread operator to pass the whole array as separate arguments.</p>',
+  task:'Given numbers = [10, 2, 33, 4], create ascending (a NEW sorted copy, smallest first, using slice().sort() so the original is not mutated) and create smallest/largest using Math.min/Math.max with spread.',
+  starter:'const numbers = [10, 2, 33, 4];\n// ascending: a NEW array sorted smallest-first (do not mutate numbers)\n\n\n// smallest and largest, using Math.min/Math.max with spread\n\n',
+  solution:'const numbers = [10, 2, 33, 4];\nconst ascending = numbers.slice().sort((a, b) => a - b);\nconst smallest = Math.min(...numbers);\nconst largest = Math.max(...numbers);',
+  tests:[
+    { desc:'ascending is correctly sorted numerically', check:'JSON.stringify(ascending) === JSON.stringify([2,4,10,33])' },
+    { desc:'the original numbers array was not mutated', check:'JSON.stringify(numbers) === JSON.stringify([10,2,33,4])' },
+    { desc:'smallest is 2', check:'smallest === 2' },
+    { desc:'largest is 33', check:'largest === 33' }
+  ]},
+
+// ======================================================================
+// MODULE 5 — Objects, Map & Set
+// ======================================================================
+{ id:'m6-l1', module:5, file:'01-object-literals-access.js', type:'exercise', title:'Object Literals & Access',
+  concept:'<p>An object groups related values under named keys: <code>{ key: value }</code>. Access with dot notation <code>user.name</code> (when the key name is known ahead of time) or bracket notation <code>user["name"]</code> (needed when the key is itself stored in a variable). Reading a key that does not exist returns <code>undefined</code> rather than crashing.</p><pre>const user = { name: "Amey", age: 27, isAdmin: true };\nuser.name;        <span style="color:#6A9955">// "Amey"</span>\nuser["age"];        <span style="color:#6A9955">// 27</span>\nuser.email;        <span style="color:#6A9955">// undefined -- no crash, key does not exist</span></pre><p><strong>Optional chaining</strong>, <code>?.</code>, safely reads a property that might be on a missing or null object without crashing: <code>user?.address?.city</code> returns undefined instead of throwing if address does not exist.</p>',
+  task:'Create an object user with keys name, age, and isAdmin (any reasonable values). Read user.name into userName using dot notation, and safely read a non-existent address.city into userCity using optional chaining, which should come back as undefined.',
+  starter:'// Create the user object\n\n\n// userName: read user.name\n\n\n// userCity: safely read user.address?.city (address does not exist)\n\n',
+  solution:'const user = { name: "Amey", age: 27, isAdmin: true };\nconst userName = user.name;\nconst userCity = user.address?.city;',
+  tests:[
+    { desc:'user has name, age, and isAdmin keys', check:'typeof user === "object" && "name" in user && "age" in user && "isAdmin" in user' },
+    { desc:'userName matches user.name', check:'userName === user.name' },
+    { desc:'userCity is undefined for a missing nested path', check:'userCity === undefined' }
+  ]},
+
+{ id:'m6-l2', module:5, file:'02-nested-objects-updating.js', type:'exercise', title:'Nested Objects & Updating Values',
+  concept:'<p>Objects can contain other objects and arrays, letting you model real structured data -- exactly what a JSON API response looks like. You update a value the same way you read it, with assignment: <code>obj.key = newValue</code>, whether the key already exists (it gets overwritten) or not (it gets added as new).</p><pre>const order = {\n  customer: "Amey",\n  items: ["pen", "notebook"],\n  address: { city: "Mumbai", zip: "400001" }\n};\norder.address.city = "Pune";    <span style="color:#6A9955">// reach into the nested object</span>\norder.items.push("eraser");     <span style="color:#6A9955">// reach into the nested array</span></pre>',
+  task:'Given car, update its nested specs.year to 2023, push "sunroof" onto its nested features array, and add a brand new top-level key color set to "blue".',
+  starter:'const car = {\n  make: "Honda",\n  specs: { model: "Civic", year: 2021 },\n  features: ["bluetooth"]\n};\n// update specs.year to 2023\n\n\n// push "sunroof" onto features\n\n\n// add a new top-level color key set to "blue"\n\n',
+  solution:'const car = {\n  make: "Honda",\n  specs: { model: "Civic", year: 2021 },\n  features: ["bluetooth"]\n};\ncar.specs.year = 2023;\ncar.features.push("sunroof");\ncar.color = "blue";',
+  tests:[
+    { desc:'nested year was updated to 2023', check:'car.specs.year === 2023' },
+    { desc:'features array grew to include sunroof', check:'JSON.stringify(car.features) === JSON.stringify(["bluetooth", "sunroof"])' },
+    { desc:'a new top-level color key was added', check:'car.color === "blue"' }
+  ]},
+
+{ id:'m6-l3', module:5, file:'03-object-keys-values-entries.js', type:'exercise', title:'Object.keys(), Object.values() & Object.entries()',
+  concept:'<p><code>Object.keys(obj)</code> gives you an array of all the keys, <code>Object.values(obj)</code> gives you an array of all the values, and <code>Object.entries(obj)</code> gives you an array of [key, value] pairs together -- the standard way to loop over an object is <code>for (const [key, value] of Object.entries(obj))</code>.</p><pre>const scores = { math: 90, science: 85 };\nfor (const [subject, score] of Object.entries(scores)) {\n  console.log(subject, "->", score);\n}</pre>',
+  task:'Given scores, use Object.entries() combined with .filter() and Object.fromEntries() to build passing (a NEW object containing only the subjects scoring 80 or above). Use Object.keys() to build subjectCount (how many entries scores has).',
+  starter:'const scores = { math: 90, science: 72, art: 95, history: 65 };\n// passing: a new object with only entries scoring >= 80\n\n\n// subjectCount: how many entries scores has\n\n',
+  solution:'const scores = { math: 90, science: 72, art: 95, history: 65 };\nconst passing = Object.fromEntries(\n  Object.entries(scores).filter(([subject, score]) => score >= 80)\n);\nconst subjectCount = Object.keys(scores).length;',
+  tests:[
+    { desc:'passing only contains subjects scoring 80 or above', check:'JSON.stringify(passing) === JSON.stringify({math: 90, art: 95})' },
+    { desc:'subjectCount equals 4', check:'subjectCount === 4' }
+  ]},
+
+{ id:'m6-l4', module:5, file:'04-destructuring-objects.js', type:'exercise', title:'Object Destructuring & Default Values',
+  concept:'<p>Just like arrays, objects can be destructured directly into named variables, matched by key name rather than position:</p><pre>const { name, age } = { name: "Amey", age: 27, city: "Mumbai" };\n<span style="color:#6A9955">// name is "Amey", age is 27 -- city is simply not pulled out</span></pre><p>You can rename a variable while destructuring with a colon, and supply a default value for a key that might be missing, in the same line:</p><pre>const { name: userName, role = "member" } = { name: "Amey" };\n<span style="color:#6A9955">// userName is "Amey", role defaults to "member" since it was not in the object</span></pre>',
+  task:'Given settings = { theme: "dark", fontSize: 14 }, destructure it into theme and a renamed size variable (from fontSize) with a default of 12 in case fontSize was missing, all in one destructuring statement.',
+  starter:'const settings = { theme: "dark", fontSize: 14 };\n// destructure into theme, and size (renamed from fontSize, default 12)\n\n',
+  solution:'const settings = { theme: "dark", fontSize: 14 };\nconst { theme, fontSize: size = 12 } = settings;',
+  tests:[
+    { desc:'theme was correctly destructured', check:'theme === "dark"' },
+    { desc:'size was correctly renamed from fontSize', check:'size === 14' }
+  ]},
+
+{ id:'m6-l5', module:5, file:'05-map.js', type:'exercise', title:'Map — A Better Dictionary for Dynamic Keys',
+  concept:'<p>A <code>Map</code> is similar to a plain object, but designed for when keys are added and removed dynamically and can be ANY type, not just strings. Key methods: <code>.set(key, value)</code>, <code>.get(key)</code>, <code>.has(key)</code>, <code>.delete(key)</code>, and <code>.size</code> for the count.</p><pre>const inventory = new Map();\ninventory.set("apples", 50);\ninventory.set("bananas", 30);\ninventory.get("apples");     <span style="color:#6A9955">// 50</span>\ninventory.has("cherries");   <span style="color:#6A9955">// false</span>\ninventory.size;               <span style="color:#6A9955">// 2</span></pre><div class="callout"><b>Map vs plain object:</b> reach for a Map when keys come and go frequently at runtime, or when you need to loop in insertion order and keep an exact count easily -- a plain object is still perfectly fine for fixed, known structures like a user profile.</div>',
+  task:'Create a Map called inventory, set "apples" to 50 and "bananas" to 30. Then write a function restock(map, item, amount), increasing the item’s count by amount if it already exists in the map, or setting it to amount if it did not exist yet.',
+  starter:'// create the inventory Map with apples: 50, bananas: 30\n\n\nfunction restock(map, item, amount) {\n  // increase if it exists, otherwise set it fresh\n}',
+  solution:'const inventory = new Map();\ninventory.set("apples", 50);\ninventory.set("bananas", 30);\n\nfunction restock(map, item, amount) {\n  if (map.has(item)) {\n    map.set(item, map.get(item) + amount);\n  } else {\n    map.set(item, amount);\n  }\n}',
+  tests:[
+    { desc:'inventory correctly holds apples and bananas', check:'inventory.get("apples") === 50 && inventory.get("bananas") === 30' },
+    { desc:'restock increases an existing item correctly', check:'(function(){ const m = new Map([["apples", 50]]); restock(m, "apples", 10); return m.get("apples") === 60; })()' },
+    { desc:'restock adds a brand new item correctly', check:'(function(){ const m = new Map(); restock(m, "cherries", 5); return m.get("cherries") === 5; })()' }
+  ]},
+
+{ id:'m6-l6', module:5, file:'06-set.js', type:'exercise', title:'Set & Removing Duplicates',
+  concept:'<p>A <code>Set</code> is a collection of UNIQUE values -- adding a duplicate value does nothing, which makes a Set the natural tool for removing duplicates from an array: <code>[...new Set(myArray)]</code>. Key methods: <code>.add(x)</code>, <code>.has(x)</code>, <code>.delete(x)</code>, and <code>.size</code>.</p><pre>const tags = ["python", "web", "python", "api", "web"];\nconst uniqueTags = [...new Set(tags)];\n<span style="color:#6A9955">// ["python", "web", "api"]</span></pre><div class="callout"><b>Why this matters:</b> checking whether something exists inside a Set (<code>mySet.has(x)</code>) is dramatically faster than checking the same thing inside a long array with <code>.includes()</code>, which matters a great deal once your data gets large.</div>',
+  task:'Given tags, create uniqueTags as an array with duplicates removed, using a Set and the spread operator. Given subscribed and purchased (arrays of usernames), create bothLists, an array of users who appear in BOTH lists, using a Set for an efficient .has() lookup inside a .filter().',
+  starter:'const tags = ["python", "web", "python", "api", "web"];\n// uniqueTags: tags with duplicates removed, using Set + spread\n\n\nconst subscribed = ["amey", "zoe", "ravi", "asha"];\nconst purchased = ["zoe", "ravi", "ken"];\n// bothLists: users in both subscribed and purchased, using a Set for lookup\n\n',
+  solution:'const tags = ["python", "web", "python", "api", "web"];\nconst uniqueTags = [...new Set(tags)];\n\nconst subscribed = ["amey", "zoe", "ravi", "asha"];\nconst purchased = ["zoe", "ravi", "ken"];\nconst purchasedSet = new Set(purchased);\nconst bothLists = subscribed.filter(user => purchasedSet.has(user));',
+  tests:[
+    { desc:'uniqueTags has duplicates removed', check:'JSON.stringify(uniqueTags) === JSON.stringify(["python","web","api"])' },
+    { desc:'bothLists contains exactly the overlapping users', check:'JSON.stringify(bothLists) === JSON.stringify(["zoe","ravi"])' }
+  ]},
+
+// ======================================================================
+// MODULE 6 — Error Handling & Debugging
+// ======================================================================
+{ id:'m7-l1', module:6, file:'01-try-catch.js', type:'exercise', title:'try / catch — Handling Errors Gracefully',
+  concept:'<p>Real programs deal with unpredictable input: a user types text where a number was expected, a network call fails, a piece of data is missing a field you expected. <code>try</code> / <code>catch</code> lets your program catch an error and respond sensibly instead of crashing entirely.</p><pre>try {\n  const age = JSON.parse(inputText);\n} catch (error) {\n  console.log("invalid input, falling back to a default");\n}</pre><p>JavaScript does not have separate catchable exception "types" the way some languages do by default -- instead, you check <code>error.message</code> or <code>error instanceof SomeErrorClass</code> inside the catch block if you need to respond differently to different problems.</p><div class="callout"><b>Industry habit:</b> only wrap the specific lines that can actually fail in a try block, not your entire function -- a try block that is too broad makes it harder to tell what actually went wrong.</div>',
+  task:'Write safeDivide(a, b), returning a / b, but checking for b === 0 first and returning null instead of dividing (division by zero does not throw in JavaScript, so this needs an explicit check, not try/catch). Then write safeParseJSON(text), using try/catch around JSON.parse(text), returning null if parsing fails.',
+  starter:'function safeDivide(a, b) {\n  // check for b === 0 first, return null; otherwise divide\n}\n\nfunction safeParseJSON(text) {\n  // try JSON.parse(text), catch and return null on failure\n}',
+  solution:'function safeDivide(a, b) {\n  if (b === 0) return null;\n  return a / b;\n}\n\nfunction safeParseJSON(text) {\n  try {\n    return JSON.parse(text);\n  } catch (error) {\n    return null;\n  }\n}',
+  tests:[
+    { desc:'safeDivide(10, 2) === 5', check:'safeDivide(10, 2) === 5' },
+    { desc:'safeDivide(10, 0) is null instead of Infinity', check:'safeDivide(10, 0) === null' },
+    { desc:'safeParseJSON parses valid JSON correctly', check:'JSON.stringify(safeParseJSON(\'{"a":1}\')) === JSON.stringify({a:1})' },
+    { desc:'safeParseJSON returns null instead of crashing on invalid JSON', check:'safeParseJSON("not json") === null' }
+  ]},
+
+{ id:'m7-l2', module:6, file:'02-finally-throw.js', type:'exercise', title:'finally & Throwing Your Own Errors',
+  concept:'<p>A try/catch block can carry an extra <code>finally</code> clause, which always runs no matter what -- whether the try succeeded, failed, or even returned early -- making it the right place for cleanup code.</p><p>You can also throw your own errors with <code>throw</code>, to signal that something is wrong in YOUR code’s own terms, with a clear message: <code>throw new Error("age cannot be negative")</code>. This is how real libraries communicate precise, descriptive errors back to whoever is calling them.</p><pre>function validateAge(age) {\n  if (age < 0) {\n    throw new Error("age cannot be negative");\n  }\n  return age;\n}\n\ntry {\n  validateAge(-5);\n} catch (error) {\n  console.log(error.message);   <span style="color:#6A9955">// "age cannot be negative"</span>\n} finally {\n  console.log("cleanup always runs here");\n}</pre>',
+  task:'Write validateAge(age), throwing a new Error with the message "age cannot be negative" if age is less than 0, and throwing a new Error with the message "age is unrealistically high" if age is over 150. Otherwise, return age unchanged.',
+  starter:'function validateAge(age) {\n  // throw new Error(...) with the right message for each invalid case\n  return age;\n}',
+  solution:'function validateAge(age) {\n  if (age < 0) {\n    throw new Error("age cannot be negative");\n  }\n  if (age > 150) {\n    throw new Error("age is unrealistically high");\n  }\n  return age;\n}',
+  tests:[
+    { desc:'validateAge(30) === 30', check:'validateAge(30) === 30' },
+    { desc:'validateAge(-5) throws with the message "age cannot be negative"', check:'__throws(() => validateAge(-5), "age cannot be negative")' },
+    { desc:'validateAge(200) throws with the message "age is unrealistically high"', check:'__throws(() => validateAge(200), "age is unrealistically high")' }
+  ]},
+
+{ id:'m7-l3', module:6, file:'03-defensive-validation.js', type:'exercise', title:'Defensive Programming: Validating Your Own Assumptions',
+  concept:'<p>Writing down your own assumptions directly in the code, and failing loudly and immediately when they turn out to be wrong, is far better than silently producing a wrong answer much later. A small reusable helper makes this easy to do consistently:</p><pre>function assert(condition, message) {\n  if (!condition) {\n    throw new Error(message);\n  }\n}\n\nfunction average(nums) {\n  assert(nums.length > 0, "cannot average an empty array");\n  return nums.reduce((sum, n) => sum + n, 0) / nums.length;\n}</pre><div class="callout"><b>Why this matters:</b> real testing frameworks like Jest build on exactly this idea at scale -- a function that checks a condition and throws (or fails a reported test) if it is not met. Writing your own tiny assert() here teaches you precisely what those frameworks are doing underneath their friendlier syntax.</div>',
+  task:'Write assert(condition, message), throwing a new Error with that message if condition is falsy. Then write average(nums), using your assert to guarantee nums is not empty (message: "cannot average an empty array"), then returning the average.',
+  starter:'function assert(condition, message) {\n  // throw if condition is falsy\n}\n\nfunction average(nums) {\n  // use assert to guarantee nums is not empty, then return the average\n}',
+  solution:'function assert(condition, message) {\n  if (!condition) {\n    throw new Error(message);\n  }\n}\n\nfunction average(nums) {\n  assert(nums.length > 0, "cannot average an empty array");\n  return nums.reduce((sum, n) => sum + n, 0) / nums.length;\n}',
+  tests:[
+    { desc:'average([2, 4, 6]) === 4', check:'average([2,4,6]) === 4' },
+    { desc:'assert does nothing when the condition is true', check:'(function(){ assert(true, "should not throw"); return true; })()' },
+    { desc:'average([]) throws the exact expected message', check:'__throws(() => average([]), "cannot average an empty array")' }
+  ]},
+
+// ======================================================================
+// MODULE 7 — JSON, Modules & Browser APIs
+// ======================================================================
+{ id:'m8-l1', module:7, file:'01-json-deep-dive.js', type:'exercise', title:'JSON.parse() & JSON.stringify() Deep Dive',
+  concept:'<p>JSON (JavaScript Object Notation) is the universal format for structured data sent between a browser, a server, and an API -- in practice, almost every real API you will ever work with speaks JSON. <code>JSON.stringify(value)</code> converts a real JavaScript object/array into a JSON STRING. <code>JSON.parse(text)</code> converts a JSON string back into a real object/array.</p><pre>const data = { name: "Amey", skills: ["js", "sql"] };\nconst text = JSON.stringify(data);\n<span style="color:#6A9955">// text is now a STRING: \'{"name":"Amey","skills":["js","sql"]}\'</span>\n\nconst parsed = JSON.parse(text);\n<span style="color:#6A9955">// parsed is a real object again, deeply equal to data</span></pre><div class="callout"><b>Why this matters:</b> a JSON string looks almost exactly like an object/array on the page, but it is NOT the same thing until you parse it -- a very common beginner confusion when working with real APIs or localStorage, which can only store strings.</div>',
+  task:'Write profileToJson(profile), converting an object to a JSON string with JSON.stringify(). Write jsonToProfile(text), converting a JSON string back to an object with JSON.parse(). Then prove they are inverses by round-tripping a sample object.',
+  starter:'function profileToJson(profile) {\n  // your code here\n}\n\nfunction jsonToProfile(text) {\n  // your code here\n}',
+  solution:'function profileToJson(profile) {\n  return JSON.stringify(profile);\n}\n\nfunction jsonToProfile(text) {\n  return JSON.parse(text);\n}',
+  tests:[
+    { desc:'profileToJson produces a real string', check:'typeof profileToJson({a:1}) === "string"' },
+    { desc:'jsonToProfile correctly parses JSON back into an object', check:'JSON.stringify(jsonToProfile(\'{"name":"Amey","age":27}\')) === JSON.stringify({name:"Amey",age:27})' },
+    { desc:'Round-tripping through both functions returns an equivalent object', check:'JSON.stringify(jsonToProfile(profileToJson({x:1,y:[1,2,3]}))) === JSON.stringify({x:1,y:[1,2,3]})' }
+  ]},
+
+{ id:'m8-l2', module:7, file:'02-modules-concept.js', type:'predict', title:'ES Modules: import & export — Predict the Output',
+  concept:'<p>Real JavaScript projects are split across many files, called <strong>modules</strong>. A module uses <code>export</code> to make a function, variable, or class available to OTHER files, and <code>import</code> to pull something another module exported into the current file.</p><pre><span style="color:#6A9955">// mathUtils.js</span>\nexport function double(n) {\n  return n * 2;\n}\nexport const PI = 3.14159;\n\n<span style="color:#6A9955">// app.js</span>\nimport { double, PI } from "./mathUtils.js";\nconsole.log(double(5));   <span style="color:#6A9955">// 10</span></pre><p>This course keeps every lesson in one single file for simplicity, so you cannot literally run import/export here, but every real project you build and deploy -- including with React, Node, or a bundler like Vite -- is built entirely out of modules exactly like this.</p>',
+  task:'',
+  predict:{
+    snippet:'// Imagine these are two separate files in a real project:\n\n// ---- mathUtils.js ----\nfunction double(n) {\n  return n * 2;\n}\nconst PI = 3.14159;\n// a real file would write: export { double, PI };\n\n// ---- app.js ----\n// a real file would write: import { double, PI } from "./mathUtils.js";\nconsole.log(double(5));\nconsole.log(PI);',
+    question:'If these were two real separate files in a real project, what would the FIRST console.log print?',
+    options:['10','5','double','undefined'],
+    correctIndex:0,
+    afterExplain:'app.js imports the double function from mathUtils.js by name, then calls double(5), which returns 5 * 2 = 10. Named imports like { double, PI } must match the exact names used after "export" in the other file -- this is the standard way real multi-file JavaScript projects share code between files.'
+  }},
+
+{ id:'m8-l3', module:7, file:'03-date-math-tour.js', type:'exercise', title:'A Tour of Built-ins: Date & Math',
+  concept:'<p>JavaScript ships with built-in objects you can use immediately, no setup needed. Two you will use constantly:</p><ul><li><code>Math</code> -- <code>Math.sqrt(x)</code>, <code>Math.floor(x)</code> / <code>Math.ceil(x)</code> / <code>Math.round(x)</code>, <code>Math.random()</code> (a random number from 0 up to, but not including, 1), and the constant <code>Math.PI</code></li><li><code>Date</code> -- <code>new Date(year, monthIndex, day)</code> represents a calendar date (note: monthIndex is 0-based, so January is 0), and subtracting two dates gives the difference in milliseconds</li></ul><pre>Math.sqrt(144);   <span style="color:#6A9955">// 12</span>\n\nconst d1 = new Date(2025, 11, 25);   <span style="color:#6A9955">// Dec 25, 2025 (month 11 = December)</span>\nconst d2 = new Date(2026, 0, 1);     <span style="color:#6A9955">// Jan 1, 2026 (month 0 = January)</span>\nconst daysBetween = (d2 - d1) / (1000 * 60 * 60 * 24);   <span style="color:#6A9955">// 7</span></pre>',
+  task:'Write hypotenuse(a, b) using Math.sqrt to compute the hypotenuse of a right triangle. Then write daysBetween(y1, m1, d1, y2, m2, d2), returning the number of days between two dates (m1/m2 given as normal 1-12 month numbers -- subtract 1 before passing to Date, since Date expects a 0-based month).',
+  starter:'function hypotenuse(a, b) {\n  // use Math.sqrt\n}\n\nfunction daysBetween(y1, m1, d1, y2, m2, d2) {\n  // build two Date objects (remember: Date months are 0-based) and subtract\n}',
+  solution:'function hypotenuse(a, b) {\n  return Math.sqrt(a ** 2 + b ** 2);\n}\n\nfunction daysBetween(y1, m1, d1, y2, m2, d2) {\n  const first = new Date(y1, m1 - 1, d1);\n  const second = new Date(y2, m2 - 1, d2);\n  return Math.round((second - first) / (1000 * 60 * 60 * 24));\n}',
+  tests:[
+    { desc:'hypotenuse(3, 4) === 5', check:'hypotenuse(3, 4) === 5' },
+    { desc:'hypotenuse(9, 12) === 15', check:'hypotenuse(9, 12) === 15' },
+    { desc:'daysBetween correctly counts a full week', check:'daysBetween(2025, 12, 25, 2026, 1, 1) === 7' }
+  ]},
+
+// ======================================================================
+// MODULE 8 — Object-Oriented Programming
+// ======================================================================
+{ id:'m9-l1', module:8, file:'01-classes-constructor.js', type:'exercise', title:'Classes, the Constructor & Instance Methods',
+  concept:'<p>A class is a blueprint for creating objects that bundle data and behavior together. <code>constructor</code> is a special method that runs automatically every time you create a new instance with <code>new ClassName(...)</code>, and is where you set up that instance’s own starting data with <code>this.property = value</code>.</p><pre>class BankAccount {\n  constructor(owner, balance) {\n    this.owner = owner;\n    this.balance = balance;\n  }\n\n  deposit(amount) {\n    this.balance += amount;\n  }\n}\n\nconst acc = new BankAccount("Amey", 100);\nacc.deposit(50);\nconsole.log(acc.balance);   <span style="color:#6A9955">// 150</span></pre>',
+  task:'Build a class BankAccount with a constructor(owner, balance), a method deposit(amount) that increases the balance, a method withdraw(amount) that decreases the balance (only if sufficient funds exist, otherwise does nothing), and getBalance() returning the current balance.',
+  starter:'class BankAccount {\n  // constructor, deposit, withdraw, getBalance\n}',
+  solution:'class BankAccount {\n  constructor(owner, balance) {\n    this.owner = owner;\n    this.balance = balance;\n  }\n\n  deposit(amount) {\n    this.balance += amount;\n  }\n\n  withdraw(amount) {\n    if (amount <= this.balance) {\n      this.balance -= amount;\n    }\n  }\n\n  getBalance() {\n    return this.balance;\n  }\n}',
+  tests:[
+    { desc:'A new account starts with the correct balance', check:'new BankAccount("Amey", 100).getBalance() === 100' },
+    { desc:'deposit() increases the balance correctly', check:'(function(){ const a = new BankAccount("Amey", 100); a.deposit(50); return a.getBalance() === 150; })()' },
+    { desc:'withdraw() decreases the balance when funds are sufficient', check:'(function(){ const a = new BankAccount("Amey", 100); a.withdraw(30); return a.getBalance() === 70; })()' },
+    { desc:'withdraw() refuses to overdraw the account', check:'(function(){ const a = new BankAccount("Amey", 100); a.withdraw(500); return a.getBalance() === 100; })()' }
+  ]},
+
+{ id:'m9-l2', module:8, file:'02-static-vs-instance.js', type:'exercise', title:'Instance Properties vs static Properties & Methods',
+  concept:'<p>A property set inside the constructor with <code>this.x = ...</code> belongs to that ONE instance -- every object gets its own independent copy. A <code>static</code> property or method belongs to the CLASS itself, not to any individual instance, and is called on the class name directly rather than on an object.</p><pre>class Employee {\n  static company = "A&A Creations";   <span style="color:#6A9955">// shared by the class itself</span>\n\n  constructor(name) {\n    this.name = name;                  <span style="color:#6A9955">// unique per instance</span>\n  }\n\n  static describe() {\n    return `Everyone here works at ${Employee.company}`;\n  }\n}\n\nconsole.log(Employee.company);     <span style="color:#6A9955">// "A&A Creations"</span>\nconsole.log(Employee.describe());  <span style="color:#6A9955">// called on the CLASS, not an instance</span></pre><div class="callout"><b>Real use case:</b> static is the right tool for something that belongs to the concept of the class as a whole -- a counter of how many instances exist, a fixed configuration value, or a small utility/factory method -- not something that differs per object.</div>',
+  task:'Build a class Employee with a static property company set to "A&A Creations". The constructor(name, salary) should set instance properties name and salary. Add an instance method annualSalary() returning salary * 12, and a static method describe() returning the string "Works at A&A Creations" (using Employee.company inside a template literal).',
+  starter:'class Employee {\n  // static company property\n\n  constructor(name, salary) {\n    // instance properties\n  }\n\n  annualSalary() {\n  }\n\n  static describe() {\n  }\n}',
+  solution:'class Employee {\n  static company = "A&A Creations";\n\n  constructor(name, salary) {\n    this.name = name;\n    this.salary = salary;\n  }\n\n  annualSalary() {\n    return this.salary * 12;\n  }\n\n  static describe() {\n    return `Works at ${Employee.company}`;\n  }\n}',
+  tests:[
+    { desc:'Every employee shares the same static company property', check:'new Employee("A", 1000).constructor.company === "A&A Creations" && new Employee("B", 2000).constructor.company === "A&A Creations"' },
+    { desc:'Each employee keeps their own separate name and salary', check:'new Employee("A", 1000).name === "A" && new Employee("B", 2000).salary === 2000' },
+    { desc:'annualSalary multiplies monthly salary by 12', check:'new Employee("A", 1000).annualSalary() === 12000' },
+    { desc:'the static describe() method works correctly', check:'Employee.describe() === "Works at A&A Creations"' }
+  ]},
+
+{ id:'m9-l3', module:8, file:'03-inheritance-extends-super.js', type:'exercise', title:'Inheritance with extends & super',
+  concept:'<p><code>extends</code> lets a new class reuse and build on an existing one: <code>class Dog extends Animal</code> makes Dog a more specific version of Animal, automatically getting everything Animal has. Call <code>super(...)</code> inside the child’s own constructor to run the parent’s setup logic too, instead of duplicating it -- it must be called before using <code>this</code> in the child constructor.</p><pre>class Animal {\n  constructor(name) {\n    this.name = name;\n  }\n  speak() {\n    return `${this.name} makes a sound`;\n  }\n}\n\nclass Dog extends Animal {\n  speak() {   <span style="color:#6A9955">// overrides the parent\'s version</span>\n    return `${this.name} says Woof`;\n  }\n}\n\nfor (const animal of [new Animal("Generic"), new Dog("Rex")]) {\n  console.log(animal.speak());   <span style="color:#6A9955">// each uses its OWN speak()</span>\n}</pre>',
+  task:'Build a class Shape with constructor(name) and a method describe() returning a template literal like "circle has an area of 12.57" using this.area() (not yet defined on Shape itself). Build Circle extends Shape and Rectangle extends Shape, each calling super with a fixed name, each implementing their own area() method (circle: constructor(radius) stores radius, area = 3.14159 * radius * radius; rectangle: constructor(width, height) stores both, area = width * height).',
+  starter:'class Shape {\n  constructor(name) {\n    this.name = name;\n  }\n\n  describe() {\n    return `${this.name} has an area of ${this.area()}`;\n  }\n}\n\nclass Circle extends Shape {\n  constructor(radius) {\n    // call super with "circle", store radius\n  }\n\n  area() {\n  }\n}\n\nclass Rectangle extends Shape {\n  constructor(width, height) {\n    // call super with "rectangle", store width and height\n  }\n\n  area() {\n  }\n}',
+  solution:'class Shape {\n  constructor(name) {\n    this.name = name;\n  }\n\n  describe() {\n    return `${this.name} has an area of ${this.area()}`;\n  }\n}\n\nclass Circle extends Shape {\n  constructor(radius) {\n    super("circle");\n    this.radius = radius;\n  }\n\n  area() {\n    return 3.14159 * this.radius * this.radius;\n  }\n}\n\nclass Rectangle extends Shape {\n  constructor(width, height) {\n    super("rectangle");\n    this.width = width;\n    this.height = height;\n  }\n\n  area() {\n    return this.width * this.height;\n  }\n}',
+  tests:[
+    { desc:'Circle correctly inherits and uses the Shape describe() method', check:'new Circle(2).describe().includes("circle has an area of")' },
+    { desc:'Circle area is computed correctly', check:'Math.abs(new Circle(2).area() - 12.56636) < 0.01' },
+    { desc:'Rectangle area is computed correctly', check:'new Rectangle(4, 5).area() === 20' },
+    { desc:'Each subclass uses its OWN area() through the shared describe()', check:'new Rectangle(4,5).describe() === "rectangle has an area of 20"' }
+  ]},
+
+{ id:'m9-l4', module:8, file:'04-getters-tostring.js', type:'exercise', title:'Getters & toString()',
+  concept:'<p>A <strong>getter</strong>, written with <code>get</code>, lets you access a computed value using plain property syntax (no parentheses), as if it were a regular property, even though it runs real code behind the scenes: <code>circle.area</code> instead of <code>circle.area()</code>.</p><p><code>toString()</code> is a special method JavaScript calls automatically whenever an object needs to be converted to a string -- for example inside a template literal, or when passed to console.log indirectly. Defining your own gives your objects a sensible, readable default text form.</p><pre>class Point {\n  constructor(x, y) {\n    this.x = x;\n    this.y = y;\n  }\n  get magnitude() {\n    return Math.sqrt(this.x ** 2 + this.y ** 2);\n  }\n  toString() {\n    return `(${this.x}, ${this.y})`;\n  }\n}\n\nconst p = new Point(3, 4);\nconsole.log(p.magnitude);   <span style="color:#6A9955">// 5 -- called like a property, no ()</span>\nconsole.log(`Point: ${p}`);  <span style="color:#6A9955">// "Point: (3, 4)" -- toString() runs automatically</span></pre>',
+  task:'Build a class Rectangle with constructor(width, height), a getter area returning width * height, and a toString() method returning a template literal like "3x4 rectangle".',
+  starter:'class Rectangle {\n  constructor(width, height) {\n    this.width = width;\n    this.height = height;\n  }\n\n  get area() {\n  }\n\n  toString() {\n  }\n}',
+  solution:'class Rectangle {\n  constructor(width, height) {\n    this.width = width;\n    this.height = height;\n  }\n\n  get area() {\n    return this.width * this.height;\n  }\n\n  toString() {\n    return `${this.width}x${this.height} rectangle`;\n  }\n}',
+  tests:[
+    { desc:'the area getter is accessed like a property, no parentheses', check:'new Rectangle(3, 4).area === 12' },
+    { desc:'toString() produces the expected text', check:'new Rectangle(3, 4).toString() === "3x4 rectangle"' },
+    { desc:'a template literal automatically uses toString()', check:'`${new Rectangle(3,4)}` === "3x4 rectangle"' }
+  ]},
+
+// ======================================================================
+// MODULE 9 — Iterators, Generators & Functional Tools
+// ======================================================================
+{ id:'m10-l1', module:9, file:'01-higher-order-functions.js', type:'exercise', title:'Higher-Order Functions: Functions That Take or Return Functions',
+  concept:'<p>In JavaScript, a function is just another value -- it can be stored in a variable, passed as an argument to another function, or returned from one. A function that takes another function as an argument, or returns one, is called a <strong>higher-order function</strong>. You have already been using them: <code>.map()</code>, <code>.filter()</code>, and <code>.reduce()</code> all take a function as an argument.</p><pre>function makeMultiplier(factor) {\n  return function(n) {       <span style="color:#6A9955">// returns a brand new function</span>\n    return n * factor;\n  };\n}\n\nconst triple = makeMultiplier(3);\ntriple(5);   <span style="color:#6A9955">// 15 -- "triple" remembers factor = 3 via closure</span></pre>',
+  task:'Write makeMultiplier(factor), returning a new function that multiplies its own argument by factor. Then write applyTwice(fn, value), a higher-order function that calls fn on value, then calls fn again on THAT result, and returns the final result.',
+  starter:'function makeMultiplier(factor) {\n  // return a new function\n}\n\nfunction applyTwice(fn, value) {\n  // call fn on value, then call fn again on the result\n}',
+  solution:'function makeMultiplier(factor) {\n  return function(n) {\n    return n * factor;\n  };\n}\n\nfunction applyTwice(fn, value) {\n  return fn(fn(value));\n}',
+  tests:[
+    { desc:'makeMultiplier(3) returns a working tripling function', check:'makeMultiplier(3)(5) === 15' },
+    { desc:'makeMultiplier(10) correctly remembers its own factor', check:'makeMultiplier(10)(4) === 40' },
+    { desc:'applyTwice correctly chains the function twice', check:'applyTwice(n => n + 3, 10) === 16' }
+  ]},
+
+{ id:'m10-l2', module:9, file:'02-generators.js', type:'exercise', title:'Generator Functions with function* and yield',
+  concept:'<p>A <strong>generator function</strong>, defined with <code>function*</code>, uses <code>yield</code> instead of <code>return</code>. Calling it does not run the function body immediately -- it returns a special generator object that produces values one at a time, on demand, pausing exactly where it left off between each value.</p><pre>function* countdown(n) {\n  while (n > 0) {\n    yield n;\n    n--;\n  }\n}\n\nfor (const number of countdown(3)) {\n  console.log(number);   <span style="color:#6A9955">// 3, then 2, then 1</span>\n}</pre><div class="callout"><b>Why this matters:</b> generators let you represent an enormous, or even infinite, sequence while only ever holding ONE value in memory at a time -- useful for streaming data, or producing values lazily only as they are actually needed.</div>',
+  task:'Write a generator function evenNumbersUpTo(n), yielding every even number from 2 up to and including n, in order. Then write firstN(generator, count), which pulls exactly count values out of any generator using .next() in a loop, and returns them as an array.',
+  starter:'function* evenNumbersUpTo(n) {\n  // yield each even number, 2, 4, 6, ... up to n\n}\n\nfunction firstN(generator, count) {\n  // pull exactly `count` values out using .next(), return as an array\n  const result = [];\n  return result;\n}',
+  solution:'function* evenNumbersUpTo(n) {\n  let current = 2;\n  while (current <= n) {\n    yield current;\n    current += 2;\n  }\n}\n\nfunction firstN(generator, count) {\n  const result = [];\n  for (let i = 0; i < count; i++) {\n    result.push(generator.next().value);\n  }\n  return result;\n}',
+  tests:[
+    { desc:'evenNumbersUpTo(10) yields 2,4,6,8,10 when collected', check:'JSON.stringify([...evenNumbersUpTo(10)]) === JSON.stringify([2,4,6,8,10])' },
+    { desc:'evenNumbersUpTo is a real generator with a .next() method', check:'typeof evenNumbersUpTo(10).next === "function"' },
+    { desc:'firstN correctly pulls a limited number of values out', check:'JSON.stringify(firstN(evenNumbersUpTo(100), 3)) === JSON.stringify([2,4,6])' }
+  ]},
+
+{ id:'m10-l3', module:9, file:'03-iteration-protocol-predict.js', type:'predict', title:'How for...of Really Works: the Iteration Protocol — Predict the Output',
+  concept:'<p>A <code>for...of</code> loop is not magic -- it is built on a protocol. Any object you can loop over with for...of (an array, a string, a Map, a Set, a generator) exposes a special method under the key <code>Symbol.iterator</code>, which returns an iterator object with a <code>.next()</code> method. Calling .next() repeatedly returns <code>{ value, done }</code> objects, until <code>done</code> becomes true.</p><pre>const letters = ["a", "b"];\nconst it = letters[Symbol.iterator]();\nconsole.log(it.next());   <span style="color:#6A9955">// { value: "a", done: false }</span>\nconsole.log(it.next());   <span style="color:#6A9955">// { value: "b", done: false }</span>\nconsole.log(it.next());   <span style="color:#6A9955">// { value: undefined, done: true }</span></pre>',
+  task:'',
+  predict:{
+    snippet:'const letters = ["x", "y"];\nconst it = letters[Symbol.iterator]();\nconsole.log(it.next().value);\nconsole.log(it.next().value);\nconsole.log(it.next().done);',
+    question:'What does the THIRD line, it.next().done, print?',
+    options:['true','false','undefined','y'],
+    correctIndex:0,
+    afterExplain:'After "x" and "y" have both been returned (each with done: false, since more values were still coming), a third call to next() has nothing left to give -- its value is undefined and its done flag flips to true. This exact mechanism, repeatedly calling .next() until done is true, is precisely what a for...of loop does automatically behind the scenes.'
+  }},
+
+{ id:'m10-l4', module:9, file:'04-wrapping-functions.js', type:'exercise', title:'Wrapping Functions: the Pattern Behind Real-World Middleware',
+  concept:'<p>A function that takes another function and returns a NEW function which calls the original while adding extra behavior around it -- before it runs, after it runs, or both -- is an extremely common real pattern. It is exactly how logging, timing, caching, and authentication checks get added around existing code in real frameworks, without changing a single line inside the original function.</p><pre>function withLogging(fn) {\n  return function(...args) {\n    console.log("calling with:", args);\n    const result = fn(...args);\n    console.log("returned:", result);\n    return result;\n  };\n}\n\nconst loggedAdd = withLogging((a, b) => a + b);\nloggedAdd(2, 3);   <span style="color:#6A9955">// logs the call, runs the real add, logs the result, returns 5</span></pre>',
+  task:'Write withTiming(fn), returning a new function that calls fn with whatever arguments it receives, and returns an object { result, ranOk } where result is whatever fn returned, and ranOk is true if fn did not throw, or false (with result set to null) if it did throw.',
+  starter:'function withTiming(fn) {\n  // return a new function that wraps fn\n}',
+  solution:'function withTiming(fn) {\n  return function(...args) {\n    try {\n      const result = fn(...args);\n      return { result, ranOk: true };\n    } catch (error) {\n      return { result: null, ranOk: false };\n    }\n  };\n}',
+  tests:[
+    { desc:'the wrapped function correctly forwards arguments and returns the real result', check:'JSON.stringify(withTiming((a,b) => a + b)(2, 3)) === JSON.stringify({result: 5, ranOk: true})' },
+    { desc:'the wrapped function reports ranOk:false when the original throws', check:'JSON.stringify(withTiming(() => { throw new Error("boom"); })()) === JSON.stringify({result: null, ranOk: false})' }
+  ]},
+
+// ======================================================================
+// MODULE 10 — Async, Leveling Up & Capstone
+// ======================================================================
+{ id:'m11-l1', module:10, file:'01-promises-async-await.js', type:'exercise', title:'Promises & async/await Basics',
+  concept:'<p>Some operations -- fetching data from a server, reading a file, waiting for a timer -- take time and should not freeze everything else while waiting. A <strong>Promise</strong> represents a value that is not ready yet, but will either RESOLVE (succeed, with a value) or REJECT (fail, with an error) at some point in the future.</p><pre>function wait(ms) {\n  return new Promise(resolve => {\n    setTimeout(() => resolve("done waiting"), ms);\n  });\n}\n\nwait(100).then(message => console.log(message));</pre><p><code>async</code> / <code>await</code> is modern, cleaner syntax for working with Promises, letting asynchronous code read almost like ordinary step-by-step code. A function marked <code>async</code> always returns a Promise, and <code>await</code> pauses just that function until the awaited Promise settles.</p><pre>async function run() {\n  const message = await wait(100);\n  console.log(message);   <span style="color:#6A9955">// "done waiting", after the delay</span>\n}</pre><div class="callout"><b>Why this matters:</b> essentially every real API call in JavaScript (fetch, database calls, file access) is asynchronous and returns a Promise -- async/await is how virtually all modern JavaScript code deals with that.</div>',
+  task:'Write an async function fetchUserName(userId) that awaits the given getUserFromDatabase(userId) (already defined for you, returns a Promise), then returns just the .name field from the result. (This sandbox checks your function’s structure rather than its eventual resolved value, since that resolves after the test has already finished checking -- exactly the kind of timing you are learning about in this lesson.)',
+  starter:'function getUserFromDatabase(userId) {\n  return Promise.resolve({ id: userId, name: "Amey", role: "developer" });\n}\n\nasync function fetchUserName(userId) {\n  // await getUserFromDatabase(userId), then return its .name\n}',
+  solution:'function getUserFromDatabase(userId) {\n  return Promise.resolve({ id: userId, name: "Amey", role: "developer" });\n}\n\nasync function fetchUserName(userId) {\n  const user = await getUserFromDatabase(userId);\n  return user.name;\n}',
+  tests:[
+    { desc:'fetchUserName is declared as an async function', check:'fetchUserName.constructor.name === "AsyncFunction"' },
+    { desc:'fetchUserName returns a Promise (since it is an async function)', check:'fetchUserName(1) instanceof Promise' }
+  ]},
+
+{ id:'m11-l2', module:10, file:'02-testable-code.js', type:'exercise', title:'Writing Testable Code With Your Own assert()',
+  concept:'<p>Every exercise in this entire course has secretly been testing your code behind the scenes using exactly this pattern. Writing your OWN tests this way is a core professional habit: a short, separate block of code that calls your function with known inputs and checks the output matches what you expect, BEFORE you ship or rely on it.</p><pre>function assert(condition, message) {\n  if (!condition) throw new Error(message);\n}\n\nfunction add(a, b) {\n  return a + b;\n}\n\n<span style="color:#6A9955">// a tiny hand-written test suite</span>\nassert(add(2, 3) === 5, "add(2,3) should be 5");\nassert(add(-1, 1) === 0, "add(-1,1) should be 0");\nconsole.log("all tests passed");</pre><div class="callout"><b>Why this matters:</b> real projects use testing frameworks like Jest or Vitest to automate exactly this pattern at scale, but the underlying idea never changes: write down what your function SHOULD do for a few representative inputs, then let the computer check it every time you change the code.</div>',
+  task:'Write isPalindrome(text), returning true if text reads the same forwards and backwards (ignore case; assume text already has no spaces or punctuation for simplicity). Then write runTests(), using an assert() helper (already given) to test isPalindrome against at least 3 cases (at least one true case and one false case), returning the string "all tests passed" only if every assert succeeds.',
+  starter:'function assert(condition, message) {\n  if (!condition) throw new Error(message);\n}\n\nfunction isPalindrome(text) {\n  // compare text to its own reverse, ignoring case\n}\n\nfunction runTests() {\n  // write at least 3 asserts testing isPalindrome, then return "all tests passed"\n}',
+  solution:'function assert(condition, message) {\n  if (!condition) throw new Error(message);\n}\n\nfunction isPalindrome(text) {\n  const cleaned = text.toLowerCase();\n  return cleaned === cleaned.split("").reverse().join("");\n}\n\nfunction runTests() {\n  assert(isPalindrome("racecar") === true, "racecar should be a palindrome");\n  assert(isPalindrome("hello") === false, "hello should not be a palindrome");\n  assert(isPalindrome("Level") === true, "Level should be a palindrome ignoring case");\n  return "all tests passed";\n}',
+  tests:[
+    { desc:'isPalindrome("racecar") === true', check:'isPalindrome("racecar") === true' },
+    { desc:'isPalindrome("hello") === false', check:'isPalindrome("hello") === false' },
+    { desc:'isPalindrome ignores case ("Level" counts as a palindrome)', check:'isPalindrome("Level") === true' },
+    { desc:'runTests completes all asserts and returns the success message', check:'runTests() === "all tests passed"' }
+  ]},
+
+{ id:'m11-l3', module:10, file:'03-capstone.js', type:'exercise', title:'Capstone — Shopping Cart System',
+  concept:'<p>Time to combine almost everything from this entire course into one realistic, multi-part program: classes, destructuring, array methods, and clean error handling -- exactly the kind of logic you would write in a real small application.</p>',
+  task:'Build a class ShoppingCart with: a constructor() starting with an empty items array; addItem(name, price, qty) pushing { name, price, qty } onto items; removeItem(name) removing the first item matching that name, if present (do nothing if not found); total() returning the sum of price*qty across all items (using reduce); applyDiscount(percent) which THROWS a new Error with message "discount must be between 0 and 100" if percent is not between 0 and 100, otherwise returns the total after reducing it by that percent.',
+  starter:'class ShoppingCart {\n  constructor() {\n    this.items = [];\n  }\n\n  addItem(name, price, qty) {\n  }\n\n  removeItem(name) {\n  }\n\n  total() {\n  }\n\n  applyDiscount(percent) {\n  }\n}',
+  solution:'class ShoppingCart {\n  constructor() {\n    this.items = [];\n  }\n\n  addItem(name, price, qty) {\n    this.items.push({ name, price, qty });\n  }\n\n  removeItem(name) {\n    const index = this.items.findIndex(item => item.name === name);\n    if (index !== -1) {\n      this.items.splice(index, 1);\n    }\n  }\n\n  total() {\n    return this.items.reduce((sum, item) => sum + item.price * item.qty, 0);\n  }\n\n  applyDiscount(percent) {\n    if (percent < 0 || percent > 100) {\n      throw new Error("discount must be between 0 and 100");\n    }\n    return this.total() * (1 - percent / 100);\n  }\n}',
+  tests:[
+    { desc:'A new cart starts empty with a total of 0', check:'new ShoppingCart().total() === 0' },
+    { desc:'addItem and total correctly sum price times qty across items', check:'(function(){ const c = new ShoppingCart(); c.addItem("Pen", 20, 3); c.addItem("Book", 150, 2); return c.total() === 360; })()' },
+    { desc:'removeItem correctly removes a matching item', check:'(function(){ const c = new ShoppingCart(); c.addItem("Pen", 20, 3); c.addItem("Book", 150, 2); c.removeItem("Pen"); return c.total() === 300; })()' },
+    { desc:'removeItem does nothing when the name is not found', check:'(function(){ const c = new ShoppingCart(); c.addItem("Pen", 20, 3); c.removeItem("Nonexistent"); return c.total() === 60; })()' },
+    { desc:'applyDiscount correctly reduces the total by the given percent', check:'(function(){ const c = new ShoppingCart(); c.addItem("Pen", 100, 1); return c.applyDiscount(20) === 80; })()' },
+    { desc:'applyDiscount throws on an invalid percent', check:'(function(){ const c = new ShoppingCart(); c.addItem("Pen", 100, 1); return __throws(() => c.applyDiscount(150), "discount must be between 0 and 100"); })()' }
+  ]}
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STORAGE_KEY = 'jsFundamentalsProgress_v2';
+const DRAFTS_KEY = 'jsFundamentalsDrafts_v2';
+
+function loadProgress(){
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveProgress(set){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); } catch(e){}
+}
+function loadDrafts(){
+  try { return JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveDraft(id, code){
+  try {
+    const drafts = loadDrafts();
+    drafts[id] = code;
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  } catch(e){}
+}
+
+const state = {
+  completed: loadProgress(),
+  drafts: loadDrafts(),
+  openTabs: [],
+  activeId: null,
+  cm: null,
+  predictAnswered: false
+};
+
+/* ============================================================
+   CODE RUNNER (Web Worker sandbox)
+   ============================================================ */
+const WORKER_SRC = `
+self.onmessage = function(e){
+  const code = e.data.code;
+  const testsCode = e.data.testsCode || '';
+  const logs = [];
+  const origLog = console.log;
+  function fmt(a){
+    if (a === undefined) return 'undefined';
+    if (a === null) return 'null';
+    if (typeof a === 'object') { try { return JSON.stringify(a); } catch(err){ return String(a); } }
+    return String(a);
+  }
+  console.log = function(){ logs.push(Array.prototype.map.call(arguments, fmt).join(' ')); };
+  let error = null;
+  const results = [];
+  try {
+    const runner = new Function('__results', '__logs', code + '\\n' + testsCode);
+    runner(results, logs);
+  } catch(err){
+    error = err.message;
+  }
+  console.log = origLog;
+  self.postMessage({ logs: logs, error: error, results: results });
+};
+`;
+
+function runInSandbox(code, testsCode, onDone){
+  let finished = false;
+  let worker;
+  try {
+    const blob = new Blob([WORKER_SRC], { type:'application/javascript' });
+    worker = new Worker(URL.createObjectURL(blob));
+  } catch(e){
+    onDone({ logs:[], error:'Could not start the sandbox: ' + e.message, results:[], timedOut:false });
+    return;
+  }
+  const timer = setTimeout(() => {
+    if (finished) return;
+    finished = true;
+    worker.terminate();
+    onDone({ logs:[], error:null, results:[], timedOut:true });
+  }, 4000);
+  worker.onmessage = function(e){
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    worker.terminate();
+    onDone({ logs:e.data.logs, error:e.data.error, results:e.data.results, timedOut:false });
+  };
+  worker.onerror = function(e){
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    worker.terminate();
+    onDone({ logs:[], error:e.message, results:[], timedOut:false });
+  };
+  worker.postMessage({ code, testsCode });
+}
+
+function buildTestsCode(tests){
+  const helpers = "function __throws(fn, expectedMessage){ try { fn(); return false; } catch(e){ return expectedMessage === undefined ? true : e.message === expectedMessage; } }\n";
+  return helpers + tests.map(t => {
+    const descJson = JSON.stringify(t.desc);
+    return 'try { var __pass = !!(' + t.check + '); __results.push({desc: ' + descJson + ', pass: __pass}); } ' +
+           'catch(__e){ __results.push({desc: ' + descJson + ', pass:false, error: __e.message}); }';
+  }).join('\n');
+}
+
+/* ============================================================
+   SIDEBAR / EXPLORER
+   ============================================================ */
+const collapsedFolders = new Set();
+
+function renderSidebar(){
+  const tree = document.getElementById('sidebarTree');
+  tree.innerHTML = '';
+  MODULES.forEach((mod, mi) => {
+    const lessons = LESSONS.filter(l => l.module === mi);
+    const folder = document.createElement('div');
+    folder.className = 'folder' + (collapsedFolders.has(mi) ? ' collapsed' : '');
+    const head = document.createElement('div');
+    head.className = 'folder-head';
+    const doneCount = lessons.filter(l => state.completed.has(l.id)).length;
+    head.innerHTML = '<span class="folder-chevron">▾</span><span>' + (mi+1) + '. ' + mod.title + '</span><span style="margin-left:auto;color:var(--text-dim);font-weight:400;font-size:11px;">' + doneCount + '/' + lessons.length + '</span>';
+    head.onclick = () => {
+      if (collapsedFolders.has(mi)) collapsedFolders.delete(mi); else collapsedFolders.add(mi);
+      renderSidebar();
+    };
+    folder.appendChild(head);
+    const filesWrap = document.createElement('div');
+    filesWrap.className = 'folder-files';
+    lessons.forEach(l => {
+      const item = document.createElement('div');
+      item.className = 'file-item' + (l.id === state.activeId ? ' active' : '') + (state.completed.has(l.id) ? ' done' : '');
+      item.innerHTML = '<span class="file-dot"></span><span class="file-icon">' + (l.type === 'predict' ? '?' : '{}') + '</span><span>' + l.file + '</span>';
+      item.onclick = () => openLesson(l.id);
+      filesWrap.appendChild(item);
+    });
+    folder.appendChild(filesWrap);
+    tree.appendChild(folder);
+  });
+}
+
+/* ============================================================
+   TAB BAR
+   ============================================================ */
+function renderTabs(){
+  const bar = document.getElementById('tabbar');
+  bar.innerHTML = '';
+  if (state.openTabs.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'tab-empty';
+    empty.textContent = 'No lesson open';
+    bar.appendChild(empty);
+    return;
+  }
+  state.openTabs.forEach(id => {
+    const lesson = LESSONS.find(l => l.id === id);
+    if (!lesson) return;
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (id === state.activeId ? ' active' : '');
+    tab.innerHTML = '<span>' + lesson.file + '</span><span class="tab-close">✕</span>';
+    tab.querySelector('span:first-child').onclick = () => openLesson(id);
+    tab.querySelector('.tab-close').onclick = (e) => { e.stopPropagation(); closeTab(id); };
+    bar.appendChild(tab);
+  });
+}
+
+function closeTab(id){
+  const idx = state.openTabs.indexOf(id);
+  if (idx === -1) return;
+  state.openTabs.splice(idx, 1);
+  if (state.activeId === id){
+    if (state.openTabs.length > 0){
+      openLesson(state.openTabs[Math.max(0, idx - 1)]);
+    } else {
+      state.activeId = null;
+      renderWelcome();
+      renderTabs();
+      renderSidebar();
+      updateStatusBar();
+    }
+  } else {
+    renderTabs();
+  }
+}
+
+/* ============================================================
+   WELCOME VIEW
+   ============================================================ */
+function renderWelcome(){
+  const scroll = document.getElementById('editorScroll');
+  const total = LESSONS.length;
+  const done = state.completed.size;
+  const pct = Math.round((done/total)*100);
+  const hasProgress = done > 0;
+  scroll.innerHTML =
+    '<div class="welcome">' +
+      '<span class="welcome-badge">Interactive Course · 11 Modules</span>' +
+      '<h1>JavaScript Fundamentals</h1>' +
+      '<p class="lede">A hands-on, from-scratch, genuinely in-depth course: real explanations with real examples, real code running live in your browser, auto-graded exercises, and the concepts that take you from zero to actually industry-ready fundamentals -- variables through classes, closures, generators, and async/await.</p>' +
+      '<div class="welcome-steps">' +
+        '<div class="welcome-step"><b>01 READ</b><span>Each lesson is a genuine deep-dive -- not a one-liner -- with examples and common mistakes.</span></div>' +
+        '<div class="welcome-step"><b>02 WRITE</b><span>You write real code in the editor to complete a multi-part task.</span></div>' +
+        '<div class="welcome-step"><b>03 RUN</b><span>Click Run -- your code executes for real, instantly.</span></div>' +
+        '<div class="welcome-step"><b>04 CHECK</b><span>Automated tests tell you exactly what passed or failed, line by line.</span></div>' +
+      '</div>' +
+      '<div class="welcome-progress">' +
+        '<div class="row"><span>Overall progress</span><span>' + done + ' / ' + total + ' lessons (' + pct + '%)</span></div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<button class="btn-primary" id="welcomeStartBtn">' + (hasProgress ? 'Resume where you left off →' : 'Start Lesson 1 →') + '</button>' +
+      '<div class="course-map-note"><b>Course map:</b> Getting Started → Operators &amp; Control Flow → Functions → Strings → Arrays → Objects, Map &amp; Set → Error Handling → JSON &amp; Browser APIs → Classes → Iterators &amp; Generators → Async &amp; Capstone.</div>' +
+    '</div>';
+  document.getElementById('welcomeStartBtn').onclick = () => {
+    if (hasProgress){
+      const next = LESSONS.find(l => !state.completed.has(l.id)) || LESSONS[0];
+      openLesson(next.id);
+    } else {
+      openLesson(LESSONS[0].id);
+    }
+  };
+  updateStatusBar();
+}
+
+/* ============================================================
+   LESSON RENDER
+   ============================================================ */
+function openLesson(id){
+  const lesson = LESSONS.find(l => l.id === id);
+  if (!lesson) return;
+  state.activeId = id;
+  if (!state.openTabs.includes(id)){
+    state.openTabs.push(id);
+    if (state.openTabs.length > 6) state.openTabs.shift();
+  }
+  closeSidebarMobile();
+  renderTabs();
+  renderSidebar();
+  renderLessonBody(lesson);
+  updateStatusBar();
+}
+
+function lessonIndex(id){ return LESSONS.findIndex(l => l.id === id); }
+
+function renderLessonBody(lesson){
+  const scroll = document.getElementById('editorScroll');
+  const idx = lessonIndex(lesson.id);
+  const modTitle = MODULES[lesson.module].title;
+
+  let html = '<div class="lesson">' +
+    '<span class="lesson-eyebrow">MODULE ' + (lesson.module+1) + ': ' + modTitle.toUpperCase() + ' &middot; LESSON ' + (idx+1) + ' OF ' + LESSONS.length + '</span>' +
+    '<h2>' + lesson.title + '</h2>' +
+    '<div class="concept">' + lesson.concept + '</div>' +
+    (lesson.task ? '<div class="task"><strong>Your task:</strong> ' + lesson.task + '</div>' : '');
+
+  if (lesson.type === 'predict'){
+    html += '<div id="predictHost"></div>';
+  } else {
+    html +=
+      '<div class="editor-toolbar">' +
+        '<button class="toolbar-btn run" id="runBtn">▶ Run</button>' +
+        '<button class="toolbar-btn" id="resetBtn">Reset</button>' +
+        '<div class="toolbar-spacer"></div>' +
+      '</div>' +
+      '<div id="cmHost"></div>' +
+      '<div class="output-panel" id="outputPanel">' +
+        '<div class="output-section-head">OUTPUT</div>' +
+        '<div class="output-log" id="outputLog"><span class="empty">Click Run to see output here.</span></div>' +
+        (lesson.tests && lesson.tests.length ? '<div class="output-section-head">TESTS</div><div class="test-results" id="testResults"><span class="empty" style="padding-left:14px;color:var(--text-dim);font-size:13px;">Run your code to check it against the tests.</span></div>' : '') +
+        '<div id="resultBanner"></div>' +
+      '</div>' +
+      (lesson.solution ? '<div class="solution-box"><button class="solution-toggle" id="solutionToggle">Show solution</button><pre class="solution-code" id="solutionCode">' + escapeHtml(lesson.solution) + '</pre></div>' : '');
+  }
+
+  html +=
+    '<div class="lesson-nav">' +
+      '<button class="nav-btn" id="prevLessonBtn"' + (idx===0?' disabled':'') + '>&larr; Previous</button>' +
+      '<button class="nav-btn" id="nextLessonBtn"' + (idx===LESSONS.length-1?' disabled':'') + '>Next &rarr;</button>' +
+    '</div>' +
+  '</div>';
+
+  scroll.innerHTML = html;
+  scroll.scrollTop = 0;
+
+  document.getElementById('prevLessonBtn').onclick = () => { if (idx>0) openLesson(LESSONS[idx-1].id); };
+  document.getElementById('nextLessonBtn').onclick = () => { if (idx<LESSONS.length-1) openLesson(LESSONS[idx+1].id); };
+
+  if (lesson.type === 'predict'){
+    renderPredict(lesson);
+  } else {
+    initEditor(lesson);
+    document.getElementById('runBtn').onclick = () => runExercise(lesson);
+    document.getElementById('resetBtn').onclick = () => {
+      state.cm.setValue(lesson.starter);
+      saveDraft(lesson.id, lesson.starter);
+    };
+    const solBtn = document.getElementById('solutionToggle');
+    if (solBtn){
+      solBtn.onclick = () => {
+        const box = document.getElementById('solutionCode');
+        box.classList.toggle('show');
+        solBtn.textContent = box.classList.contains('show') ? 'Hide solution' : 'Show solution';
+      };
+    }
+  }
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function initEditor(lesson){
+  const host = document.getElementById('cmHost');
+  const startCode = (state.drafts[lesson.id] !== undefined) ? state.drafts[lesson.id] : lesson.starter;
+  state.cm = CodeMirror(host, {
+    value: startCode,
+    mode: { name:'javascript' },
+    theme: 'default',
+    lineNumbers: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    tabSize: 2,
+    indentUnit: 2,
+    viewportMargin: 20
+  });
+  let debounce;
+  state.cm.on('change', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => saveDraft(lesson.id, state.cm.getValue()), 400);
+  });
+}
+
+function runExercise(lesson){
+  const code = state.cm.getValue();
+  const testsCode = lesson.tests && lesson.tests.length ? buildTestsCode(lesson.tests) : '';
+  const outputLog = document.getElementById('outputLog');
+  const testResults = document.getElementById('testResults');
+  const banner = document.getElementById('resultBanner');
+  outputLog.innerHTML = '<span class="empty">Running...</span>';
+  if (testResults) testResults.innerHTML = '';
+  banner.innerHTML = '';
+
+  runInSandbox(code, testsCode, (res) => {
+    if (res.timedOut){
+      outputLog.innerHTML = '';
+      banner.innerHTML = '<div class="timeout-banner">Still running after 4 seconds -- this usually means an infinite loop. The sandbox was stopped automatically; check your loop condition and try again.</div>';
+      return;
+    }
+    outputLog.innerHTML = res.logs.length
+      ? res.logs.map(l => '<div>' + escapeHtml(l) + '</div>').join('')
+      : '<span class="empty">No console.log output yet.</span>';
+    if (res.error){
+      outputLog.innerHTML += '<div class="err">Uncaught Error: ' + escapeHtml(res.error) + '</div>';
+    }
+    if (testResults && lesson.tests && lesson.tests.length){
+      testResults.innerHTML = res.results.map(r =>
+        '<div class="test-row ' + (r.pass ? 'pass' : 'fail') + '">' +
+          '<span class="mark">' + (r.pass ? '✓' : '✗') + '</span>' +
+          '<span>' + escapeHtml(r.desc) + (r.error && !r.pass ? '<span class="detail">' + escapeHtml(r.error) + '</span>' : '') + '</span>' +
+        '</div>'
+      ).join('');
+      const allPass = res.results.length > 0 && res.results.every(r => r.pass);
+      if (allPass){
+        state.completed.add(lesson.id);
+        saveProgress(state.completed);
+        banner.innerHTML = '<div class="success-banner">✓ All tests passed -- lesson complete.</div>';
+        renderSidebar();
+        updateStatusBar();
+      }
+    } else if (!res.error) {
+      // explore-type lesson: mark complete just by running
+      if (!state.completed.has(lesson.id)){
+        state.completed.add(lesson.id);
+        saveProgress(state.completed);
+        renderSidebar();
+        updateStatusBar();
+      }
+    }
+  });
+}
+
+/* ---------- Predict lessons ---------- */
+function renderPredict(lesson){
+  const host = document.getElementById('predictHost');
+  const p = lesson.predict;
+  host.innerHTML =
+    '<div class="predict-snippet"><div id="predictCmHost"></div></div>' +
+    '<div class="predict-question">' + p.question + '</div>' +
+    '<div class="predict-options" id="predictOptions"></div>' +
+    '<div class="predict-explain" id="predictExplain">' + p.afterExplain + '</div>' +
+    '<button class="run-verify-btn" id="runVerifyBtn">▶ Run it to see the real output</button>' +
+    '<div class="output-panel" style="display:none;" id="predictOutputPanel">' +
+      '<div class="output-section-head">OUTPUT</div>' +
+      '<div class="output-log" id="predictOutputLog"></div>' +
+    '</div>';
+
+  CodeMirror(document.getElementById('predictCmHost'), {
+    value: p.snippet,
+    mode: { name:'javascript' },
+    theme: 'default',
+    lineNumbers: true,
+    readOnly: true,
+    viewportMargin: Infinity
+  });
+
+  const optsWrap = document.getElementById('predictOptions');
+  p.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'predict-opt';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      const allBtns = optsWrap.querySelectorAll('.predict-opt');
+      allBtns.forEach((b, bi) => {
+        b.disabled = true;
+        if (bi === p.correctIndex) b.classList.add('correct');
+        else if (bi === i) b.classList.add('wrong');
+      });
+      document.getElementById('predictExplain').classList.add('show');
+      if (!state.completed.has(lesson.id)){
+        state.completed.add(lesson.id);
+        saveProgress(state.completed);
+        renderSidebar();
+        updateStatusBar();
+      }
+    };
+    optsWrap.appendChild(btn);
+  });
+
+  document.getElementById('runVerifyBtn').onclick = () => {
+    const panel = document.getElementById('predictOutputPanel');
+    const log = document.getElementById('predictOutputLog');
+    panel.style.display = 'block';
+    log.innerHTML = '<span class="empty">Running...</span>';
+    runInSandbox(p.snippet, '', (res) => {
+      if (res.timedOut){
+        log.innerHTML = '<span class="err">Timed out -- possible infinite loop.</span>';
+        return;
+      }
+      log.innerHTML = res.logs.map(l => '<div>' + escapeHtml(l) + '</div>').join('');
+      if (res.error){
+        log.innerHTML += '<div class="err">Uncaught Error: ' + escapeHtml(res.error) + '</div>';
+      }
+    });
+  };
+}
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+function updateStatusBar(){
+  const crumb = document.getElementById('statusBreadcrumb');
+  const prog = document.getElementById('statusProgress');
+  if (state.activeId){
+    const lesson = LESSONS.find(l => l.id === state.activeId);
+    crumb.textContent = 'JavaScript Fundamentals › ' + MODULES[lesson.module].title + ' › ' + lesson.title;
+  } else {
+    crumb.textContent = 'Welcome';
+  }
+  prog.textContent = state.completed.size + ' / ' + LESSONS.length + ' complete';
+}
+
+/* ============================================================
+   MOBILE SIDEBAR
+   ============================================================ */
+function openSidebarMobile(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+document.getElementById('hamburgerBtn').onclick = () => {
+  const sb = document.getElementById('sidebar');
+  if (sb.classList.contains('open')) closeSidebarMobile(); else openSidebarMobile();
+};
+document.getElementById('sidebarOverlay').onclick = closeSidebarMobile;
+document.getElementById('navHome').onclick = () => {
+  state.activeId = null;
+  closeSidebarMobile();
+  renderWelcome();
+  renderTabs();
+  renderSidebar();
+};
+document.getElementById('navExplorer').onclick = () => {
+  if (window.innerWidth <= 860) openSidebarMobile();
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderSidebar();
+renderTabs();
+renderWelcome();
+</script>
+<!--hub-link--><a href="index.html" aria-label="Back to Learning Hub" style="position:fixed;right:10px;bottom:46px;z-index:99999;width:38px;height:38px;border-radius:50%;background:#007ACC;color:#fff;font:700 18px/38px system-ui,sans-serif;text-align:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.28);opacity:.88">&#8962;</a>
+</body>
+</html>

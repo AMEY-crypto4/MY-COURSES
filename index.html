@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Learning Dashboard — All Courses</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#007ACC">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Learn">
+<title>Learning Hub — All Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -33,7 +40,7 @@ body{
 .mono{font-family:'JetBrains Mono', monospace;}
 
 .titlebar{
-  height:34px; background:#EDEDED; border-bottom:1px solid var(--border);
+  padding-top:env(safe-area-inset-top); height:calc(34px + env(safe-area-inset-top)); background:#EDEDED; border-bottom:1px solid var(--border);
   display:flex; align-items:center; padding:0 14px; gap:10px; font-size:12.5px; color:var(--text-dim);
   position:sticky; top:0; z-index:50;
 }
@@ -126,14 +133,14 @@ p.page-lede{font-size:15.5px; line-height:1.65; color:var(--text-dim); max-width
 
 <div class="titlebar">
   <span class="titlebar-dots"><i></i><i></i><i></i></span>
-  <div class="titlebar-title">Learning Dashboard</div>
+  <div class="titlebar-title">Learning Hub</div>
   <div style="width:40px;"></div>
 </div>
 
 <div class="wrap">
-  <span class="header-badge">Command Center</span>
-  <h1 class="page-title">Your Learning Dashboard</h1>
-  <p class="page-lede">Every course built so far, in one place. Progress below is read live from this browser — open a course, make progress, come back here and it updates. Keep all course files in the same folder when you deploy, so the links below work.</p>
+  <span class="header-badge">Learning Hub</span>
+  <h1 class="page-title">Your Learning Hub</h1>
+  <p class="page-lede">Every course in one place, built to work on your phone. Progress is read live from this browser: open a course, make progress, tap the round home button to come back here, and it updates. Suggested order for interview prep: DSA and SQL first, then JavaScript and Python fundamentals, then the career tracks.</p>
 
   <div class="stat-row" id="statRow"></div>
 
@@ -145,22 +152,37 @@ p.page-lede{font-size:15.5px; line-height:1.65; color:var(--text-dim); max-width
   <div class="filter-row" id="filterRow">
     <div class="filter-chip active" data-filter="all">All courses</div>
     <div class="filter-chip" data-filter="track">12-week tracks</div>
-    <div class="filter-chip" data-filter="interactive">Interactive fundamentals</div>
+    <div class="filter-chip" data-filter="interactive">Interactive courses</div>
   </div>
 
-  <div class="section-label">The Bench Series — Career Tracks</div>
-  <div class="course-grid" id="trackGrid"></div>
-
-  <div class="section-label">Interactive Fundamentals — Learn to Code, For Real</div>
+  <div class="section-label">Interactive Courses — Learn to Code, For Real</div>
   <div class="course-grid" id="fundamentalsGrid"></div>
 
+  <div class="section-label">The Bench Series — 12-Week Career Tracks</div>
+  <div class="course-grid" id="trackGrid"></div>
+
   <div class="footnote">
-    Progress is stored in this browser's <code>localStorage</code>, scoped per course. It persists across visits on this device/browser, but does not sync across devices — it isn't sent anywhere. If a course shows 0% here but you know you've made progress, make sure this dashboard and that course file are hosted under the exact same domain (e.g. the same GitHub Pages / Vercel project).
+    <b>Install on your phone:</b> open this page in Safari (iPhone) or Chrome (Android) and use <em>Add to Home Screen</em>. After the first visit the courses also open offline (the first run of each course needs internet to fetch its code editor and engine).<br><br>
+    Progress is stored in this browser's <code>localStorage</code>, per course. It persists on this device and browser, does not sync across devices, and is not sent anywhere. If a course shows 0% but you made progress, you are probably on a different address (for example <code>www</code> vs no <code>www</code>, or the installed app vs the browser tab).
   </div>
 </div>
 
 <script>
 const COURSES = [
+  {
+    id:'dsa', group:'interactive', accent:'#7A3FE0', accentWash:'rgba(122,63,224,.08)',
+    kicker:'Interview Prep', type:'171 interactive lessons',
+    title:'Data Structures & Algorithms', file:'dsa-course.html',
+    desc:'Big-O, arrays, hash maps, two pointers, stacks, linked lists, recursion, sorting, trees, graphs, heaps, dynamic programming and mock rounds — in JavaScript. Write each function from a blank stub; tests include large inputs so slow solutions time out.',
+    storageKey:'dsaJsProgress_v1', total:171, unit:'lessons'
+  },
+  {
+    id:'sql', group:'interactive', accent:'#1E874B', accentWash:'rgba(30,135,75,.1)',
+    kicker:'Backend & Data', type:'95 interactive lessons',
+    title:'SQL & Databases', file:'sql-databases-course.html',
+    desc:'A real SQLite database running in your browser. SELECT to joins, CTEs, window functions, transactions, schema design, indexes and an analytics capstone — checked against expected results.',
+    storageKey:'sqlDatabasesProgress_v1', total:95, unit:'lessons'
+  },
   {
     id:'bench', group:'track', accent:'#0C8F86', accentWash:'rgba(12,143,134,.08)',
     kicker:'Course 1 · The Bench', type:'12-week track',
@@ -266,7 +288,7 @@ function renderCourses(){
   fundGrid.innerHTML = COURSES.filter(c => c.group === 'interactive').map(courseCardHtml).join('') +
     `<div class="placeholder-card">
       <div class="ph-title">+ More on the way</div>
-      <div class="ph-desc">Every real skill from your Master Resume gets the same treatment — live editor, real execution, no bookish reading-only lessons. This tile turns into real courses once that list is in hand.</div>
+      <div class="ph-desc">TypeScript, React and Node/Express are next. New courses appear here automatically once added to this page.</div>
     </div>`;
 }
 
@@ -293,6 +315,7 @@ document.getElementById('filterRow').addEventListener('click', (e) => {
 
 renderStats();
 renderCourses();
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) { navigator.serviceWorker.register("sw.js").catch(function(){}); }
 </script>
 </body>
 </html>
