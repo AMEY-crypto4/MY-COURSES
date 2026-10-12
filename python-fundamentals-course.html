@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="theme-color" content="#007ACC">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Python Fundamentals — Interactive Course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+:root{
+  --bg:#FFFFFF;
+  --bg-sidebar:#F3F3F3;
+  --bg-panel:#F8F8F8;
+  --border:#E1E1E1;
+  --text:#1E1E1E;
+  --text-dim:#6E6E6E;
+  --blue:#007ACC;
+  --blue-bright:#0098FF;
+  --blue-wash:rgba(0,122,204,.08);
+  --green:#1E874B;
+  --green-wash:rgba(30,135,75,.1);
+  --red:#CD3131;
+  --red-wash:rgba(205,49,49,.08);
+  --amber:#BF8803;
+  --py-yellow:#D6A21E;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0; height:100%;}
+body{
+  background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;
+  -webkit-font-smoothing:antialiased; display:flex; flex-direction:column; height:100vh; overflow:hidden;
+}
+.mono{font-family:'JetBrains Mono', monospace;}
+button{font-family:'Inter', sans-serif;}
+code{font-family:'JetBrains Mono', monospace; background:var(--blue-wash); color:var(--blue); padding:1px 5px; border-radius:3px; font-size:.92em;}
+
+.titlebar{
+  height:34px; flex:0 0 34px; background:#EDEDED; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 10px; gap:10px; font-size:12.5px; color:var(--text-dim);
+}
+.titlebar-dots{display:flex; gap:6px;}
+.titlebar-dots i{width:11px; height:11px; border-radius:50%; display:inline-block;}
+.titlebar-dots i:nth-child(1){background:#FF5F57;}
+.titlebar-dots i:nth-child(2){background:#FEBC2E;}
+.titlebar-dots i:nth-child(3){background:#28C840;}
+.titlebar-title{flex:1; text-align:center; font-weight:500;}
+.hamburger{display:none; background:none; border:none; font-size:18px; cursor:pointer; color:var(--text); padding:4px 8px;}
+@media (max-width:860px){ .hamburger{display:inline-block;} }
+
+.app{flex:1; display:flex; min-height:0; position:relative;}
+.activitybar{
+  width:46px; flex:0 0 46px; background:var(--bg-sidebar); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; padding-top:10px; gap:6px;
+}
+.activity-icon{
+  width:34px; height:34px; border:none; background:none; border-radius:5px; cursor:pointer;
+  font-size:17px; color:var(--text-dim); display:flex; align-items:center; justify-content:center;
+}
+.activity-icon:hover{color:var(--text); background:rgba(0,0,0,.05);}
+.activity-icon.active{color:var(--blue); border-left:2px solid var(--blue); border-radius:0;}
+@media (max-width:860px){ .activitybar{display:none;} }
+
+.sidebar{
+  width:270px; flex:0 0 270px; background:var(--bg-sidebar); border-right:1px solid var(--border);
+  overflow-y:auto; padding:14px 0;
+}
+.sidebar-header{font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--text-dim); padding:0 16px 10px;}
+.sidebar-tree{padding:0 6px;}
+.folder{margin-bottom:2px;}
+.folder-head{
+  display:flex; align-items:center; gap:6px; padding:6px 8px; font-size:12.5px; font-weight:600; color:var(--text);
+  cursor:pointer; border-radius:4px; user-select:none;
+}
+.folder-head:hover{background:rgba(0,0,0,.04);}
+.folder-chevron{font-size:10px; color:var(--text-dim); width:10px; transition:transform .12s;}
+.folder.collapsed .folder-chevron{transform:rotate(-90deg);}
+.folder-files{padding-left:18px;}
+.folder.collapsed .folder-files{display:none;}
+.file-item{
+  display:flex; align-items:center; gap:7px; padding:5px 8px; font-size:12.5px; color:var(--text-dim);
+  cursor:pointer; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.file-item:hover{background:rgba(0,0,0,.04); color:var(--text);}
+.file-item.active{background:var(--blue-wash); color:var(--blue); font-weight:600;}
+.file-dot{width:7px; height:7px; border-radius:50%; flex:0 0 7px; border:1.5px solid var(--text-dim); background:transparent;}
+.file-item.done .file-dot{background:var(--green); border-color:var(--green);}
+.file-item.active .file-dot{border-color:var(--blue);}
+.file-icon{font-size:11px; flex:0 0 18px; color:var(--py-yellow); font-weight:700; font-family:'JetBrains Mono';}
+.sidebar-overlay{display:none;}
+@media (max-width:860px){
+  .sidebar{position:fixed; top:34px; left:0; bottom:28px; z-index:40; transform:translateX(-100%); transition:transform .18s; box-shadow:2px 0 14px rgba(0,0,0,.15);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay{display:none; position:fixed; top:34px; left:0; right:0; bottom:28px; background:rgba(0,0,0,.25); z-index:39;}
+  .sidebar-overlay.open{display:block;}
+}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.tabbar{
+  height:36px; flex:0 0 36px; background:var(--bg-panel); border-bottom:1px solid var(--border);
+  display:flex; align-items:stretch; overflow-x:auto; overflow-y:hidden;
+}
+.tab{
+  display:flex; align-items:center; gap:8px; padding:0 10px; font-size:12.5px; color:var(--text-dim);
+  border-right:1px solid var(--border); cursor:pointer; white-space:nowrap; background:var(--bg-panel); flex:0 0 auto;
+}
+.tab.active{background:var(--bg); color:var(--text); border-top:2px solid var(--blue); padding-top:2px;}
+.tab .tab-close{opacity:.5; font-size:13px; padding:0 2px;}
+.tab .tab-close:hover{opacity:1; color:var(--red);}
+.tab-empty{display:flex; align-items:center; padding:0 12px; font-size:12.5px; color:var(--text-dim);}
+
+.editor-scroll{flex:1; overflow-y:auto; padding:30px 34px 60px;}
+@media (max-width:700px){ .editor-scroll{padding:18px 16px 48px;} }
+
+.welcome{max-width:720px; margin:0 auto;}
+.welcome-badge{
+  display:inline-block; font-family:'JetBrains Mono'; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--py-yellow); border:1px solid var(--py-yellow); background:rgba(214,162,30,.08); padding:4px 10px; border-radius:3px;
+}
+.welcome h1{font-size:32px; font-weight:700; margin:16px 0 10px; letter-spacing:-.01em;}
+.welcome p.lede{font-size:15.5px; line-height:1.65; color:var(--text-dim); max-width:60ch;}
+.welcome-steps{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:28px 0;}
+@media (max-width:700px){ .welcome-steps{grid-template-columns:1fr 1fr;} }
+.welcome-step{border:1px solid var(--border); border-radius:5px; padding:14px; background:var(--bg-panel);}
+.welcome-step b{display:block; font-family:'JetBrains Mono'; color:var(--blue); font-size:12px; margin-bottom:6px;}
+.welcome-step span{font-size:13px; color:var(--text-dim); line-height:1.5;}
+.welcome-progress{margin:26px 0;}
+.welcome-progress .row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-dim); margin-bottom:6px;}
+.bar-track{height:7px; background:#E8E8E8; border-radius:4px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--blue); border-radius:4px; transition:width .4s;}
+.btn-primary{
+  background:var(--blue); color:#fff; border:none; font-weight:600; font-size:14.5px; padding:11px 22px;
+  border-radius:4px; cursor:pointer; margin-top:4px;
+}
+.btn-primary:hover{background:var(--blue-bright);}
+.runtime-note{margin-top:18px; font-size:12.5px; color:var(--text-dim); background:var(--bg-panel); border:1px solid var(--border); border-radius:5px; padding:10px 14px; max-width:60ch;}
+.course-map-note{margin-top:14px; font-size:12.5px; color:var(--text-dim); max-width:60ch; line-height:1.6;}
+
+.lesson{max-width:800px; margin:0 auto;}
+.lesson-eyebrow{font-family:'JetBrains Mono'; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--amber);}
+.lesson h2{font-size:27px; font-weight:700; margin:10px 0 18px; letter-spacing:-.01em;}
+.concept{font-size:15px; line-height:1.68; color:#333; margin-bottom:16px;}
+.concept p{margin:0 0 10px;}
+.concept ul, .concept ol{margin:0 0 12px; padding-left:22px;}
+.concept li{margin-bottom:5px;}
+.concept pre{
+  background:#1E1E1E; color:#D4D4D4; font-family:'JetBrains Mono', monospace; font-size:12.8px;
+  padding:12px 15px; border-radius:5px; overflow-x:auto; line-height:1.6; margin:10px 0 14px;
+}
+.concept pre code{background:none; color:inherit; padding:0; font-size:1em;}
+.concept .callout{
+  border-left:3px solid var(--amber); background:rgba(191,136,3,.07); padding:9px 13px; margin:10px 0 14px;
+  font-size:14px; border-radius:0 4px 4px 0;
+}
+.concept .callout b{color:var(--amber);}
+.task{
+  background:var(--blue-wash); border:1px solid rgba(0,122,204,.25); border-radius:5px;
+  padding:12px 16px; font-size:14px; line-height:1.6; color:#1a1a1a; margin-bottom:20px;
+}
+.task strong{color:var(--blue);}
+.task ol, .task ul{margin:6px 0 0; padding-left:20px;}
+.task li{margin-bottom:4px;}
+
+.editor-toolbar{display:flex; align-items:center; gap:8px; margin-bottom:0; flex-wrap:wrap;}
+.toolbar-btn{
+  background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;
+  padding:7px 14px; border-radius:4px 4px 0 0; cursor:pointer; display:flex; align-items:center; gap:6px;
+}
+.toolbar-btn.run{background:var(--blue); color:#fff; border-color:var(--blue);}
+.toolbar-btn.run:hover{background:var(--blue-bright);}
+.toolbar-btn.run:disabled{opacity:.6; cursor:wait;}
+.toolbar-btn:not(.run):hover{background:rgba(0,0,0,.04);}
+.toolbar-spacer{flex:1;}
+.runtime-pill{font-size:11.5px; color:var(--text-dim); font-family:'JetBrains Mono';}
+
+.CodeMirror{
+  border:1px solid var(--border); font-family:'JetBrains Mono', monospace; font-size:13.5px; height:320px;
+}
+@media (max-width:700px){ .CodeMirror{height:240px;} }
+.CodeMirror-gutters{background:var(--bg-panel); border-right:1px solid var(--border);}
+.cm-s-default .cm-keyword{color:#0000FF;}
+.cm-s-default .cm-string{color:#A31515;}
+.cm-s-default .cm-comment{color:#008000; font-style:italic;}
+.cm-s-default .cm-number{color:#098658;}
+.cm-s-default .cm-def{color:#795E26;}
+.cm-s-default .cm-variable{color:#001080;}
+.cm-s-default .cm-property{color:#001080;}
+.cm-s-default .cm-atom{color:#0000FF;}
+.cm-s-default .cm-builtin{color:#267F99;}
+
+.output-panel{border:1px solid var(--border); border-top:none; background:var(--bg-panel); border-radius:0 0 4px 4px; overflow:hidden;}
+.output-section-head{
+  font-family:'JetBrains Mono'; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);
+  padding:8px 14px 4px;
+}
+.output-log{
+  font-family:'JetBrains Mono'; font-size:13px; padding:4px 14px 12px; color:#333; min-height:20px; white-space:pre-wrap; word-break:break-word;
+}
+.output-log .empty{color:var(--text-dim); font-style:italic;}
+.output-log .err{color:var(--red); white-space:pre-wrap;}
+.test-results{padding:2px 14px 12px; display:flex; flex-direction:column; gap:5px;}
+.test-row{display:flex; align-items:flex-start; gap:8px; font-size:13px; line-height:1.5;}
+.test-row .mark{flex:0 0 16px; font-weight:700;}
+.test-row.pass .mark{color:var(--green);}
+.test-row.fail .mark{color:var(--red);}
+.test-row.fail .detail{color:var(--text-dim); font-size:12px; display:block;}
+.success-banner{
+  margin-top:10px; background:var(--green-wash); border:1px solid rgba(30,135,75,.3); color:var(--green);
+  padding:10px 14px; border-radius:4px; font-size:13.5px; font-weight:600;
+}
+.timeout-banner{
+  margin-top:10px; background:var(--red-wash); border:1px solid rgba(205,49,49,.3); color:var(--red);
+  padding:10px 14px; border-radius:4px; font-size:13.5px;
+}
+.solution-box{margin-top:14px;}
+.solution-toggle{
+  background:none; border:1px dashed var(--border); color:var(--text-dim); font-size:12.5px; padding:7px 12px;
+  border-radius:4px; cursor:pointer;
+}
+.solution-toggle:hover{color:var(--text); border-color:var(--text-dim);}
+.solution-code{
+  display:none; margin-top:10px; background:#1E1E1E; color:#D4D4D4; font-family:'JetBrains Mono', monospace;
+  font-size:13px; padding:14px 16px; border-radius:4px; white-space:pre-wrap; line-height:1.6;
+}
+.solution-code.show{display:block;}
+
+.predict-snippet .CodeMirror{height:auto; min-height:60px;}
+.predict-question{font-size:15px; font-weight:600; margin:18px 0 12px;}
+.predict-options{display:flex; flex-direction:column; gap:8px; margin-bottom:14px;}
+.predict-opt{
+  text-align:left; background:var(--bg-panel); border:1px solid var(--border); border-radius:5px;
+  padding:11px 14px; font-family:'JetBrains Mono'; font-size:13.5px; cursor:pointer; color:var(--text);
+}
+.predict-opt:hover{border-color:var(--blue);}
+.predict-opt.correct{background:var(--green-wash); border-color:var(--green); color:var(--green); font-weight:600;}
+.predict-opt.wrong{background:var(--red-wash); border-color:var(--red); color:var(--red);}
+.predict-explain{display:none; background:var(--blue-wash); border:1px solid rgba(0,122,204,.25); border-radius:5px; padding:13px 16px; font-size:14px; line-height:1.6; margin-bottom:14px;}
+.predict-explain.show{display:block;}
+.run-verify-btn{background:var(--bg); border:1px solid var(--border); font-size:13px; padding:8px 14px; border-radius:4px; cursor:pointer; margin-bottom:14px;}
+.run-verify-btn:hover{border-color:var(--blue); color:var(--blue);}
+
+.lesson-nav{display:flex; justify-content:space-between; margin-top:36px; padding-top:18px; border-top:1px solid var(--border);}
+.nav-btn{
+  background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:13.5px; padding:9px 16px;
+  border-radius:4px; cursor:pointer;
+}
+.nav-btn:hover{border-color:var(--blue); color:var(--blue);}
+.nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+.statusbar{
+  height:26px; flex:0 0 26px; background:var(--blue); color:#fff; display:flex; align-items:center;
+  padding:0 14px; font-size:11.5px; font-family:'JetBrains Mono'; justify-content:space-between;
+}
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18); border-radius:99px;}
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <button class="hamburger" id="hamburgerBtn">☰</button>
+  <span class="titlebar-dots"><i></i><i></i><i></i></span>
+  <div class="titlebar-title">Python Fundamentals — Interactive Course</div>
+  <div style="width:70px;"></div>
+</div>
+
+<div class="app">
+  <div class="activitybar">
+    <button class="activity-icon active" id="navExplorer" title="Explorer">🗀</button>
+    <button class="activity-icon" id="navHome" title="Home">⌂</button>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">EXPLORER</div>
+    <div class="sidebar-tree" id="sidebarTree"></div>
+  </div>
+  <div class="main">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="editor-scroll" id="editorScroll"></div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <span id="statusBreadcrumb">Welcome</span>
+  <span id="statusProgress">0 / 48 complete</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
+<script>
+/* ============================================================
+   MODULES & LESSONS
+   ============================================================ */
+const MODULES = [
+  { title: 'Getting Started & How Python Thinks' },
+  { title: 'Operators & Control Flow Mastery' },
+  { title: 'Functions Deep Dive' },
+  { title: 'Strings In Depth' },
+  { title: 'Lists & Tuples Mastery' },
+  { title: 'Dictionaries & Sets' },
+  { title: 'Error Handling & Debugging' },
+  { title: 'Files, Modules & the Standard Library' },
+  { title: 'Object-Oriented Programming' },
+  { title: 'Iterators, Generators & Functional Tools' },
+  { title: 'Leveling Up & Capstone' }
+];
+
+const LESSONS = [
+
+// ======================================================================
+// MODULE 0 — Getting Started & How Python Thinks
+// ======================================================================
+{ id:'m1-l1', module:0, file:'01_how_python_runs.py', type:'explore', title:'What Is Code, and How Does Python Actually Run?',
+  concept:'<p>A computer only understands extremely literal, low-level instructions. Code is how you write those instructions in a form a human can read and reason about. Python is an <strong>interpreted</strong> language: when you run a Python file, the interpreter reads your code from top to bottom, translates each line into lower-level instructions behind the scenes, and executes it immediately. There is no separate "compile the whole program first" step you have to manage yourself, unlike languages such as C++ or Java.</p><p>This is exactly why Python is such a strong language for learning the real mechanics of programming: the gap between what you wrote and what the computer actually did is small, which makes it much easier to build an accurate mental model of what is happening at every step.</p><div class="callout"><b>How this course actually works:</b> clicking Run below sends your code to a real Python interpreter running inside your browser (not a fake simulation), executes it exactly as it would run on a server or your own laptop, and shows whatever your code prints in the Output panel. Every mistake you make here, and every error message you learn to read, is identical to real-world Python development.</div>',
+  task:'',
+  starter:'# Python runs this file from top to bottom, one line at a time.\nprint("Hello, world!")\nprint("This line runs second, because it comes second.")\n\n# Add a third print() line below with anything you like, then click Run.\n',
+  solution:'print("Hello, world!")\nprint("This line runs second, because it comes second.")\nprint("This is the third line.")',
+  tests:[] },
+
+{ id:'m1-l2', module:0, file:'02_print_in_depth.py', type:'exercise', title:'print() In Depth — sep, end, and Debugging With It',
+  concept:'<p><code>print()</code> is the single most-used tool in every Python developer\u2019s day, not just for saying hello to the user but for answering the constant real-world question: "what does this variable actually contain right now?" Long before you reach for a real debugger, print() is how you check your own assumptions.</p><p>You can hand it several values separated by commas, and it joins them with a single space by default: <code>print("Score:", 90)</code> prints <code>Score: 90</code>. Two optional keyword arguments give you more control over the output:</p><ul><li><code>sep</code> changes what goes between values (default is a single space)</li><li><code>end</code> changes what gets printed after everything else (default is a newline character, which is why every print() call normally starts a fresh line on screen) &mdash; pass <code>end=""</code> to keep the cursor on the same line</li></ul><pre>print(1, 2, 3, sep="-")   <span style="color:#6A9955"># prints: 1-2-3</span>\nprint("Loading", end="...")  <span style="color:#6A9955"># no newline after this</span>\nprint("done")                <span style="color:#6A9955"># continues on the SAME line</span></pre>',
+  task:'Using the given variables, print name and score as two separate arguments to a single print() call (not an f-string, default sep). Then print the numbers 1, 2, 3, 4 using sep=", " so the line reads exactly "1, 2, 3, 4".',
+  starter:'name = "Amey"\nscore = 87\n\n# print name and score as two separate print() arguments\n\n\n# print 1, 2, 3, 4 using sep=", "\n\n',
+  solution:'name = "Amey"\nscore = 87\nprint(name, score)\nprint(1, 2, 3, 4, sep=", ")',
+  tests:[
+    { desc:'Printed at least two lines', check:'len(__logs) >= 2' },
+    { desc:'One line reads exactly "Amey 87"', check:'"Amey 87" in __logs' },
+    { desc:'One line reads exactly "1, 2, 3, 4"', check:'"1, 2, 3, 4" in __logs' }
+  ]},
+
+{ id:'m1-l3', module:0, file:'03_variables_and_typing.py', type:'exercise', title:'Variables, Naming Rules & Dynamic Typing',
+  concept:'<p>A variable is a name that points to a value in memory. You create one with <code>name = value</code> &mdash; no declaration keyword needed. Names can contain letters, digits and underscores, cannot start with a digit, and are case-sensitive (<code>score</code> and <code>Score</code> are two different variables). Python convention, called <strong>snake_case</strong>, is to write multi-word names in all-lowercase with underscores: <code>total_price</code>, not <code>totalPrice</code>.</p><p>Python is <strong>dynamically typed</strong>: a variable is not locked to one type forever. The type belongs to the value, not to the name, so the exact same name can point to a string and later point to a number with nothing special required:</p><pre>x = "hello"\nx = 5   <span style="color:#6A9955"># totally legal -- x now points to an int instead</span></pre><div class="callout"><b>Why this matters:</b> this flexibility is convenient, but it is also a real source of bugs in large codebases. Reusing a variable name for two unrelated things makes code harder to follow. In professional code a name should describe what it holds clearly enough that reassigning it to something unrelated looks obviously wrong at a glance.</div>',
+  task:'Create product_name set to "Desk Lamp", price set to 899.5, and in_stock set to True. Then reassign price to the integer 850, showing the same name pointing to a different type. Finally create final_price equal to price.',
+  starter:'# Create product_name, price, and in_stock\n\n\n# Reassign price to the integer 850\n\n\n# Create final_price equal to price\n\n',
+  solution:'product_name = "Desk Lamp"\nprice = 899.5\nin_stock = True\nprice = 850\nfinal_price = price',
+  tests:[
+    { desc:'product_name is the string "Desk Lamp"', check:'product_name == "Desk Lamp"' },
+    { desc:'in_stock is True', check:'in_stock is True' },
+    { desc:'price was reassigned to the integer 850', check:'price == 850 and isinstance(price, int)' },
+    { desc:'final_price matches the reassigned price', check:'final_price == 850' }
+  ]},
+
+{ id:'m1-l4', module:0, file:'04_dynamic_typing_predict.py', type:'predict', title:'Dynamic Typing & type() — Predict the Output',
+  concept:'<p>Every value has a type, and <code>type()</code> reports exactly what it is. Because Python is dynamically typed, the type attached to a name can change the instant you reassign it &mdash; type() always reports the CURRENT value\u2019s type, never a type the name was "declared" with, because no such declaration exists.</p>',
+  task:'',
+  predict:{
+    snippet:'x = 10\nprint(type(x))\nx = "ten"\nprint(type(x))\nx = 10.0\nprint(type(x))\nx = (10 == 10)\nprint(type(x))',
+    question:'What does the FOURTH print line, after x = (10 == 10), print?',
+    options:["&lt;class 'bool'&gt;","&lt;class 'int'&gt;","True","&lt;class 'str'&gt;"],
+    correctIndex:0,
+    afterExplain:"x = (10 == 10) first evaluates the comparison 10 == 10, which produces the boolean value True, and THEN stores that boolean in x. So type(x) reports &lt;class 'bool'&gt;, not &lt;class 'int'&gt;. The same name, x, pointed to an int, then a str, then a float, then a bool, across just four lines -- all perfectly legal."
+  }},
+
+{ id:'m1-l5', module:0, file:'05_comments_and_readability.py', type:'exercise', title:'Comments, Docstrings & Writing Code Humans Can Read',
+  concept:'<p>A <code>#</code> starts a comment &mdash; Python ignores everything after it on that line. Comments exist for the next human who reads the code, which, very often, is you in six months with no memory of why you wrote something a certain way. Good comments explain <em>why</em> a piece of code exists, not just what it does line by line &mdash; the code itself already says what it does.</p><p>A <strong>docstring</strong> is a special string placed as the very first line inside a function, written with triple quotes, that documents what the function does, its parameters, and what it returns. Tools, editors and other developers rely on docstrings to understand a function without reading its implementation:</p><pre>def discount_price(price, percent_off):\n    """Return the price after applying a percentage discount."""\n    return price * (1 - percent_off / 100)</pre><div class="callout"><b>Industry habit:</b> a function name plus a one-line docstring should let another developer use your function correctly without ever opening it up. This single habit is one of the fastest ways to look and work like an experienced engineer.</div>',
+  task:'Write a function named circle_area with a one-line docstring describing what it does. It should take radius and return the area using 3.14159 as an approximation of pi (area = pi * radius * radius).',
+  starter:'def circle_area(radius):\n    # add a one-line docstring as the first line of the function, then your code\n    pass',
+  solution:'def circle_area(radius):\n    """Return the area of a circle given its radius."""\n    return 3.14159 * radius * radius',
+  tests:[
+    { desc:'circle_area(2) is approximately 12.566', check:'abs(circle_area(2) - 12.56636) < 0.01' },
+    { desc:'circle_area(0) == 0', check:'circle_area(0) == 0' },
+    { desc:'circle_area has a docstring (starts with triple quotes)', check:'circle_area.__doc__ is not None and len(circle_area.__doc__.strip()) > 0' }
+  ]},
+
+// ======================================================================
+// MODULE 1 — Operators & Control Flow Mastery
+// ======================================================================
+{ id:'m2-l1', module:1, file:'01_operators_deep_dive.py', type:'exercise', title:'Arithmetic & Comparison Operators Deep Dive',
+  concept:'<p>Arithmetic operators do math: <code>+ - * /</code> are the familiar four. Two are easy to confuse: <code>//</code> (<strong>floor division</strong>) divides and rounds down to a whole number, while <code>%</code> (<strong>modulo</strong>) gives you the remainder left over. <code>**</code> raises to a power: <code>2 ** 10</code> is 1024.</p><pre>17 / 5    <span style="color:#6A9955"># 3.4   (true division, always a float)</span>\n17 // 5   <span style="color:#6A9955"># 3     (floor division, rounds down)</span>\n17 % 5    <span style="color:#6A9955"># 2     (the remainder)</span></pre><p>Comparison operators (<code>== != &lt; &gt; &lt;= &gt;=</code>) produce a boolean. Python also allows <strong>chained comparisons</strong> that read almost like math notation: <code>0 &lt;= score &lt;= 100</code> checks both bounds in one clean expression, equivalent to writing <code>0 &lt;= score and score &lt;= 100</code>.</p><div class="callout"><b>Common mistake:</b> confusing <code>=</code> (assignment, "store this value") with <code>==</code> (comparison, "are these equal?"). Using one where you meant the other is one of the most common bugs beginners write, in every language.</div>',
+  task:'Given minutes, create hours (the whole number of hours using floor division by 60) and remaining_minutes (the leftover minutes using modulo 60). Then create in_valid_range, True only if minutes is between 0 and 1440 inclusive, using a single chained comparison.',
+  starter:'minutes = 135\n# hours: whole hours using floor division\n\n\n# remaining_minutes: leftover minutes using modulo\n\n\n# in_valid_range: True if 0 <= minutes <= 1440, using one chained comparison\n\n',
+  solution:'minutes = 135\nhours = minutes // 60\nremaining_minutes = minutes % 60\nin_valid_range = 0 <= minutes <= 1440',
+  tests:[
+    { desc:'hours equals 2 (135 // 60)', check:'hours == 2' },
+    { desc:'remaining_minutes equals 15 (135 % 60)', check:'remaining_minutes == 15' },
+    { desc:'in_valid_range is True for 135 minutes', check:'in_valid_range is True' }
+  ]},
+
+{ id:'m2-l2', module:1, file:'02_truthiness_predict.py', type:'predict', title:'Boolean Logic, Truthiness & Short-Circuiting — Predict the Output',
+  concept:'<p><code>and</code> is only True when both sides are true; <code>or</code> is true if at least one side is true; <code>not</code> flips a boolean. Python spells these out as real words instead of symbols like <code>&amp;&amp;</code> or <code>||</code>.</p><p>What surprises most beginners: Python lets you use <code>and</code> / <code>or</code> on non-boolean values too, because every value has a <strong>truthiness</strong>. <code>0</code>, <code>""</code> (empty string), <code>[]</code> (empty list), <code>{}</code> (empty dict), and <code>None</code> are all treated as "falsy." Everything else is "truthy." This is why <code>if my_list:</code> is idiomatic Python for "if the list is not empty" &mdash; no need to write <code>if len(my_list) &gt; 0:</code>.</p><p>Python also <strong>short-circuits</strong>: in <code>a and b</code>, if <code>a</code> is already False, Python never even evaluates <code>b</code> &mdash; the overall result is already known. This matters in real code, for example <code>user is not None and user.is_active</code> safely avoids crashing on a None user, because the second check never runs if the first is False.</p>',
+  task:'',
+  predict:{
+    snippet:'username = ""\nprint(username or "guest")\nitems = [1, 2, 3]\nprint("has items" if items else "empty")\nprint(bool(0), bool(""), bool([1]), bool(None))',
+    question:'What does the FIRST line, print(username or "guest"), print?',
+    options:['guest','(an empty string)','True','username'],
+    correctIndex:0,
+    afterExplain:'An empty string is falsy, so "username or \\"guest\\"" evaluates username first, finds it falsy, and moves on to evaluate and return the right-hand side, "guest". This "value or default" pattern is extremely common in real Python code for filling in a fallback when something might be empty or None.'
+  }},
+
+{ id:'m2-l3', module:1, file:'03_if_elif_else_deep_dive.py', type:'exercise', title:'if / elif / else Deep Dive',
+  concept:'<p><code>if</code> runs a block only when its condition is true. <code>elif</code> checks another condition if the previous ones were false, and <code>else</code> catches everything else. Conditions are checked top to bottom, and the FIRST true one wins &mdash; later ones are never even checked. Indentation is not a style choice in Python; it is how blocks are defined, and inconsistent indentation is a syntax error.</p><p>A pattern worth learning early is the <strong>guard clause</strong>: handle the edge case first and return immediately, instead of nesting your main logic inside a deep if/else pyramid.</p><pre><span style="color:#6A9955"># Harder to read: everything nested</span>\ndef describe(n):\n    if n is not None:\n        if n >= 0:\n            return "non-negative"\n        else:\n            return "negative"\n    else:\n        return "missing"\n\n<span style="color:#6A9955"># Easier to read: guard clauses up front</span>\ndef describe(n):\n    if n is None:\n        return "missing"\n    if n < 0:\n        return "negative"\n    return "non-negative"</pre>',
+  task:'Write grade_label(score) returning "A" for 90 or above, "B" for 80-89, "C" for 70-79, and "F" otherwise. Then write is_valid_score(score) using a guard clause that returns False immediately if score is less than 0 or greater than 100, and True otherwise.',
+  starter:'def grade_label(score):\n    # your code here\n    pass\n\ndef is_valid_score(score):\n    # use a guard clause: return False immediately if out of range\n    pass',
+  solution:'def grade_label(score):\n    if score >= 90:\n        return "A"\n    elif score >= 80:\n        return "B"\n    elif score >= 70:\n        return "C"\n    else:\n        return "F"\n\ndef is_valid_score(score):\n    if score < 0 or score > 100:\n        return False\n    return True',
+  tests:[
+    { desc:'grade_label(95) == "A"', check:'grade_label(95) == "A"' },
+    { desc:'grade_label(82) == "B"', check:'grade_label(82) == "B"' },
+    { desc:'grade_label(71) == "C"', check:'grade_label(71) == "C"' },
+    { desc:'grade_label(40) == "F"', check:'grade_label(40) == "F"' },
+    { desc:'is_valid_score(150) is False', check:'is_valid_score(150) is False' },
+    { desc:'is_valid_score(-5) is False', check:'is_valid_score(-5) is False' },
+    { desc:'is_valid_score(72) is True', check:'is_valid_score(72) is True' }
+  ]},
+
+{ id:'m2-l4', module:1, file:'04_while_loops.py', type:'exercise', title:'while Loops & Loop Control',
+  concept:'<p>A <code>while</code> loop repeats as long as its condition stays true, and is checked again before every single repetition. Use it when you do not know in advance how many times you need to repeat &mdash; unlike a for loop over a fixed range, a while loop can run zero times, run forever (if you are not careful), or run an unpredictable number of times depending on what happens inside it.</p><pre>count = 0\nwhile count < 3:\n    print(count)\n    count += 1   <span style="color:#6A9955"># without this line, the loop never ends</span></pre><div class="callout"><b>The #1 while-loop bug:</b> forgetting to update the variable the condition depends on, which creates an infinite loop that never ends. Every while loop needs something inside it that eventually makes the condition false.</div><p><code>break</code> exits a loop immediately, no matter what the condition says. <code>continue</code> skips straight to the next repetition without running the rest of the loop body.</p>',
+  task:'Write collatz_steps(n), counting how many steps it takes for the classic Collatz sequence to reach 1: while n is not 1, if n is even divide it by 2, otherwise set n to 3*n + 1, and count each step. Return the step count.',
+  starter:'def collatz_steps(n):\n    steps = 0\n    # your while loop here\n    return steps',
+  solution:'def collatz_steps(n):\n    steps = 0\n    while n != 1:\n        if n % 2 == 0:\n            n = n // 2\n        else:\n            n = 3 * n + 1\n        steps += 1\n    return steps',
+  tests:[
+    { desc:'collatz_steps(1) == 0 (already at 1)', check:'collatz_steps(1) == 0' },
+    { desc:'collatz_steps(6) == 8', check:'collatz_steps(6) == 8' },
+    { desc:'collatz_steps(27) == 111', check:'collatz_steps(27) == 111' }
+  ]},
+
+{ id:'m2-l5', module:1, file:'05_for_range_enumerate.py', type:'exercise', title:'for Loops, range() & enumerate() Deep Dive',
+  concept:'<p>A <code>for</code> loop repeats once per item in a sequence. <code>range(n)</code> generates whole numbers from 0 up to (but not including) n. <code>range(start, stop)</code> and <code>range(start, stop, step)</code> give you more control &mdash; <code>range(10, 0, -1)</code> counts down.</p><p>When you need both the item AND its position while looping, <code>enumerate()</code> is the idiomatic tool &mdash; far cleaner than manually tracking a counter variable:</p><pre>names = ["Asha", "Ravi", "Zoe"]\nfor index, name in enumerate(names):\n    print(index, name)\n<span style="color:#6A9955"># 0 Asha</span>\n<span style="color:#6A9955"># 1 Ravi</span>\n<span style="color:#6A9955"># 2 Zoe</span></pre><p>A for loop can also carry an <code>else</code> block, which runs only if the loop finished WITHOUT hitting a <code>break</code> &mdash; useful for search patterns like "did I find it, or did I search everything and come up empty?"</p>',
+  task:'Write first_index_over(nums, threshold), returning the index of the first number in nums that is strictly greater than threshold, using enumerate() and break. If no number qualifies, return -1 (use the for-else pattern: set a result of -1 before the loop, or use the else clause).',
+  starter:'def first_index_over(nums, threshold):\n    # use enumerate() and break\n    for index, value in enumerate(nums):\n        pass\n    return -1',
+  solution:'def first_index_over(nums, threshold):\n    for index, value in enumerate(nums):\n        if value > threshold:\n            return index\n    return -1',
+  tests:[
+    { desc:'Finds the first qualifying index', check:'first_index_over([1,5,9,3], 4) == 1' },
+    { desc:'Returns -1 when nothing qualifies', check:'first_index_over([1,2,3], 10) == -1' },
+    { desc:'Works when the first item qualifies', check:'first_index_over([9,1,1], 5) == 0' }
+  ]},
+
+{ id:'m2-l6', module:1, file:'06_nested_loops.py', type:'exercise', title:'Nested Loops & Loop Patterns',
+  concept:'<p>A loop inside another loop is a <strong>nested loop</strong> &mdash; for every single repetition of the outer loop, the entire inner loop runs start to finish. This is how you work with grid-like or table-like data: think rows and columns, or every possible pair between two lists.</p><pre>for row in range(3):\n    for col in range(3):\n        print(f"({row},{col})", end=" ")\n    print()  <span style="color:#6A9955"># newline after each row finishes</span></pre><div class="callout"><b>Why this matters:</b> nested loops are the natural first tool for comparing every item against every other item &mdash; a very common real pattern, for example checking a list of orders against a list of valid coupon codes, or building a multiplication table.</div>',
+  task:'Write common_elements(list_a, list_b), returning a list of every value that appears in BOTH list_a and list_b, using nested for loops (not a set, to practice the pattern directly). Preserve the order of first appearance in list_a, and do not repeat a value twice in the result.',
+  starter:'def common_elements(list_a, list_b):\n    result = []\n    # nested loops: for each item in list_a, check if it appears in list_b\n    return result',
+  solution:'def common_elements(list_a, list_b):\n    result = []\n    for a in list_a:\n        for b in list_b:\n            if a == b and a not in result:\n                result.append(a)\n    return result',
+  tests:[
+    { desc:'Finds the shared values in order of first appearance', check:'common_elements([1,2,3,4],[3,4,5]) == [3,4]' },
+    { desc:'Returns an empty list when nothing overlaps', check:'common_elements([1,2],[3,4]) == []' },
+    { desc:'Never duplicates a shared value in the result', check:'common_elements([1,1,2],[1,2]) == [1,2]' }
+  ]},
+
+// ======================================================================
+// MODULE 2 — Functions Deep Dive
+// ======================================================================
+{ id:'m3-l1', module:2, file:'01_functions_and_return.py', type:'exercise', title:'Defining Functions & Returning Multiple Values',
+  concept:'<p>A function is a named, reusable block of instructions, defined with <code>def name(params):</code>. <code>return</code> sends a value back to whoever called the function &mdash; the moment return runs, the function stops immediately, even if there is more code written after it. A function with no return statement gives back <code>None</code> automatically.</p><p>Python functions can return more than one value at once, by separating them with commas &mdash; this actually returns a single tuple, which the caller can "unpack" into separate names:</p><pre>def min_and_max(nums):\n    return min(nums), max(nums)\n\nlowest, highest = min_and_max([4, 1, 9, 2])\n<span style="color:#6A9955"># lowest is 1, highest is 9</span></pre><div class="callout"><b>Why this matters:</b> returning multiple related values this way, instead of several separate function calls, is extremely common in real Python code &mdash; for example a function that validates input might return (is_valid, error_message) in one call.</div>',
+  task:'Write square(n) returning n multiplied by itself. Then write min_max(nums) returning both the minimum and maximum of a list in a single return statement.',
+  starter:'def square(n):\n    # your code here\n    pass\n\ndef min_max(nums):\n    # return both the min and max in one return statement\n    pass',
+  solution:'def square(n):\n    return n * n\n\ndef min_max(nums):\n    return min(nums), max(nums)',
+  tests:[
+    { desc:'square(4) == 16', check:'square(4) == 16' },
+    { desc:'square(-3) == 9', check:'square(-3) == 9' },
+    { desc:'min_max returns a tuple of (min, max)', check:'min_max([4,1,9,2]) == (1, 9)' }
+  ]},
+
+{ id:'m3-l2', module:2, file:'02_defaults_and_mutable_trap.py', type:'exercise', title:'Parameters, Defaults & the Mutable-Default Trap',
+  concept:'<p>Parameters are the named inputs a function expects. Give one a default value with <code>=</code> in the signature, and it is used automatically whenever the caller leaves that argument out: <code>def greet(name, greeting="Hello"):</code>.</p><div class="callout"><b>A real, famous Python gotcha:</b> NEVER use a mutable value like a list or dict as a default argument. A default value is created only ONCE, when the function is defined, not fresh on every call &mdash; so a mutable default is silently shared and accumulates state across every call that uses it:</p><pre><span style="color:#6A9955"># BUGGY -- the same list is reused across every call!</span>\ndef add_item(item, basket=[]):\n    basket.append(item)\n    return basket\n\nadd_item("apple")   <span style="color:#6A9955"># ["apple"]</span>\nadd_item("pear")    <span style="color:#6A9955"># ["apple", "pear"] -- surprise!</span></pre><p>The fix is to default to <code>None</code> and create a fresh list inside the function body when needed:</p><pre>def add_item(item, basket=None):\n    if basket is None:\n        basket = []\n    basket.append(item)\n    return basket</pre></div>',
+  task:'Write greet(name, greeting="Hello") returning a string like "Hello, Amey!" using an f-string. Then write add_item(item, basket=None), correctly using the None-default pattern so each call without a basket starts fresh.',
+  starter:'def greet(name, greeting="Hello"):\n    # your code here\n    pass\n\ndef add_item(item, basket=None):\n    # use the None-default pattern -- do NOT write basket=[]\n    pass',
+  solution:'def greet(name, greeting="Hello"):\n    return f"{greeting}, {name}!"\n\ndef add_item(item, basket=None):\n    if basket is None:\n        basket = []\n    basket.append(item)\n    return basket',
+  tests:[
+    { desc:'greet("Amey") == "Hello, Amey!"', check:'greet("Amey") == "Hello, Amey!"' },
+    { desc:'greet("Amey","Hi") == "Hi, Amey!"', check:'greet("Amey","Hi") == "Hi, Amey!"' },
+    { desc:'add_item does not leak state between separate calls with no basket', check:'add_item("apple") == ["apple"] and add_item("pear") == ["pear"]' },
+    { desc:'add_item still works when a basket is explicitly passed in', check:'add_item("x", ["a","b"]) == ["a","b","x"]' }
+  ]},
+
+{ id:'m3-l3', module:2, file:'03_args_kwargs.py', type:'exercise', title:'*args and **kwargs',
+  concept:'<p><code>*args</code> in a function signature gathers any extra positional arguments into a tuple, letting a function accept any number of inputs: <code>def total(*nums):</code> can be called as <code>total(1,2)</code> or <code>total(1,2,3,4,5)</code>. <code>**kwargs</code> does the same for extra keyword arguments, gathered into a dictionary.</p><pre>def describe(**kwargs):\n    for key, value in kwargs.items():\n        print(f"{key}: {value}")\n\ndescribe(name="Amey", role="developer")\n<span style="color:#6A9955"># name: Amey</span>\n<span style="color:#6A9955"># role: developer</span></pre><div class="callout"><b>Where you will see this constantly:</b> library and framework code uses *args/**kwargs everywhere to write flexible functions that forward arguments onward without knowing in advance exactly what will be passed.</div>',
+  task:'Write sum_all(*nums) returning the sum of however many numbers are passed in. Then write build_profile(**kwargs) returning a dictionary that is exactly the kwargs it received, with an extra key "field_count" set to how many fields were given.',
+  starter:'def sum_all(*nums):\n    # your code here\n    pass\n\ndef build_profile(**kwargs):\n    # return kwargs plus a "field_count" key\n    pass',
+  solution:'def sum_all(*nums):\n    return sum(nums)\n\ndef build_profile(**kwargs):\n    profile = dict(kwargs)\n    profile["field_count"] = len(kwargs)\n    return profile',
+  tests:[
+    { desc:'sum_all(1,2,3) == 6', check:'sum_all(1,2,3) == 6' },
+    { desc:'sum_all() == 0', check:'sum_all() == 0' },
+    { desc:'build_profile includes passed fields plus field_count', check:'build_profile(name="Amey", role="dev") == {"name":"Amey","role":"dev","field_count":2}' }
+  ]},
+
+{ id:'m3-l4', module:2, file:'04_lambda_predict.py', type:'predict', title:'Lambda Functions — Predict the Output',
+  concept:'<p>A lambda is a short, throwaway, nameless function written in one line: <code>lambda params: expression</code>. There is no return keyword &mdash; the expression\u2019s value is returned automatically. Lambdas are used constantly as a quick argument to functions like <code>sorted()</code> and <code>map()</code>, where defining a whole separate named function would feel heavy for something this small.</p>',
+  task:'',
+  predict:{
+    snippet:'people = [{"name": "Zoe", "age": 25}, {"name": "Ravi", "age": 19}]\nsorted_people = sorted(people, key=lambda p: p["age"])\nprint([p["name"] for p in sorted_people])\nprint(type(lambda x: x))',
+    question:'What does the SECOND print line, type(lambda x: x), print?',
+    options:["&lt;class 'function'&gt;","&lt;class 'lambda'&gt;","&lt;class 'int'&gt;","None"],
+    correctIndex:0,
+    afterExplain:"A lambda is still just a function under the hood -- type() reports it as &lt;class 'function'&gt;, exactly like one defined with def. The first line sorted people by age using a lambda as the key, which is the single most common real use of lambda: a tiny, inline \"how should I compare these\" rule."
+  }},
+
+{ id:'m3-l5', module:2, file:'05_scope_and_closures.py', type:'predict', title:'Scope, Closures & the LEGB Rule — Predict the Output',
+  concept:'<p>A variable created inside a function only exists inside that function &mdash; this is called <strong>scope</strong>. When Python looks up a name, it searches in a specific order known as <strong>LEGB</strong>: Local (inside the current function), Enclosing (any function this one is nested inside), Global (the top level of the file), then Built-in (Python\u2019s own names like <code>len</code>).</p><p>A <strong>closure</strong> is an inner function that remembers variables from the enclosing function it was created inside, even after that outer function has already finished running. Python needs the <code>nonlocal</code> keyword to let the inner function actually MODIFY (not just read) a remembered variable from the enclosing scope.</p>',
+  task:'',
+  predict:{
+    snippet:'def make_counter():\n    count = 0\n    def increment():\n        nonlocal count\n        count += 1\n        return count\n    return increment\n\ncounter_a = make_counter()\ncounter_b = make_counter()\nprint(counter_a())\nprint(counter_a())\nprint(counter_b())',
+    question:'What does the THIRD print line, counter_b(), print?',
+    options:['1','2','3','0'],
+    correctIndex:0,
+    afterExplain:'counter_a and counter_b come from two SEPARATE calls to make_counter(), so each one closed over its own independent count variable. counter_a climbed to 1 then 2, but counter_b has never been called before -- its own private count starts fresh at 0 and becomes 1 on this first call. Closures remember state per closure, not globally.'
+  }},
+
+{ id:'m3-l6', module:2, file:'06_recursion.py', type:'exercise', title:'Recursion Basics',
+  concept:'<p>A <strong>recursive</strong> function is one that calls itself, solving a smaller version of the same problem each time, until it reaches a <strong>base case</strong> simple enough to answer directly without recursing further. Every recursive function needs two things: a base case that stops the recursion, and a recursive case that makes real progress toward that base case.</p><pre>def factorial(n):\n    if n <= 1:          <span style="color:#6A9955"># base case</span>\n        return 1\n    return n * factorial(n - 1)   <span style="color:#6A9955"># recursive case</span></pre><div class="callout"><b>Common mistake:</b> forgetting the base case, or writing a recursive call that does not actually move closer to it, which causes infinite recursion and crashes with a RecursionError. Always ask: "does this call definitely get closer to the base case?"</div><p>Recursion is not always the most efficient tool, but it is the natural way to express problems that are defined in terms of smaller versions of themselves &mdash; like counting down, searching nested folders, or walking a tree structure.</p>',
+  task:'Write factorial(n) recursively (base case: n <= 1 returns 1). Then write count_down(n), which returns a list counting down from n to 1 (for example count_down(4) returns [4, 3, 2, 1]), built recursively rather than with a loop.',
+  starter:'def factorial(n):\n    # base case, then recursive case\n    pass\n\ndef count_down(n):\n    # base case: n == 0 returns an empty list\n    pass',
+  solution:'def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\ndef count_down(n):\n    if n == 0:\n        return []\n    return [n] + count_down(n - 1)',
+  tests:[
+    { desc:'factorial(5) == 120', check:'factorial(5) == 120' },
+    { desc:'factorial(1) == 1', check:'factorial(1) == 1' },
+    { desc:'factorial(0) == 1', check:'factorial(0) == 1' },
+    { desc:'count_down(4) == [4, 3, 2, 1]', check:'count_down(4) == [4,3,2,1]' },
+    { desc:'count_down(0) == []', check:'count_down(0) == []' }
+  ]},
+
+// ======================================================================
+// MODULE 3 — Strings In Depth
+// ======================================================================
+{ id:'m4-l1', module:3, file:'01_string_indexing_slicing.py', type:'exercise', title:'String Indexing, Slicing & Immutability',
+  concept:'<p>A string is a sequence of characters, and it supports the same indexing you will see again with lists: <code>text[0]</code> is the first character, <code>text[-1]</code> is the last. <strong>Slicing</strong> with <code>text[start:stop]</code> grabs a sub-section, not including the stop position: <code>"hello"[1:3]</code> gives <code>"el"</code>.</p><p>Strings are <strong>immutable</strong>: once created, a string can never be changed in place. <code>text[0] = "H"</code> raises an error. Every string method that looks like it "changes" a string &mdash; <code>.upper()</code>, <code>.replace()</code>, and so on &mdash; actually builds and returns a brand new string, leaving the original untouched.</p><pre>text = "hello"\nloud = text.upper()\nprint(text)   <span style="color:#6A9955"># still "hello" -- unchanged</span>\nprint(loud)   <span style="color:#6A9955"># "HELLO" -- a new string</span></pre>',
+  task:'Given word = "Python", create first_three (the first 3 characters using slicing), last_char (the last character using negative indexing), and reversed_word (the whole word reversed, using the slice trick word[::-1]).',
+  starter:'word = "Python"\n# first_three: the first 3 characters\n\n\n# last_char: the last character, using a negative index\n\n\n# reversed_word: the whole word reversed\n\n',
+  solution:'word = "Python"\nfirst_three = word[:3]\nlast_char = word[-1]\nreversed_word = word[::-1]',
+  tests:[
+    { desc:'first_three equals "Pyt"', check:'first_three == "Pyt"' },
+    { desc:'last_char equals "n"', check:'last_char == "n"' },
+    { desc:'reversed_word equals "nohtyP"', check:'reversed_word == "nohtyP"' }
+  ]},
+
+{ id:'m4-l2', module:3, file:'02_string_methods_tour.py', type:'exercise', title:'String Methods Tour',
+  concept:'<p>Strings come with a large set of built-in methods. A few you will use constantly:</p><ul><li><code>.upper()</code> / <code>.lower()</code> &mdash; change case</li><li><code>.strip()</code> &mdash; remove whitespace from both ends</li><li><code>.replace(old, new)</code> &mdash; swap every occurrence of a substring</li><li><code>.split(separator)</code> &mdash; break a string into a list of pieces</li><li><code>"sep".join(list)</code> &mdash; the reverse: glue a list of strings back together</li><li><code>.find(sub)</code> &mdash; the index of the first match, or -1 if not found</li><li><code>in</code> &mdash; checks if a substring is present at all, returning a boolean</li></ul><pre>csv_line = "amey, 27, mumbai"\nparts = [p.strip() for p in csv_line.split(",")]\n<span style="color:#6A9955"># ["amey", "27", "mumbai"]</span></pre>',
+  task:'Given csv_line = "  Amey@GMAIL.com , 27 , Mumbai  ", split it on commas into a list called parts, stripping whitespace from each piece (use a list comprehension with .strip()). Then create clean_email as parts[0] lowercased.',
+  starter:'csv_line = "  Amey@GMAIL.com , 27 , Mumbai  "\n# parts: split on "," then strip each piece\n\n\n# clean_email: parts[0] lowercased\n\n',
+  solution:'csv_line = "  Amey@GMAIL.com , 27 , Mumbai  "\nparts = [p.strip() for p in csv_line.split(",")]\nclean_email = parts[0].lower()',
+  tests:[
+    { desc:'parts has exactly 3 cleanly-stripped items', check:'parts == ["Amey@GMAIL.com", "27", "Mumbai"]' },
+    { desc:'clean_email is fully lowercase', check:'clean_email == "amey@gmail.com"' }
+  ]},
+
+{ id:'m4-l3', module:3, file:'03_fstrings_format_specs.py', type:'exercise', title:'f-strings & Format Specs Deep Dive',
+  concept:'<p>f-strings put an <code>f</code> before the opening quote and let you embed expressions directly with curly braces: <code>f"{name} scored {score}"</code> &mdash; no messy <code>+</code> concatenation, and you can even call methods or do math inside the braces: <code>f"{name.upper()}"</code> or <code>f"{price * 1.18:.2f}"</code>.</p><p>After a colon inside the braces, a <strong>format spec</strong> controls exactly how a value is displayed:</p><ul><li><code>:.2f</code> &mdash; a float rounded to 2 decimal places</li><li><code>:,</code> &mdash; adds thousands separators: 1000000 becomes 1,000,000</li><li><code>:&gt;10</code> &mdash; right-align in a 10-character-wide field (useful for lining up columns)</li></ul><pre>price = 1234.5\nprint(f"${price:,.2f}")   <span style="color:#6A9955"># $1,234.50</span></pre>',
+  task:'Given price = 48950.5, create message using an f-string formatted to exactly "Total: $48,950.50" (comma thousands separator, 2 decimal places, with a dollar sign).',
+  starter:'price = 48950.5\n# message should read exactly: "Total: $48,950.50"\n\n',
+  solution:'price = 48950.5\nmessage = f"Total: ${price:,.2f}"',
+  tests:[ { desc:'message reads exactly "Total: $48,950.50"', check:'message == "Total: $48,950.50"' } ]},
+
+{ id:'m4-l4', module:3, file:'04_reading_tracebacks.py', type:'exercise', title:'Reading Tracebacks Like a Pro — Fix the Bug',
+  concept:'<p>Every developer, at every level, hits errors constantly &mdash; that is normal, not a sign of failure. A Python <strong>traceback</strong> tells you, bottom to top: the exact TYPE of error (the last line), the exact MESSAGE describing what went wrong, and the exact LINE where it happened. Reading from the bottom up is usually the fastest way in.</p><div class="callout"><b>A real debugging method, not guessing:</b><ol><li>Read the last line first &mdash; the error type and message, often naming the exact variable involved</li><li>Find the line number it points to in YOUR code</li><li>Ask: what did I assume about this line that turned out to be false?</li></ol></div><p>The code below has a real bug &mdash; a misspelled variable name, which produces a <code>NameError</code>. Run it, read the traceback in the Output panel carefully, then fix it.</p>',
+  task:'Click Run, read the error in the Output panel, then fix the code below so calculate_area(5, 10) returns 50 and calculate_area(3, 4) returns 12.',
+  starter:'def calculate_area(width, height):\n    return width * heigth\n\nprint(calculate_area(5, 10))',
+  solution:'def calculate_area(width, height):\n    return width * height\n\nprint(calculate_area(5, 10))',
+  tests:[
+    { desc:'calculate_area(5, 10) == 50', check:'calculate_area(5, 10) == 50' },
+    { desc:'calculate_area(3, 4) == 12', check:'calculate_area(3, 4) == 12' }
+  ]},
+
+// ======================================================================
+// MODULE 4 — Lists & Tuples Mastery
+// ======================================================================
+{ id:'m5-l1', module:4, file:'01_creating_mutating_lists.py', type:'exercise', title:'Creating, Indexing & Mutating Lists',
+  concept:'<p>A list is an ordered, <strong>mutable</strong> collection written with square brackets: <code>[1, 2, 3]</code>. "Mutable" means you can change it in place after creating it &mdash; unlike a string, no new list needs to be built just to add or remove something. Each item has an index starting at 0; negative indexes count from the end.</p><p>The core mutating methods:</p><ul><li><code>.append(x)</code> &mdash; adds x to the end</li><li><code>.insert(i, x)</code> &mdash; inserts x at index i, shifting everything after it</li><li><code>.remove(x)</code> &mdash; removes the FIRST matching value (raises an error if not found)</li><li><code>.pop()</code> &mdash; removes and returns the last item; <code>.pop(i)</code> removes at index i</li><li><code>.sort()</code> &mdash; sorts the list in place (changes it directly, returns None)</li></ul><div class="callout"><b>Common mistake:</b> writing <code>my_list = my_list.sort()</code>. Since .sort() returns None, this actually destroys the list, replacing it with None. .sort() already changed the list in place -- you do not reassign it.</div>',
+  task:'Starting from fruits = ["banana", "apple"], append "cherry", then insert "apricot" at index 0, then sort the list in place. Finally pop the last item off and store it in removed_fruit.',
+  starter:'fruits = ["banana", "apple"]\n# append "cherry"\n\n\n# insert "apricot" at index 0\n\n\n# sort the list in place\n\n\n# pop the last item into removed_fruit\n\n',
+  solution:'fruits = ["banana", "apple"]\nfruits.append("cherry")\nfruits.insert(0, "apricot")\nfruits.sort()\nremoved_fruit = fruits.pop()',
+  tests:[
+    { desc:'fruits ends up correctly sorted after the last pop', check:'fruits == ["apple", "apricot", "banana"]' },
+    { desc:'removed_fruit is the item that was popped off the end', check:'removed_fruit == "cherry"' }
+  ]},
+
+{ id:'m5-l2', module:4, file:'02_slicing_deep_dive.py', type:'exercise', title:'List Slicing Deep Dive',
+  concept:'<p>Slicing a list works like slicing a string: <code>my_list[start:stop:step]</code>. All three parts are optional. Leaving out start means "from the beginning"; leaving out stop means "to the end"; a negative step reverses direction.</p><pre>nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]\nnums[2:5]     <span style="color:#6A9955"># [2, 3, 4]</span>\nnums[:3]      <span style="color:#6A9955"># [0, 1, 2]</span>\nnums[-3:]     <span style="color:#6A9955"># [7, 8, 9]  -- last 3 items</span>\nnums[::2]     <span style="color:#6A9955"># [0, 2, 4, 6, 8]  -- every other item</span>\nnums[::-1]    <span style="color:#6A9955"># fully reversed</span></pre><div class="callout"><b>Why this matters:</b> a slice always returns a brand NEW list, copying the selected items. my_list[:] (a full slice with no bounds) is a common, idiomatic way to make a shallow copy of a list so that changing the copy never affects the original.</div>',
+  task:'Given nums = [10, 20, 30, 40, 50, 60, 70, 80], create last_three (the final 3 items), every_other (every other item starting from the first), and a_copy (a full independent copy of nums made using a full slice).',
+  starter:'nums = [10, 20, 30, 40, 50, 60, 70, 80]\n# last_three: the final 3 items\n\n\n# every_other: every other item, starting from index 0\n\n\n# a_copy: a full copy of nums using a full slice\n\n',
+  solution:'nums = [10, 20, 30, 40, 50, 60, 70, 80]\nlast_three = nums[-3:]\nevery_other = nums[::2]\na_copy = nums[:]',
+  tests:[
+    { desc:'last_three equals [60, 70, 80]', check:'last_three == [60,70,80]' },
+    { desc:'every_other equals [10, 30, 50, 70]', check:'every_other == [10,30,50,70]' },
+    { desc:'a_copy has the same contents as nums', check:'a_copy == nums' },
+    { desc:'a_copy is a genuinely separate list object, not the same list', check:'a_copy is not nums' }
+  ]},
+
+{ id:'m5-l3', module:4, file:'03_list_comprehensions_deep_dive.py', type:'exercise', title:'List Comprehensions Deep Dive',
+  concept:'<p>A list comprehension builds a new list in one line: <code>[expression for item in iterable]</code>, optionally filtered with <code>if expression for item in iterable if condition</code>. It is the single most distinctively Pythonic tool you will use constantly, replacing what would otherwise be a multi-line loop with an empty list and repeated .append() calls.</p><pre><span style="color:#6A9955"># The loop version</span>\nresult = []\nfor n in numbers:\n    if n % 2 == 0:\n        result.append(n * n)\n\n<span style="color:#6A9955"># The exact same thing, as a comprehension</span>\nresult = [n * n for n in numbers if n % 2 == 0]</pre><p>Comprehensions can also nest, mirroring nested for loops &mdash; useful for flattening a list of lists into one flat list.</p>',
+  task:'Given a list of lists called grid, create flattened (every number from every inner list, in order) using a nested list comprehension. Then given numbers, create squared_evens (the square of each even number) using a single list comprehension with a filter.',
+  starter:'grid = [[1, 2], [3, 4], [5, 6]]\n# flattened: every number from every inner list, using a nested comprehension\n\n\nnumbers = [1, 2, 3, 4, 5, 6, 7, 8]\n# squared_evens: square of each even number, one comprehension with a filter\n\n',
+  solution:'grid = [[1, 2], [3, 4], [5, 6]]\nflattened = [n for row in grid for n in row]\n\nnumbers = [1, 2, 3, 4, 5, 6, 7, 8]\nsquared_evens = [n * n for n in numbers if n % 2 == 0]',
+  tests:[
+    { desc:'flattened equals [1, 2, 3, 4, 5, 6]', check:'flattened == [1,2,3,4,5,6]' },
+    { desc:'squared_evens equals [4, 16, 36, 64]', check:'squared_evens == [4,16,36,64]' }
+  ]},
+
+{ id:'m5-l4', module:4, file:'04_tuples_and_immutability.py', type:'exercise', title:'Tuples & Immutability',
+  concept:'<p>A tuple looks like a list but uses parentheses, <code>(1, 2, 3)</code>, and is <strong>immutable</strong> &mdash; once created, it can never be changed, added to, or removed from. You use a tuple specifically when a collection of values should never change: a fixed (x, y) coordinate pair, the (red, green, blue) channels of a color, or a group of values returned together from a function.</p><pre>point = (3, 4)\npoint[0] = 9   <span style="color:#6A9955"># TypeError -- tuples cannot be modified</span></pre><p>Because tuples cannot change, they can safely be used as dictionary keys, while lists cannot. Tuple "unpacking" &mdash; assigning each element to its own name in one line &mdash; is extremely common:</p><pre>x, y = (3, 4)\nname, age, city = ("Amey", 27, "Mumbai")</pre><div class="callout"><b>List vs tuple, in one line:</b> use a list when the collection will change over time (add/remove items); use a tuple when the group of values is fixed and meant to travel together.</div>',
+  task:'Create coordinates as the tuple (10, 20). Unpack it into x and y on one line. Then write distance_from_origin(point), taking a tuple like (3, 4) and returning the straight-line distance from (0, 0) using the Pythagorean theorem ((x**2 + y**2) ** 0.5).',
+  starter:'# coordinates: the tuple (10, 20)\n\n\n# unpack coordinates into x and y on one line\n\n\ndef distance_from_origin(point):\n    # unpack point, then compute the distance\n    pass',
+  solution:'coordinates = (10, 20)\nx, y = coordinates\n\ndef distance_from_origin(point):\n    px, py = point\n    return (px ** 2 + py ** 2) ** 0.5',
+  tests:[
+    { desc:'coordinates is the tuple (10, 20)', check:'coordinates == (10, 20) and isinstance(coordinates, tuple)' },
+    { desc:'x and y were correctly unpacked', check:'x == 10 and y == 20' },
+    { desc:'distance_from_origin((3, 4)) == 5.0', check:'distance_from_origin((3, 4)) == 5.0' },
+    { desc:'distance_from_origin((0, 0)) == 0', check:'distance_from_origin((0, 0)) == 0' }
+  ]},
+
+{ id:'m5-l5', module:4, file:'05_sum_min_max_sorted.py', type:'exercise', title:'sum(), min(), max() & sorted() with key=',
+  concept:'<p>Python has built-in functions that work directly on a sequence of numbers: <code>sum()</code> adds everything up, <code>min()</code> / <code>max()</code> find the smallest and largest value. No loop required for any of them.</p><p><code>sorted()</code> returns a NEW sorted list, leaving the original untouched (unlike <code>.sort()</code>, which sorts in place). Its real power is the <code>key</code> argument: a function describing exactly what to sort BY, which lets you sort complex data like dictionaries or tuples by any field you choose:</p><pre>people = [{"name": "Zoe", "age": 25}, {"name": "Ravi", "age": 19}]\nsorted(people, key=lambda p: p["age"])\n<span style="color:#6A9955"># sorted youngest first</span>\nsorted(people, key=lambda p: p["age"], reverse=True)\n<span style="color:#6A9955"># sorted oldest first</span></pre>',
+  task:'Given products (a list of dicts with "name" and "price"), create cheapest_name (the name of the cheapest product, found using min() with a key function) and by_price_desc (the full list of products sorted most expensive first, using sorted() with key and reverse).',
+  starter:'products = [\n    {"name": "Mouse", "price": 25},\n    {"name": "Monitor", "price": 300},\n    {"name": "Cable", "price": 8}\n]\n# cheapest_name: the name of the cheapest product, using min() with key=\n\n\n# by_price_desc: all products sorted most expensive first\n\n',
+  solution:'products = [\n    {"name": "Mouse", "price": 25},\n    {"name": "Monitor", "price": 300},\n    {"name": "Cable", "price": 8}\n]\ncheapest_name = min(products, key=lambda p: p["price"])["name"]\nby_price_desc = sorted(products, key=lambda p: p["price"], reverse=True)',
+  tests:[
+    { desc:'cheapest_name equals "Cable"', check:'cheapest_name == "Cable"' },
+    { desc:'by_price_desc is ordered from most to least expensive', check:'[p["name"] for p in by_price_desc] == ["Monitor", "Mouse", "Cable"]' }
+  ]},
+
+// ======================================================================
+// MODULE 5 — Dictionaries & Sets
+// ======================================================================
+{ id:'m6-l1', module:5, file:'01_dict_literals_access.py', type:'exercise', title:'Dict Literals & Access',
+  concept:'<p>A dictionary groups related values under named keys: <code>{"key": value}</code>. Unlike a list, you look things up by a meaningful key instead of a numeric position, which is exactly why dictionaries are how you model most real-world structured data: a user profile, a product record, a single row of a spreadsheet.</p><p>Access a value with <code>my_dict["key"]</code> (raises a KeyError if missing), or more safely with <code>my_dict.get("key")</code>, which returns None instead of crashing when the key is not there.</p><pre>user = {"name": "Amey", "age": 27, "is_admin": True}\nuser["name"]       <span style="color:#6A9955"># "Amey"</span>\nuser.get("email")  <span style="color:#6A9955"># None -- no crash, key does not exist</span></pre>',
+  task:'Create a dictionary user with keys "name", "age", and "is_admin" (any reasonable values). Read user["name"] into user_name using square brackets, and safely read a non-existent "email" key into user_email using .get(), which should come back as None.',
+  starter:'# Create the user dict\n\n\n# user_name: read user["name"]\n\n\n# user_email: safely read a non-existent "email" key using .get()\n\n',
+  solution:'user = {"name": "Amey", "age": 27, "is_admin": True}\nuser_name = user["name"]\nuser_email = user.get("email")',
+  tests:[
+    { desc:'user has name, age, and is_admin keys', check:'isinstance(user, dict) and "name" in user and "age" in user and "is_admin" in user' },
+    { desc:'user_name matches user["name"]', check:'user_name == user["name"]' },
+    { desc:'user_email is None for a missing key', check:'user_email is None' }
+  ]},
+
+{ id:'m6-l2', module:5, file:'02_nested_dicts_updating.py', type:'exercise', title:'Nested Dictionaries & Updating Values',
+  concept:'<p>Dictionaries can contain other dictionaries and lists, letting you model real structured data &mdash; exactly what a JSON API response or a database record looks like. You update a value the same way you read it, with assignment: <code>my_dict["key"] = new_value</code> &mdash; this works whether the key already exists (it gets overwritten) or not (it gets added as new).</p><pre>order = {\n    "customer": "Amey",\n    "items": ["pen", "notebook"],\n    "address": {"city": "Mumbai", "zip": "400001"}\n}\norder["address"]["city"] = "Pune"   <span style="color:#6A9955"># reach into the nested dict</span>\norder["items"].append("eraser")    <span style="color:#6A9955"># reach into the nested list</span></pre>',
+  task:'Given car, update its nested specs["year"] to 2023, append "sunroof" to its nested features list, and add a brand new top-level key "color" set to "blue".',
+  starter:'car = {\n    "make": "Honda",\n    "specs": {"model": "Civic", "year": 2021},\n    "features": ["bluetooth"]\n}\n# update specs["year"] to 2023\n\n\n# append "sunroof" to features\n\n\n# add a new top-level "color" key set to "blue"\n\n',
+  solution:'car = {\n    "make": "Honda",\n    "specs": {"model": "Civic", "year": 2021},\n    "features": ["bluetooth"]\n}\ncar["specs"]["year"] = 2023\ncar["features"].append("sunroof")\ncar["color"] = "blue"',
+  tests:[
+    { desc:'nested year was updated to 2023', check:'car["specs"]["year"] == 2023' },
+    { desc:'features list grew to include sunroof', check:'car["features"] == ["bluetooth", "sunroof"]' },
+    { desc:'a new top-level color key was added', check:'car.get("color") == "blue"' }
+  ]},
+
+{ id:'m6-l3', module:5, file:'03_keys_values_items.py', type:'exercise', title:'.keys(), .values(), .items() Deep Dive',
+  concept:'<p><code>.keys()</code> gives you all the keys, <code>.values()</code> gives you all the values, and <code>.items()</code> gives you key-value pairs together &mdash; the standard way to loop over a dictionary is <code>for key, value in my_dict.items():</code>.</p><pre>scores = {"math": 90, "science": 85}\nfor subject, score in scores.items():\n    print(subject, "->", score)</pre><p>A dict comprehension builds a brand new dictionary the same way a list comprehension builds a list: <code>{key_expr: value_expr for item in iterable}</code>.</p>',
+  task:'Given scores, create passing (a NEW dict containing only the subjects scoring 80 or above) using a dict comprehension over scores.items(), and subject_count (the number of entries in scores, using len()).',
+  starter:'scores = {"math": 90, "science": 72, "art": 95, "history": 65}\n# passing: a new dict with only entries scoring >= 80, using a dict comprehension\n\n\n# subject_count: how many entries scores has\n\n',
+  solution:'scores = {"math": 90, "science": 72, "art": 95, "history": 65}\npassing = {subject: score for subject, score in scores.items() if score >= 80}\nsubject_count = len(scores)',
+  tests:[
+    { desc:'passing only contains subjects scoring 80 or above', check:'passing == {"math": 90, "art": 95}' },
+    { desc:'subject_count equals 4', check:'subject_count == 4' }
+  ]},
+
+{ id:'m6-l4', module:5, file:'04_dict_get_default_predict.py', type:'predict', title:'.get() with a Default — Predict the Output',
+  concept:'<p>Using <code>my_dict["key"]</code> on a missing key crashes the program with a KeyError. <code>my_dict.get("key", default)</code> is the safe version: it returns the default value you supply instead of crashing when the key is not present, and returns None if you do not supply a default at all.</p>',
+  task:'',
+  predict:{
+    snippet:'settings = {"theme": "dark"}\nprint(settings.get("theme"))\nprint(settings.get("language", "english"))\nprint(settings["language"])',
+    question:'What happens on the LAST line, settings["language"]?',
+    options:["KeyError: 'language'",'Prints "english"','Prints None','Prints an empty string'],
+    correctIndex:0,
+    afterExplain:'Square-bracket access demands the key exist -- "language" was never added to settings, so Python raises a KeyError. The line just before it used .get() with a default instead, which is why that one safely printed "english" rather than crashing: .get() never raises KeyError, by design.'
+  }},
+
+{ id:'m6-l5', module:5, file:'05_dict_comprehensions.py', type:'exercise', title:'Dict Comprehensions',
+  concept:'<p>A dict comprehension builds a new dictionary in one line: <code>{key_expr: value_expr for item in iterable}</code>, with an optional <code>if</code> filter just like a list comprehension. It is the idiomatic way to transform one dictionary (or a list) into another dictionary, instead of building an empty dict and assigning into it inside a loop.</p><pre>prices = {"pen": 20, "book": 150, "eraser": 5}\ndoubled = {name: price * 2 for name, price in prices.items()}\n<span style="color:#6A9955"># {"pen": 40, "book": 300, "eraser": 10}</span></pre>',
+  task:'Given words, build word_lengths, a dict comprehension mapping each word to its length (len()). Then given prices, build a NEW dict discounted applying a 10% discount to every price (price * 0.9), rounded to 2 decimal places with round().',
+  starter:'words = ["python", "code", "fun"]\n# word_lengths: map each word to its length\n\n\nprices = {"pen": 20, "book": 150, "eraser": 5}\n# discounted: each price reduced by 10%, rounded to 2 decimals\n\n',
+  solution:'words = ["python", "code", "fun"]\nword_lengths = {w: len(w) for w in words}\n\nprices = {"pen": 20, "book": 150, "eraser": 5}\ndiscounted = {name: round(price * 0.9, 2) for name, price in prices.items()}',
+  tests:[
+    { desc:'word_lengths maps each word to its correct length', check:'word_lengths == {"python": 6, "code": 4, "fun": 3}' },
+    { desc:'discounted applies a 10 percent discount to every price', check:'discounted == {"pen": 18.0, "book": 135.0, "eraser": 4.5}' }
+  ]},
+
+{ id:'m6-l6', module:5, file:'06_sets_and_set_operations.py', type:'exercise', title:'Sets & Set Operations',
+  concept:'<p>A set is an unordered collection of UNIQUE values, written with curly braces: <code>{1, 2, 3}</code>. Adding a duplicate value does nothing &mdash; it is simply ignored, which makes a set the natural tool for removing duplicates from a list: <code>list(set(my_list))</code>.</p><p>Sets support real mathematical set operations, which are extremely useful for comparing two collections:</p><ul><li><code>a | b</code> &mdash; union: everything in either set</li><li><code>a &amp; b</code> &mdash; intersection: only what is in BOTH sets</li><li><code>a - b</code> &mdash; difference: in a, but not in b</li></ul><pre>team_a = {"amey", "zoe", "ravi"}\nteam_b = {"zoe", "ravi", "asha"}\nteam_a & team_b   <span style="color:#6A9955"># {"zoe", "ravi"} -- on both teams</span>\nteam_a - team_b   <span style="color:#6A9955"># {"amey"} -- only on team_a</span></pre><div class="callout"><b>Why this matters:</b> checking whether something exists inside a set (<code>x in my_set</code>) is dramatically faster than checking the same thing inside a long list, which matters a great deal once your data gets large.</div>',
+  task:'Given subscribed and purchased (sets of usernames), create both_sets (users who both subscribed AND purchased, using intersection) and subscribed_only (users who subscribed but never purchased, using difference). Then create unique_tags, a set built from the given tags list with duplicates removed.',
+  starter:'subscribed = {"amey", "zoe", "ravi", "asha"}\npurchased = {"zoe", "ravi", "ken"}\n# both_sets: in both subscribed and purchased\n\n\n# subscribed_only: in subscribed but not purchased\n\n\ntags = ["python", "web", "python", "api", "web"]\n# unique_tags: tags with duplicates removed, as a set\n\n',
+  solution:'subscribed = {"amey", "zoe", "ravi", "asha"}\npurchased = {"zoe", "ravi", "ken"}\nboth_sets = subscribed & purchased\nsubscribed_only = subscribed - purchased\n\ntags = ["python", "web", "python", "api", "web"]\nunique_tags = set(tags)',
+  tests:[
+    { desc:'both_sets contains exactly the overlapping users', check:'both_sets == {"zoe", "ravi"}' },
+    { desc:'subscribed_only contains only non-purchasers', check:'subscribed_only == {"amey", "asha"}' },
+    { desc:'unique_tags has duplicates removed', check:'unique_tags == {"python", "web", "api"}' }
+  ]},
+
+// ======================================================================
+// MODULE 6 — Error Handling & Debugging
+// ======================================================================
+{ id:'m7-l1', module:6, file:'01_try_except.py', type:'exercise', title:'try / except — Handling Errors Gracefully',
+  concept:'<p>Real programs deal with unpredictable input: a user types text where a number was expected, a file is missing, a network call fails. <code>try</code> / <code>except</code> lets your program catch an error and respond sensibly instead of crashing entirely.</p><pre>try:\n    age = int(input_text)\nexcept ValueError:\n    age = 0   <span style="color:#6A9955"># input was not a valid number -- fall back safely</span></pre><p>You can catch a SPECIFIC exception type (recommended, so you only handle the errors you actually expect) or use a bare <code>except:</code> to catch anything (generally discouraged, because it can silently hide real bugs you did not anticipate). You can also catch several types at once with a tuple: <code>except (ValueError, TypeError):</code>.</p><div class="callout"><b>Industry habit:</b> catch the narrowest exception type that makes sense. Catching everything with a bare except hides real bugs instead of fixing them.</div>',
+  task:'Write safe_divide(a, b), returning a / b, but catching ZeroDivisionError and returning None instead of crashing when b is 0. Then write safe_int(text), converting text to an int, catching ValueError and returning None if the text is not a valid number.',
+  starter:'def safe_divide(a, b):\n    # try the division, except ZeroDivisionError\n    pass\n\ndef safe_int(text):\n    # try int(text), except ValueError\n    pass',
+  solution:'def safe_divide(a, b):\n    try:\n        return a / b\n    except ZeroDivisionError:\n        return None\n\ndef safe_int(text):\n    try:\n        return int(text)\n    except ValueError:\n        return None',
+  tests:[
+    { desc:'safe_divide(10, 2) == 5.0', check:'safe_divide(10, 2) == 5.0' },
+    { desc:'safe_divide(10, 0) is None instead of crashing', check:'safe_divide(10, 0) is None' },
+    { desc:'safe_int("42") == 42', check:'safe_int("42") == 42' },
+    { desc:'safe_int("not a number") is None instead of crashing', check:'safe_int("not a number") is None' }
+  ]},
+
+{ id:'m7-l2', module:6, file:'02_else_finally_raise.py', type:'exercise', title:'else, finally & Raising Your Own Exceptions',
+  concept:'<p>A try block can carry two extra clauses. <code>else</code> runs only if NO exception happened in the try block. <code>finally</code> always runs no matter what &mdash; whether the try succeeded, failed, or even returned early &mdash; making it the right place for cleanup code like closing a file or a connection.</p><pre>try:\n    result = risky_operation()\nexcept ValueError:\n    print("bad input")\nelse:\n    print("succeeded:", result)\nfinally:\n    print("cleanup always runs here")</pre><p>You can also raise your own exceptions with <code>raise</code>, to signal that something is wrong in YOUR code\u2019s own terms, with a clear message: <code>raise ValueError("age cannot be negative")</code>. This is how real libraries communicate precise, descriptive errors back to whoever is calling them.</p>',
+  task:'Write validate_age(age), raising a ValueError with the message "age cannot be negative" if age is less than 0, and raising a ValueError with the message "age is unrealistically high" if age is over 150. Otherwise, return age unchanged.',
+  starter:'def validate_age(age):\n    # raise ValueError with the right message for each invalid case\n    return age',
+  solution:'def validate_age(age):\n    if age < 0:\n        raise ValueError("age cannot be negative")\n    if age > 150:\n        raise ValueError("age is unrealistically high")\n    return age',
+  tests:[
+    { desc:'validate_age(30) == 30', check:'validate_age(30) == 30' },
+    { desc:'validate_age(-5) raises ValueError with the message "age cannot be negative"', check:'__raises_msg(ValueError, lambda: validate_age(-5), "age cannot be negative")' },
+    { desc:'validate_age(200) raises ValueError with the message "age is unrealistically high"', check:'__raises_msg(ValueError, lambda: validate_age(200), "age is unrealistically high")' }
+  ]},
+
+{ id:'m7-l3', module:6, file:'03_assert_defensive.py', type:'exercise', title:'Defensive Programming with assert',
+  concept:'<p><code>assert condition, "message"</code> checks that something you believe MUST be true actually is, and crashes immediately with an AssertionError (and your message) if it is not. It is a way of writing down your own assumptions directly in the code, so that if reality ever disagrees with your assumption, you find out immediately instead of getting a confusing wrong answer much later.</p><pre>def average(nums):\n    assert len(nums) > 0, "cannot average an empty list"\n    return sum(nums) / len(nums)</pre><div class="callout"><b>assert vs raise:</b> assert is mainly a development and testing tool for catching your own logic mistakes early and clearly. For errors you expect might genuinely happen with real user input (a missing file, bad user input), use try/except and raise instead -- assertions can even be stripped out of optimized production code, so never rely on them for real input validation.</div>',
+  task:'Write average(nums), using an assert to guarantee nums is not empty (message: "cannot average an empty list"), then returning the average. Then write get_middle(nums), asserting the list has an odd length (message: "list must have an odd length") before returning the middle element.',
+  starter:'def average(nums):\n    # assert nums is not empty, then return the average\n    pass\n\ndef get_middle(nums):\n    # assert len(nums) is odd, then return the middle item\n    pass',
+  solution:'def average(nums):\n    assert len(nums) > 0, "cannot average an empty list"\n    return sum(nums) / len(nums)\n\ndef get_middle(nums):\n    assert len(nums) % 2 == 1, "list must have an odd length"\n    return nums[len(nums) // 2]',
+  tests:[
+    { desc:'average([2, 4, 6]) == 4', check:'average([2,4,6]) == 4' },
+    { desc:'get_middle([1,2,3,4,5]) == 3', check:'get_middle([1,2,3,4,5]) == 3' },
+    { desc:'average([]) raises an AssertionError instead of crashing with something else', check:'__raises(AssertionError, lambda: average([]))' },
+    { desc:'get_middle([1,2,3,4]) raises an AssertionError for an even-length list', check:'__raises(AssertionError, lambda: get_middle([1,2,3,4]))' }
+  ]},
+
+// ======================================================================
+// MODULE 7 — Files, Modules & the Standard Library
+// ======================================================================
+{ id:'m8-l1', module:7, file:'01_reading_writing_files.py', type:'exercise', title:'Reading & Writing Files with open() and with',
+  concept:'<p><code>open(filename, mode)</code> gives you a file object to read from or write to. <code>"w"</code> mode writes (creating the file, or erasing it if it already exists), <code>"a"</code> mode appends to the end, and <code>"r"</code> mode reads. The <code>with</code> statement is the standard, idiomatic way to work with a file: it automatically closes the file for you when the block ends, even if an error happens inside it.</p><pre>with open("notes.txt", "w") as f:\n    f.write("first line\\n")\n    f.write("second line\\n")\n\nwith open("notes.txt", "r") as f:\n    contents = f.read()        <span style="color:#6A9955"># the whole file as one string</span>\n    <span style="color:#6A9955"># or: f.readlines() for a list of lines</span></pre><div class="callout"><b>Why "with" and not plain open()/close():</b> if you open a file manually and an error happens before you reach your own .close() call, the file is left open, which can corrupt data or leak resources. "with" guarantees cleanup no matter what.</div><p>In this sandboxed browser environment, files you create live in an in-memory filesystem scoped to your own run &mdash; the mechanics are identical to a real local file, which is exactly the point of practicing it here.</p>',
+  task:'Write a function save_and_count(lines), which writes each string in the lines list to a file called "log.txt" (one per line, using a for loop and a with block), then reads the file back and returns how many lines it contains using len() on readlines().',
+  starter:'def save_and_count(lines):\n    # write each line to "log.txt", one per line\n    # then read it back and return how many lines it has\n    pass',
+  solution:'def save_and_count(lines):\n    with open("log.txt", "w") as f:\n        for line in lines:\n            f.write(line + "\\n")\n    with open("log.txt", "r") as f:\n        return len(f.readlines())',
+  tests:[
+    { desc:'Correctly counts 3 written lines', check:'save_and_count(["a", "b", "c"]) == 3' },
+    { desc:'Correctly counts a single written line', check:'save_and_count(["only one"]) == 1' }
+  ]},
+
+{ id:'m8-l2', module:7, file:'02_working_with_json.py', type:'exercise', title:'Working with JSON Data',
+  concept:'<p>JSON (JavaScript Object Notation) is the universal format for structured data sent between a web browser, a server, and an API &mdash; in practice, almost every real API you will ever work with speaks JSON. Python\u2019s built-in <code>json</code> module converts between JSON TEXT and real Python objects:</p><ul><li><code>json.dumps(python_object)</code> &mdash; converts a Python dict/list into a JSON string</li><li><code>json.loads(json_string)</code> &mdash; converts a JSON string back into a Python dict/list</li></ul><pre>import json\n\ndata = {"name": "Amey", "skills": ["python", "sql"]}\ntext = json.dumps(data)\n<span style="color:#6A9955"># text is now a STRING: \'{"name": "Amey", "skills": ["python", "sql"]}\'</span>\n\nparsed = json.loads(text)\n<span style="color:#6A9955"># parsed is a real dict again, identical to data</span></pre><div class="callout"><b>Why this matters:</b> a JSON string looks almost exactly like a Python dict/list on the page, but it is NOT the same thing until you parse it -- a very common beginner confusion when working with real APIs.</div>',
+  task:'Import json. Write profile_to_json(profile), converting a dict to a JSON string with json.dumps(). Write json_to_profile(text), converting a JSON string back to a dict with json.loads(). Then prove they are inverses by round-tripping a sample dict.',
+  starter:'import json\n\ndef profile_to_json(profile):\n    # your code here\n    pass\n\ndef json_to_profile(text):\n    # your code here\n    pass',
+  solution:'import json\n\ndef profile_to_json(profile):\n    return json.dumps(profile)\n\ndef json_to_profile(text):\n    return json.loads(text)',
+  tests:[
+    { desc:'profile_to_json produces a real string', check:'isinstance(profile_to_json({"a": 1}), str)' },
+    { desc:'json_to_profile correctly parses JSON back into a dict', check:'json_to_profile(\'{"name": "Amey", "age": 27}\') == {"name": "Amey", "age": 27}' },
+    { desc:'Round-tripping through both functions returns the original dict', check:'json_to_profile(profile_to_json({"x": 1, "y": [1,2,3]})) == {"x": 1, "y": [1,2,3]}' }
+  ]},
+
+{ id:'m8-l3', module:7, file:'03_stdlib_tour.py', type:'exercise', title:'A Tour of the Standard Library: random, math & datetime',
+  concept:'<p>Python ships with a huge "standard library" of modules you can use immediately with just an <code>import</code> &mdash; no installation needed. Three you will use constantly:</p><ul><li><code>random</code> &mdash; <code>random.randint(a, b)</code> a random whole number from a to b inclusive; <code>random.choice(list)</code> a random item from a list</li><li><code>math</code> &mdash; <code>math.sqrt(x)</code>, <code>math.floor(x)</code>/<code>math.ceil(x)</code>, and the constant <code>math.pi</code></li><li><code>datetime</code> &mdash; <code>datetime.date(year, month, day)</code> represents a calendar date, and supports real subtraction to get the number of days between two dates</li></ul><pre>import math\nmath.sqrt(144)   <span style="color:#6A9955"># 12.0</span>\n\nfrom datetime import date\ndelta = date(2026, 1, 1) - date(2025, 12, 25)\ndelta.days        <span style="color:#6A9955"># 7</span></pre>',
+  task:'Import math and datetime.date. Write hypotenuse(a, b) using math.sqrt to compute the hypotenuse of a right triangle (a**2 + b**2 then sqrt). Then write days_between(y1, m1, d1, y2, m2, d2), returning the number of days between two dates using date subtraction.',
+  starter:'import math\nfrom datetime import date\n\ndef hypotenuse(a, b):\n    # use math.sqrt\n    pass\n\ndef days_between(y1, m1, d1, y2, m2, d2):\n    # build two date objects and subtract them\n    pass',
+  solution:'import math\nfrom datetime import date\n\ndef hypotenuse(a, b):\n    return math.sqrt(a ** 2 + b ** 2)\n\ndef days_between(y1, m1, d1, y2, m2, d2):\n    return (date(y2, m2, d2) - date(y1, m1, d1)).days',
+  tests:[
+    { desc:'hypotenuse(3, 4) == 5.0', check:'hypotenuse(3, 4) == 5.0' },
+    { desc:'hypotenuse(9, 12) == 15.0', check:'hypotenuse(9, 12) == 15.0' },
+    { desc:'days_between correctly counts a full week', check:'days_between(2025, 12, 25, 2026, 1, 1) == 7' }
+  ]},
+
+// ======================================================================
+// MODULE 8 — Object-Oriented Programming
+// ======================================================================
+{ id:'m9-l1', module:8, file:'01_classes_init_self.py', type:'exercise', title:'Classes, __init__ & self',
+  concept:'<p>A class is a blueprint for creating objects that bundle data and behavior together. <code>__init__</code> is a special method that runs automatically every time you create a new instance with <code>ClassName(...)</code>, and is where you set up that instance\u2019s own starting data. <code>self</code> is the first parameter of every instance method, and always refers to the SPECIFIC instance the method was called on &mdash; Python passes it in for you automatically.</p><pre>class BankAccount:\n    def __init__(self, owner, balance):\n        self.owner = owner\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance += amount\n\nacc = BankAccount("Amey", 100)\nacc.deposit(50)\nprint(acc.balance)   <span style="color:#6A9955"># 150</span></pre><div class="callout"><b>Why this matters:</b> a class is the natural way to model a real-world "thing" that has both state (data that can change, like balance) and behavior (actions it can take, like deposit) -- instead of passing a loose dictionary and a pile of separate functions around.</div>',
+  task:'Build a class BankAccount with __init__(self, owner, balance), a method deposit(self, amount) that increases the balance, a method withdraw(self, amount) that decreases the balance (only if sufficient funds exist, otherwise does nothing), and get_balance(self) returning the current balance.',
+  starter:'class BankAccount:\n    # __init__, deposit, withdraw, get_balance\n    pass',
+  solution:'class BankAccount:\n    def __init__(self, owner, balance):\n        self.owner = owner\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance += amount\n\n    def withdraw(self, amount):\n        if amount <= self.balance:\n            self.balance -= amount\n\n    def get_balance(self):\n        return self.balance',
+  tests:[
+    { desc:'A new account starts with the correct balance', check:'BankAccount("Amey", 100).get_balance() == 100' },
+    { desc:'deposit() increases the balance correctly', check:'(lambda acc: (acc.deposit(50), acc.get_balance())[1])(BankAccount("Amey", 100)) == 150' },
+    { desc:'withdraw() decreases the balance when funds are sufficient', check:'(lambda acc: (acc.withdraw(30), acc.get_balance())[1])(BankAccount("Amey", 100)) == 70' },
+    { desc:'withdraw() refuses to overdraw the account', check:'(lambda acc: (acc.withdraw(500), acc.get_balance())[1])(BankAccount("Amey", 100)) == 100' }
+  ]},
+
+{ id:'m9-l2', module:8, file:'02_instance_vs_class_attributes.py', type:'exercise', title:'Instance Attributes vs Class Attributes',
+  concept:'<p>An attribute set inside <code>__init__</code> with <code>self.x = ...</code> is an <strong>instance attribute</strong> &mdash; every object gets its own independent copy. An attribute defined directly inside the class body, outside any method, is a <strong>class attribute</strong> &mdash; it is shared by every instance of the class, unless a specific instance overrides it.</p><pre>class Dog:\n    species = "Canis familiaris"   <span style="color:#6A9955"># class attribute -- shared</span>\n\n    def __init__(self, name):\n        self.name = name            <span style="color:#6A9955"># instance attribute -- unique per dog</span>\n\nrex = Dog("Rex")\nfido = Dog("Fido")\nprint(rex.species, fido.species)   <span style="color:#6A9955"># both share the same species</span>\nprint(rex.name, fido.name)         <span style="color:#6A9955"># each has its own name</span></pre><div class="callout"><b>Real use case:</b> a class attribute is the right tool for something true of every instance equally, like a species name, a tax rate, or a maximum allowed value -- not something that differs per object.</div>',
+  task:'Build a class Employee with a class attribute company set to "A&A Creations", shared by every instance. __init__(self, name, salary) should set instance attributes name and salary. Add a method annual_salary(self) returning salary * 12.',
+  starter:'class Employee:\n    # class attribute: company\n\n    def __init__(self, name, salary):\n        # instance attributes\n        pass\n\n    def annual_salary(self):\n        pass',
+  solution:'class Employee:\n    company = "A&A Creations"\n\n    def __init__(self, name, salary):\n        self.name = name\n        self.salary = salary\n\n    def annual_salary(self):\n        return self.salary * 12',
+  tests:[
+    { desc:'Every employee shares the same company class attribute', check:'Employee("A", 1000).company == "A&A Creations" and Employee("B", 2000).company == "A&A Creations"' },
+    { desc:'Each employee keeps their own separate name and salary', check:'Employee("A", 1000).name == "A" and Employee("B", 2000).salary == 2000' },
+    { desc:'annual_salary multiplies monthly salary by 12', check:'Employee("A", 1000).annual_salary() == 12000' }
+  ]},
+
+{ id:'m9-l3', module:8, file:'03_inheritance_polymorphism.py', type:'exercise', title:'Inheritance & Polymorphism',
+  concept:'<p><strong>Inheritance</strong> lets a new class reuse and extend an existing one: <code>class Dog(Animal):</code> makes Dog a more specific version of Animal, automatically getting everything Animal has. Use <code>super().__init__(...)</code> inside the child\u2019s own __init__ to run the parent\u2019s setup logic too, instead of duplicating it.</p><p><strong>Polymorphism</strong> means different classes can implement the SAME method name in their own way, and calling that method on any of them "just works" correctly for its specific type &mdash; the caller does not need to know or care exactly which subclass it has:</p><pre>class Animal:\n    def __init__(self, name):\n        self.name = name\n    def speak(self):\n        return f"{self.name} makes a sound"\n\nclass Dog(Animal):\n    def speak(self):   <span style="color:#6A9955"># overrides the parent\'s version</span>\n        return f"{self.name} says Woof"\n\nfor animal in [Animal("Generic"), Dog("Rex")]:\n    print(animal.speak())   <span style="color:#6A9955"># each uses its OWN speak()</span></pre>',
+  task:'Build a class Shape with __init__(self, name) and a method describe(self) returning f"{name} has an area of {area}" using self.area() (not yet defined on Shape itself). Build Circle(Shape) and Rectangle(Shape), each calling super().__init__ with a fixed name ("circle" / "rectangle"), each implementing their own area(self) method (circle: __init__(self, radius) stores radius, area = 3.14159 * radius * radius; rectangle: __init__(self, width, height) stores both, area = width * height).',
+  starter:'class Shape:\n    def __init__(self, name):\n        self.name = name\n\n    def describe(self):\n        return f"{self.name} has an area of {self.area()}"\n\nclass Circle(Shape):\n    def __init__(self, radius):\n        # call super().__init__ with "circle", store radius\n        pass\n\n    def area(self):\n        pass\n\nclass Rectangle(Shape):\n    def __init__(self, width, height):\n        # call super().__init__ with "rectangle", store width and height\n        pass\n\n    def area(self):\n        pass',
+  solution:'class Shape:\n    def __init__(self, name):\n        self.name = name\n\n    def describe(self):\n        return f"{self.name} has an area of {self.area()}"\n\nclass Circle(Shape):\n    def __init__(self, radius):\n        super().__init__("circle")\n        self.radius = radius\n\n    def area(self):\n        return 3.14159 * self.radius * self.radius\n\nclass Rectangle(Shape):\n    def __init__(self, width, height):\n        super().__init__("rectangle")\n        self.width = width\n        self.height = height\n\n    def area(self):\n        return self.width * self.height',
+  tests:[
+    { desc:'Circle correctly inherits and uses Shape describe()', check:'"circle has an area of" in Circle(2).describe()' },
+    { desc:'Circle area is computed correctly', check:'abs(Circle(2).area() - 12.56636) < 0.01' },
+    { desc:'Rectangle area is computed correctly', check:'Rectangle(4, 5).area() == 20' },
+    { desc:'Each subclass uses its OWN area() through the shared describe()', check:'Rectangle(4,5).describe() == "rectangle has an area of 20"' }
+  ]},
+
+{ id:'m9-l4', module:8, file:'04_dunder_methods.py', type:'exercise', title:'Dunder Methods: __str__, __repr__ & __eq__',
+  concept:'<p>"Dunder" methods (short for "double underscore") are special methods Python calls automatically in specific situations, letting your own classes hook into built-in language behavior. Three of the most useful:</p><ul><li><code>__str__(self)</code> &mdash; controls what <code>print(obj)</code> or <code>str(obj)</code> shows: a friendly, readable description</li><li><code>__repr__(self)</code> &mdash; a more precise, developer-facing representation, shown when you just type the object name, often written to look like valid code that could recreate it</li><li><code>__eq__(self, other)</code> &mdash; controls what <code>obj1 == obj2</code> actually checks; without it, two separate objects are never equal even with identical data, because == defaults to checking if they are literally the same object in memory</li></ul><pre>class Point:\n    def __init__(self, x, y):\n        self.x, self.y = x, y\n    def __str__(self):\n        return f"({self.x}, {self.y})"\n    def __eq__(self, other):\n        return self.x == other.x and self.y == other.y\n\nprint(Point(1, 2))                  <span style="color:#6A9955"># (1, 2) -- uses __str__</span>\nprint(Point(1, 2) == Point(1, 2))   <span style="color:#6A9955"># True -- uses __eq__</span></pre>',
+  task:'Build a class Point with __init__(self, x, y), __str__(self) returning "(x, y)" formatted with an f-string, and __eq__(self, other) returning True only when both x and y match.',
+  starter:'class Point:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __str__(self):\n        pass\n\n    def __eq__(self, other):\n        pass',
+  solution:'class Point:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __str__(self):\n        return f"({self.x}, {self.y})"\n\n    def __eq__(self, other):\n        return self.x == other.x and self.y == other.y',
+  tests:[
+    { desc:'str(Point(1, 2)) reads exactly "(1, 2)"', check:'str(Point(1, 2)) == "(1, 2)"' },
+    { desc:'Two points with the same coordinates compare equal', check:'Point(3, 4) == Point(3, 4)' },
+    { desc:'Two points with different coordinates are not equal', check:'not (Point(3, 4) == Point(9, 9))' }
+  ]},
+
+// ======================================================================
+// MODULE 9 — Iterators, Generators & Functional Tools
+// ======================================================================
+{ id:'m10-l1', module:9, file:'01_iterables_iterators_predict.py', type:'predict', title:'How for Loops Really Work: Iterables & Iterators — Predict the Output',
+  concept:'<p>A <code>for</code> loop is not magic &mdash; it is built on a simple protocol. Any object you can loop over (a list, a string, a dict) is called an <strong>iterable</strong>, meaning it can produce an <strong>iterator</strong> via the built-in <code>iter()</code> function. That iterator then yields one value at a time via the built-in <code>next()</code> function, until there is nothing left, at which point it raises a special <code>StopIteration</code> signal that the for loop catches silently and uses to know when to stop.</p><pre>nums = [10, 20, 30]\nit = iter(nums)\nprint(next(it))   <span style="color:#6A9955"># 10</span>\nprint(next(it))   <span style="color:#6A9955"># 20</span>\nprint(next(it))   <span style="color:#6A9955"># 30</span>\n<span style="color:#6A9955"># next(it) again here would raise StopIteration</span></pre>',
+  task:'',
+  predict:{
+    snippet:'letters = ["a", "b"]\nit = iter(letters)\nprint(next(it))\nprint(next(it))\ntry:\n    print(next(it))\nexcept StopIteration:\n    print("no more items")',
+    question:'What does the program print on its FINAL line of output?',
+    options:['no more items','StopIteration','None','b'],
+    correctIndex:0,
+    afterExplain:'After "a" and "b" have both been returned, calling next(it) a third time has nothing left to give, so the iterator raises StopIteration. The except block catches that exact exception and prints "no more items" instead of letting the program crash. This is EXACTLY the mechanism a for loop uses internally, just normally hidden from you.'
+  }},
+
+{ id:'m10-l2', module:9, file:'02_generator_functions.py', type:'exercise', title:'Generator Functions with yield',
+  concept:'<p>A <strong>generator function</strong> looks like a normal function but uses <code>yield</code> instead of <code>return</code>. Calling it does not run the function body immediately &mdash; it returns a special generator object that produces values one at a time, on demand, pausing exactly where it left off between each value. This means a generator can represent an enormous (even infinite) sequence while only ever holding ONE value in memory at a time.</p><pre>def countdown(n):\n    while n > 0:\n        yield n\n        n -= 1\n\nfor number in countdown(3):\n    print(number)   <span style="color:#6A9955"># 3, then 2, then 1</span></pre><div class="callout"><b>Why this matters in real code:</b> reading a huge file line by line, or streaming results from an API one page at a time, are both naturally expressed as generators -- you never need to load everything into memory at once just to process it piece by piece.</div>',
+  task:'Write a generator function even_numbers_up_to(n), yielding every even number from 2 up to and including n, in order. Then write first_n(generator, count), which pulls exactly count values out of any generator using next() in a loop, and returns them as a list.',
+  starter:'def even_numbers_up_to(n):\n    # yield each even number, 2, 4, 6, ... up to n\n    pass\n\ndef first_n(generator, count):\n    # pull exactly `count` values out using next(), return as a list\n    result = []\n    return result',
+  solution:'def even_numbers_up_to(n):\n    current = 2\n    while current <= n:\n        yield current\n        current += 2\n\ndef first_n(generator, count):\n    result = []\n    for _ in range(count):\n        result.append(next(generator))\n    return result',
+  tests:[
+    { desc:'even_numbers_up_to(10) yields 2,4,6,8,10 when collected into a list', check:'list(even_numbers_up_to(10)) == [2,4,6,8,10]' },
+    { desc:'even_numbers_up_to is a real generator, not a plain list', check:'hasattr(even_numbers_up_to(10), "__next__")' },
+    { desc:'first_n correctly pulls a limited number of values out', check:'first_n(even_numbers_up_to(100), 3) == [2, 4, 6]' }
+  ]},
+
+{ id:'m10-l3', module:9, file:'03_map_filter.py', type:'exercise', title:'map(), filter() & Functional Patterns',
+  concept:'<p><code>map(function, iterable)</code> applies a function to every item and gives back the transformed results. <code>filter(function, iterable)</code> keeps only the items for which the function returns a truthy value. Both return a lazy iterator (not a list directly), so you usually wrap them in <code>list(...)</code> to see or use the results right away.</p><pre>nums = [1, 2, 3, 4, 5]\ndoubled = list(map(lambda n: n * 2, nums))     <span style="color:#6A9955"># [2, 4, 6, 8, 10]</span>\nevens = list(filter(lambda n: n % 2 == 0, nums))  <span style="color:#6A9955"># [2, 4]</span></pre><div class="callout"><b>map/filter vs comprehensions:</b> a list comprehension can express the exact same idea and most Python developers consider it more readable for simple cases. You will still see map() and filter() often in real code, especially passed existing named functions instead of lambdas, so recognizing them is essential even if you usually reach for a comprehension yourself.</div>',
+  task:'Given prices, use map() with a lambda to build with_tax (each price increased by 18%, rounded to 2 decimals with round() inside the lambda). Use filter() with a lambda to build affordable (only prices from the ORIGINAL list that are 100 or less). Both results should be real lists.',
+  starter:'prices = [50, 120, 85, 200, 30]\n# with_tax: each price + 18%, rounded to 2 decimals, using map()\n\n\n# affordable: only prices <= 100 from the original list, using filter()\n\n',
+  solution:'prices = [50, 120, 85, 200, 30]\nwith_tax = list(map(lambda p: round(p * 1.18, 2), prices))\naffordable = list(filter(lambda p: p <= 100, prices))',
+  tests:[
+    { desc:'with_tax correctly applies 18 percent tax to every price', check:'with_tax == [59.0, 141.6, 100.3, 236.0, 35.4]' },
+    { desc:'affordable keeps only prices of 100 or less from the original list', check:'affordable == [50, 85, 30]' }
+  ]},
+
+{ id:'m10-l4', module:9, file:'04_decorators_predict.py', type:'predict', title:'Decorators — Functions That Wrap Functions — Predict the Output',
+  concept:'<p>A <strong>decorator</strong> is a function that takes another function as input, and returns a new function that usually calls the original while adding extra behavior around it &mdash; before it runs, after it runs, or both. The <code>@decorator_name</code> syntax just above a function definition is shorthand for "pass this function through the decorator, and use the result instead."</p><pre>def shout(func):\n    def wrapper(*args, **kwargs):\n        result = func(*args, **kwargs)\n        return result.upper()\n    return wrapper\n\n@shout\ndef greet(name):\n    return f"hello {name}"\n\nprint(greet("amey"))   <span style="color:#6A9955"># HELLO AMEY</span></pre><p>This is exactly how real frameworks add logging, timing, authentication checks, or caching around a function, without changing a single line inside that function itself.</p>',
+  task:'',
+  predict:{
+    snippet:'def shout(func):\n    def wrapper(*args, **kwargs):\n        result = func(*args, **kwargs)\n        return result.upper()\n    return wrapper\n\n@shout\ndef greet(name):\n    return f"hello {name}"\n\nprint(greet("amey"))\nprint(greet.__name__)',
+    question:'What does the SECOND print line, greet.__name__, print?',
+    options:['wrapper','greet','shout','HELLO AMEY'],
+    correctIndex:0,
+    afterExplain:'The @shout line replaced greet with whatever shout(greet) returned -- the inner "wrapper" function. So the name "greet" now actually points to a function literally named wrapper, and __name__ reports that honestly. (Real-world decorators fix this cosmetic issue with functools.wraps, but seeing the raw behavior first is the whole point here.)'
+  }},
+
+// ======================================================================
+// MODULE 10 — Leveling Up & Capstone
+// ======================================================================
+{ id:'m11-l1', module:10, file:'01_testable_code.py', type:'exercise', title:'Writing Testable Code with assert-based Tests',
+  concept:'<p>Every exercise in this entire course has secretly been testing your code with assert-style checks behind the scenes. Writing your OWN tests this way is a core professional habit: a short, separate block of code that calls your function with known inputs and checks the output matches what you expect, BEFORE you ship or rely on it.</p><pre>def add(a, b):\n    return a + b\n\n<span style="color:#6A9955"># a tiny hand-written test suite</span>\nassert add(2, 3) == 5\nassert add(-1, 1) == 0\nassert add(0, 0) == 0\nprint("all tests passed")</pre><div class="callout"><b>Why this matters:</b> real projects use testing frameworks like pytest to automate exactly this pattern at scale, but the underlying idea never changes: write down what your function SHOULD do for a few representative inputs, then let the computer check it every time you change the code, instead of re-checking by hand and eye.</div>',
+  task:'Write is_palindrome(text), returning True if text reads the same forwards and backwards (ignore case, compare letters only -- assume text already has no spaces or punctuation for simplicity). Then write run_tests(), which uses several assert statements to test is_palindrome against at least 3 cases (at least one True case and one False case) and returns the string "all tests passed" only if every assert succeeds.',
+  starter:'def is_palindrome(text):\n    # compare text to its own reverse, ignoring case\n    pass\n\ndef run_tests():\n    # write at least 3 assert statements testing is_palindrome\n    # then return "all tests passed"\n    pass',
+  solution:'def is_palindrome(text):\n    cleaned = text.lower()\n    return cleaned == cleaned[::-1]\n\ndef run_tests():\n    assert is_palindrome("racecar") == True\n    assert is_palindrome("hello") == False\n    assert is_palindrome("Level") == True\n    return "all tests passed"',
+  tests:[
+    { desc:'is_palindrome("racecar") is True', check:'is_palindrome("racecar") is True' },
+    { desc:'is_palindrome("hello") is False', check:'is_palindrome("hello") is False' },
+    { desc:'is_palindrome ignores case ("Level" counts as a palindrome)', check:'is_palindrome("Level") is True' },
+    { desc:'run_tests completes all asserts and returns the success message', check:'run_tests() == "all tests passed"' }
+  ]},
+
+{ id:'m11-l2', module:10, file:'02_capstone.py', type:'exercise', title:'Capstone — Shopping Cart System',
+  concept:'<p>Time to combine almost everything from this entire course into one realistic, multi-part program: classes, dictionaries, list comprehensions, error handling, and clean function design &mdash; exactly the kind of logic you would write in a real small application.</p>',
+  task:'Build a class ShoppingCart with: __init__(self) starting with an empty items list; add_item(self, name, price, qty) appending a dict {"name", "price", "qty"} to items; remove_item(self, name) removing the first item matching that name, if present (do nothing if not found); total(self) returning the sum of price*qty across all items; apply_discount(self, percent) which RAISES a ValueError with message "discount must be between 0 and 100" if percent is not between 0 and 100, otherwise returns the total after reducing it by that percent.',
+  starter:'class ShoppingCart:\n    def __init__(self):\n        self.items = []\n\n    def add_item(self, name, price, qty):\n        pass\n\n    def remove_item(self, name):\n        pass\n\n    def total(self):\n        pass\n\n    def apply_discount(self, percent):\n        pass',
+  solution:'class ShoppingCart:\n    def __init__(self):\n        self.items = []\n\n    def add_item(self, name, price, qty):\n        self.items.append({"name": name, "price": price, "qty": qty})\n\n    def remove_item(self, name):\n        for item in self.items:\n            if item["name"] == name:\n                self.items.remove(item)\n                return\n\n    def total(self):\n        return sum(item["price"] * item["qty"] for item in self.items)\n\n    def apply_discount(self, percent):\n        if not (0 <= percent <= 100):\n            raise ValueError("discount must be between 0 and 100")\n        return self.total() * (1 - percent / 100)',
+  tests:[
+    { desc:'A new cart starts empty with a total of 0', check:'ShoppingCart().total() == 0' },
+    { desc:'add_item and total correctly sum price times qty across items', check:'(lambda c: (c.add_item("Pen", 20, 3), c.add_item("Book", 150, 2), c.total())[2])(ShoppingCart()) == 360' },
+    { desc:'remove_item correctly removes a matching item', check:'(lambda c: (c.add_item("Pen", 20, 3), c.add_item("Book", 150, 2), c.remove_item("Pen"), c.total())[3])(ShoppingCart()) == 300' },
+    { desc:'remove_item does nothing when the name is not found', check:'(lambda c: (c.add_item("Pen", 20, 3), c.remove_item("Nonexistent"), c.total())[2])(ShoppingCart()) == 60' },
+    { desc:'apply_discount correctly reduces the total by the given percent', check:'(lambda c: (c.add_item("Pen", 100, 1), c.apply_discount(20))[1])(ShoppingCart()) == 80.0' }
+  ]}
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STORAGE_KEY = 'pyFundamentalsProgress_v2';
+const DRAFTS_KEY = 'pyFundamentalsDrafts_v2';
+
+function loadProgress(){
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveProgress(set){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); } catch(e){}
+}
+function loadDrafts(){
+  try { return JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveDraft(id, code){
+  try {
+    const drafts = loadDrafts();
+    drafts[id] = code;
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  } catch(e){}
+}
+
+const state = {
+  completed: loadProgress(),
+  drafts: loadDrafts(),
+  openTabs: [],
+  activeId: null,
+  cm: null
+};
+
+/* ============================================================
+   PYTHON RUNTIME (Pyodide, inside a persistent Web Worker)
+   ============================================================ */
+const PY_WORKER_SRC = `
+importScripts('https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js');
+let pyodideReadyPromise = loadPyodide();
+
+self.onmessage = async function(e){
+  const { code, testsCode, runId } = e.data;
+  const pyodide = await pyodideReadyPromise;
+  const logs = [];
+  pyodide.setStdout({ batched: (s) => logs.push(s) });
+  pyodide.setStderr({ batched: (s) => logs.push(s) });
+  let error = null;
+  let results = [];
+  // Fresh global namespace per run, so variables from one run never leak into the next.
+  const namespace = pyodide.runPython('dict()');
+  try {
+    await pyodide.runPythonAsync(code, { globals: namespace });
+    if (testsCode) {
+      // Make the captured print() output available to the test code as a real Python list.
+      namespace.set('__logs', pyodide.toPy(logs));
+      await pyodide.runPythonAsync(testsCode, { globals: namespace });
+      const resultsJson = namespace.get('__results_json');
+      results = JSON.parse(resultsJson);
+    }
+  } catch(err){
+    error = err.message;
+  } finally {
+    namespace.destroy();
+  }
+  self.postMessage({ logs, error, results, runId, ready:true });
+};
+self.postMessage({ workerBooting:true });
+`;
+
+let pyWorker = null;
+let pyWorkerBusy = false;
+let pyRunCounter = 0;
+
+function getPyWorker(){
+  if (pyWorker) return pyWorker;
+  const blob = new Blob([PY_WORKER_SRC], { type:'application/javascript' });
+  pyWorker = new Worker(URL.createObjectURL(blob));
+  return pyWorker;
+}
+
+function runPython(code, testsCode, onDone, onBooting){
+  const worker = getPyWorker();
+  const runId = ++pyRunCounter;
+  let finished = false;
+  pyWorkerBusy = true;
+  if (onBooting) onBooting();
+
+  const timer = setTimeout(() => {
+    if (finished) return;
+    finished = true;
+    pyWorkerBusy = false;
+    try { worker.terminate(); } catch(e){}
+    pyWorker = null; // force a fresh runtime next time
+    onDone({ logs:[], error:null, results:[], timedOut:true });
+  }, 10000);
+
+  function handler(e){
+    if (e.data && e.data.workerBooting) return;
+    if (e.data.runId !== runId) return;
+    if (finished) return;
+    finished = true;
+    pyWorkerBusy = false;
+    clearTimeout(timer);
+    worker.removeEventListener('message', handler);
+    onDone({ logs:e.data.logs, error:e.data.error, results:e.data.results, timedOut:false });
+  }
+  worker.addEventListener('message', handler);
+  worker.onerror = function(e){
+    if (finished) return;
+    finished = true;
+    pyWorkerBusy = false;
+    clearTimeout(timer);
+    try { worker.terminate(); } catch(err){}
+    pyWorker = null;
+    onDone({ logs:[], error:e.message, results:[], timedOut:false });
+  };
+  worker.postMessage({ code, testsCode, runId });
+}
+
+function buildTestsCode(tests){
+  if (!tests || !tests.length) return '';
+  const lines = [
+    '__results = []',
+    'def __raises(exc_type, fn):',
+    '    try:',
+    '        fn()',
+    '        return False',
+    '    except exc_type:',
+    '        return True',
+    '    except Exception:',
+    '        return False',
+    'def __raises_msg(exc_type, fn, expected_msg):',
+    '    try:',
+    '        fn()',
+    '        return False',
+    '    except exc_type as __e:',
+    '        return str(__e) == expected_msg',
+    '    except Exception:',
+    '        return False'
+  ];
+  tests.forEach(t => {
+    const descJson = JSON.stringify(t.desc);
+    lines.push('try:');
+    lines.push('    __pass = bool(' + t.check + ')');
+    lines.push('    __results.append({"desc": ' + descJson + ', "pass": __pass})');
+    lines.push('except Exception as __e:');
+    lines.push('    __results.append({"desc": ' + descJson + ', "pass": False, "error": str(__e)})');
+  });
+  lines.push('import json as __json_mod');
+  lines.push('__results_json = __json_mod.dumps(__results)');
+  return lines.join('\n');
+}
+
+/* ============================================================
+   SIDEBAR / EXPLORER
+   ============================================================ */
+const collapsedFolders = new Set();
+
+function renderSidebar(){
+  const tree = document.getElementById('sidebarTree');
+  tree.innerHTML = '';
+  MODULES.forEach((mod, mi) => {
+    const lessons = LESSONS.filter(l => l.module === mi);
+    const folder = document.createElement('div');
+    folder.className = 'folder' + (collapsedFolders.has(mi) ? ' collapsed' : '');
+    const head = document.createElement('div');
+    head.className = 'folder-head';
+    const doneCount = lessons.filter(l => state.completed.has(l.id)).length;
+    head.innerHTML = '<span class="folder-chevron">▾</span><span>' + (mi+1) + '. ' + mod.title + '</span><span style="margin-left:auto;color:var(--text-dim);font-weight:400;font-size:11px;">' + doneCount + '/' + lessons.length + '</span>';
+    head.onclick = () => {
+      if (collapsedFolders.has(mi)) collapsedFolders.delete(mi); else collapsedFolders.add(mi);
+      renderSidebar();
+    };
+    folder.appendChild(head);
+    const filesWrap = document.createElement('div');
+    filesWrap.className = 'folder-files';
+    lessons.forEach(l => {
+      const item = document.createElement('div');
+      item.className = 'file-item' + (l.id === state.activeId ? ' active' : '') + (state.completed.has(l.id) ? ' done' : '');
+      item.innerHTML = '<span class="file-dot"></span><span class="file-icon">' + (l.type === 'predict' ? '?' : 'py') + '</span><span>' + l.file + '</span>';
+      item.onclick = () => openLesson(l.id);
+      filesWrap.appendChild(item);
+    });
+    folder.appendChild(filesWrap);
+    tree.appendChild(folder);
+  });
+}
+
+/* ============================================================
+   TAB BAR
+   ============================================================ */
+function renderTabs(){
+  const bar = document.getElementById('tabbar');
+  bar.innerHTML = '';
+  if (state.openTabs.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'tab-empty';
+    empty.textContent = 'No lesson open';
+    bar.appendChild(empty);
+    return;
+  }
+  state.openTabs.forEach(id => {
+    const lesson = LESSONS.find(l => l.id === id);
+    if (!lesson) return;
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (id === state.activeId ? ' active' : '');
+    tab.innerHTML = '<span>' + lesson.file + '</span><span class="tab-close">✕</span>';
+    tab.querySelector('span:first-child').onclick = () => openLesson(id);
+    tab.querySelector('.tab-close').onclick = (e) => { e.stopPropagation(); closeTab(id); };
+    bar.appendChild(tab);
+  });
+}
+
+function closeTab(id){
+  const idx = state.openTabs.indexOf(id);
+  if (idx === -1) return;
+  state.openTabs.splice(idx, 1);
+  if (state.activeId === id){
+    if (state.openTabs.length > 0){
+      openLesson(state.openTabs[Math.max(0, idx - 1)]);
+    } else {
+      state.activeId = null;
+      renderWelcome();
+      renderTabs();
+      renderSidebar();
+      updateStatusBar();
+    }
+  } else {
+    renderTabs();
+  }
+}
+
+/* ============================================================
+   WELCOME VIEW
+   ============================================================ */
+function renderWelcome(){
+  const scroll = document.getElementById('editorScroll');
+  const total = LESSONS.length;
+  const done = state.completed.size;
+  const pct = Math.round((done/total)*100);
+  const hasProgress = done > 0;
+  scroll.innerHTML =
+    '<div class="welcome">' +
+      '<span class="welcome-badge">Interactive Course · 11 Modules</span>' +
+      '<h1>Python Fundamentals</h1>' +
+      '<p class="lede">A hands-on, from-scratch, genuinely in-depth course: real explanations with real examples, real Python running live in your browser, auto-graded exercises, and the concepts that take you from zero to actually industry-ready fundamentals -- variables through error handling, files, real OOP, and generators.</p>' +
+      '<div class="welcome-steps">' +
+        '<div class="welcome-step"><b>01 READ</b><span>Each lesson is a genuine deep-dive -- not a one-liner -- with examples and common mistakes.</span></div>' +
+        '<div class="welcome-step"><b>02 WRITE</b><span>You write real Python in the editor to complete a multi-part task.</span></div>' +
+        '<div class="welcome-step"><b>03 RUN</b><span>Click Run -- real Python executes in your browser, instantly.</span></div>' +
+        '<div class="welcome-step"><b>04 CHECK</b><span>Automated tests tell you exactly what passed or failed, line by line.</span></div>' +
+      '</div>' +
+      '<div class="welcome-progress">' +
+        '<div class="row"><span>Overall progress</span><span>' + done + ' / ' + total + ' lessons (' + pct + '%)</span></div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<button class="btn-primary" id="welcomeStartBtn">' + (hasProgress ? 'Resume where you left off →' : 'Start Lesson 1 →') + '</button>' +
+      '<div class="runtime-note">This runs real Python in your browser via Pyodide (CPython compiled to WebAssembly) -- not a simulation. The first time you click Run, it downloads the Python runtime (a few seconds); every run after that is instant.</div>' +
+      '<div class="course-map-note"><b>Course map:</b> Getting Started → Operators &amp; Control Flow → Functions → Strings → Lists &amp; Tuples → Dictionaries &amp; Sets → Error Handling → Files &amp; the Standard Library → Object-Oriented Programming → Iterators &amp; Generators → Capstone.</div>' +
+    '</div>';
+  document.getElementById('welcomeStartBtn').onclick = () => {
+    if (hasProgress){
+      const next = LESSONS.find(l => !state.completed.has(l.id)) || LESSONS[0];
+      openLesson(next.id);
+    } else {
+      openLesson(LESSONS[0].id);
+    }
+  };
+  updateStatusBar();
+}
+
+/* ============================================================
+   LESSON RENDER
+   ============================================================ */
+function openLesson(id){
+  const lesson = LESSONS.find(l => l.id === id);
+  if (!lesson) return;
+  state.activeId = id;
+  if (!state.openTabs.includes(id)){
+    state.openTabs.push(id);
+    if (state.openTabs.length > 6) state.openTabs.shift();
+  }
+  closeSidebarMobile();
+  renderTabs();
+  renderSidebar();
+  renderLessonBody(lesson);
+  updateStatusBar();
+}
+
+function lessonIndex(id){ return LESSONS.findIndex(l => l.id === id); }
+
+function renderLessonBody(lesson){
+  const scroll = document.getElementById('editorScroll');
+  const idx = lessonIndex(lesson.id);
+  const modTitle = MODULES[lesson.module].title;
+
+  let html = '<div class="lesson">' +
+    '<span class="lesson-eyebrow">MODULE ' + (lesson.module+1) + ': ' + modTitle.toUpperCase() + ' &middot; LESSON ' + (idx+1) + ' OF ' + LESSONS.length + '</span>' +
+    '<h2>' + lesson.title + '</h2>' +
+    '<div class="concept">' + lesson.concept + '</div>' +
+    (lesson.task ? '<div class="task"><strong>Your task:</strong> ' + lesson.task + '</div>' : '');
+
+  if (lesson.type === 'predict'){
+    html += '<div id="predictHost"></div>';
+  } else {
+    html +=
+      '<div class="editor-toolbar">' +
+        '<button class="toolbar-btn run" id="runBtn">▶ Run</button>' +
+        '<button class="toolbar-btn" id="resetBtn">Reset</button>' +
+        '<div class="toolbar-spacer"></div>' +
+        '<span class="runtime-pill" id="runtimePill"></span>' +
+      '</div>' +
+      '<div id="cmHost"></div>' +
+      '<div class="output-panel" id="outputPanel">' +
+        '<div class="output-section-head">OUTPUT</div>' +
+        '<div class="output-log" id="outputLog"><span class="empty">Click Run to see output here.</span></div>' +
+        (lesson.tests && lesson.tests.length ? '<div class="output-section-head">TESTS</div><div class="test-results" id="testResults"><span class="empty" style="padding-left:14px;color:var(--text-dim);font-size:13px;">Run your code to check it against the tests.</span></div>' : '') +
+        '<div id="resultBanner"></div>' +
+      '</div>' +
+      (lesson.solution ? '<div class="solution-box"><button class="solution-toggle" id="solutionToggle">Show solution</button><pre class="solution-code" id="solutionCode">' + escapeHtml(lesson.solution) + '</pre></div>' : '');
+  }
+
+  html +=
+    '<div class="lesson-nav">' +
+      '<button class="nav-btn" id="prevLessonBtn"' + (idx===0?' disabled':'') + '>&larr; Previous</button>' +
+      '<button class="nav-btn" id="nextLessonBtn"' + (idx===LESSONS.length-1?' disabled':'') + '>Next &rarr;</button>' +
+    '</div>' +
+  '</div>';
+
+  scroll.innerHTML = html;
+  scroll.scrollTop = 0;
+
+  document.getElementById('prevLessonBtn').onclick = () => { if (idx>0) openLesson(LESSONS[idx-1].id); };
+  document.getElementById('nextLessonBtn').onclick = () => { if (idx<LESSONS.length-1) openLesson(LESSONS[idx+1].id); };
+
+  if (lesson.type === 'predict'){
+    renderPredict(lesson);
+  } else {
+    initEditor(lesson);
+    document.getElementById('runBtn').onclick = () => runExercise(lesson);
+    document.getElementById('resetBtn').onclick = () => {
+      state.cm.setValue(lesson.starter);
+      saveDraft(lesson.id, lesson.starter);
+    };
+    const solBtn = document.getElementById('solutionToggle');
+    if (solBtn){
+      solBtn.onclick = () => {
+        const box = document.getElementById('solutionCode');
+        box.classList.toggle('show');
+        solBtn.textContent = box.classList.contains('show') ? 'Hide solution' : 'Show solution';
+      };
+    }
+  }
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Pyodide tracebacks include internal runtime frames (_pyodide/_base.py, etc.) before
+// reaching the student's own code. Strip those so a beginner only sees frames from
+// their own script -- exactly what a real local Python traceback would show.
+function cleanPythonError(raw){
+  if (!raw) return raw;
+  const lines = raw.split('\n');
+  const out = [];
+  let i = 0;
+  const isFrameStart = (l) => /^\s*File "/.test(l);
+  const isExcLine = (l) => /^[A-Za-z_][A-Za-z0-9_.]*(Error|Exception|Warning)\b/.test(l) || /^Traceback/.test(l);
+  while (i < lines.length){
+    const line = lines[i];
+    if (isFrameStart(line)){
+      const keep = line.includes('<exec>');
+      if (keep) out.push(line);
+      i++;
+      while (i < lines.length && !isFrameStart(lines[i]) && !isExcLine(lines[i])){
+        if (keep) out.push(lines[i]);
+        i++;
+      }
+    } else {
+      out.push(line);
+      i++;
+    }
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function initEditor(lesson){
+  const host = document.getElementById('cmHost');
+  const startCode = (state.drafts[lesson.id] !== undefined) ? state.drafts[lesson.id] : lesson.starter;
+  state.cm = CodeMirror(host, {
+    value: startCode,
+    mode: { name:'python' },
+    theme: 'default',
+    lineNumbers: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    tabSize: 4,
+    indentUnit: 4,
+    viewportMargin: 20
+  });
+  let debounce;
+  state.cm.on('change', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => saveDraft(lesson.id, state.cm.getValue()), 400);
+  });
+}
+
+function runExercise(lesson){
+  const code = state.cm.getValue();
+  const testsCode = buildTestsCode(lesson.tests);
+  const outputLog = document.getElementById('outputLog');
+  const testResults = document.getElementById('testResults');
+  const banner = document.getElementById('resultBanner');
+  const runBtn = document.getElementById('runBtn');
+  const pill = document.getElementById('runtimePill');
+  if (testResults) testResults.innerHTML = '';
+  banner.innerHTML = '';
+  runBtn.disabled = true;
+
+  runPython(code, testsCode, (res) => {
+    runBtn.disabled = false;
+    pill.textContent = '';
+    if (res.timedOut){
+      outputLog.innerHTML = '';
+      banner.innerHTML = '<div class="timeout-banner">Still running after 10 seconds -- this usually means an infinite loop. The Python runtime was restarted automatically; check your loop condition and try again.</div>';
+      return;
+    }
+    outputLog.innerHTML = res.logs.length
+      ? res.logs.map(l => '<div>' + escapeHtml(l) + '</div>').join('')
+      : '<span class="empty">No print() output yet.</span>';
+    if (res.error){
+      outputLog.innerHTML += '<div class="err">' + escapeHtml(cleanPythonError(res.error)) + '</div>';
+    }
+    if (testResults && lesson.tests && lesson.tests.length){
+      testResults.innerHTML = res.results.map(r =>
+        '<div class="test-row ' + (r.pass ? 'pass' : 'fail') + '">' +
+          '<span class="mark">' + (r.pass ? '✓' : '✗') + '</span>' +
+          '<span>' + escapeHtml(r.desc) + (r.error && !r.pass ? '<span class="detail">' + escapeHtml(r.error) + '</span>' : '') + '</span>' +
+        '</div>'
+      ).join('');
+      const allPass = res.results.length > 0 && res.results.every(r => r.pass);
+      if (allPass){
+        state.completed.add(lesson.id);
+        saveProgress(state.completed);
+        banner.innerHTML = '<div class="success-banner">✓ All tests passed -- lesson complete.</div>';
+        renderSidebar();
+        updateStatusBar();
+      }
+    } else if (!res.error) {
+      if (!state.completed.has(lesson.id)){
+        state.completed.add(lesson.id);
+        saveProgress(state.completed);
+        renderSidebar();
+        updateStatusBar();
+      }
+    }
+  }, () => {
+    pill.textContent = pyWorker && !pyWorkerBusy ? '' : 'booting Python runtime…';
+    outputLog.innerHTML = '<span class="empty">' + (pill.textContent ? 'Starting Python (first run only, a few seconds)…' : 'Running...') + '</span>';
+  });
+}
+
+/* ---------- Predict lessons ---------- */
+function renderPredict(lesson){
+  const host = document.getElementById('predictHost');
+  const p = lesson.predict;
+  host.innerHTML =
+    '<div class="predict-snippet"><div id="predictCmHost"></div></div>' +
+    '<div class="predict-question">' + p.question + '</div>' +
+    '<div class="predict-options" id="predictOptions"></div>' +
+    '<div class="predict-explain" id="predictExplain">' + p.afterExplain + '</div>' +
+    '<button class="run-verify-btn" id="runVerifyBtn">▶ Run it to see the real output</button>' +
+    '<div class="output-panel" style="display:none;" id="predictOutputPanel">' +
+      '<div class="output-section-head">OUTPUT</div>' +
+      '<div class="output-log" id="predictOutputLog"></div>' +
+    '</div>';
+
+  CodeMirror(document.getElementById('predictCmHost'), {
+    value: p.snippet,
+    mode: { name:'python' },
+    theme: 'default',
+    lineNumbers: true,
+    readOnly: true,
+    viewportMargin: Infinity
+  });
+
+  const optsWrap = document.getElementById('predictOptions');
+  p.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'predict-opt';
+    btn.innerHTML = opt;
+    btn.onclick = () => {
+      const allBtns = optsWrap.querySelectorAll('.predict-opt');
+      allBtns.forEach((b, bi) => {
+        b.disabled = true;
+        if (bi === p.correctIndex) b.classList.add('correct');
+        else if (bi === i) b.classList.add('wrong');
+      });
+      document.getElementById('predictExplain').classList.add('show');
+      if (!state.completed.has(lesson.id)){
+        state.completed.add(lesson.id);
+        saveProgress(state.completed);
+        renderSidebar();
+        updateStatusBar();
+      }
+    };
+    optsWrap.appendChild(btn);
+  });
+
+  document.getElementById('runVerifyBtn').onclick = () => {
+    const panel = document.getElementById('predictOutputPanel');
+    const log = document.getElementById('predictOutputLog');
+    panel.style.display = 'block';
+    log.innerHTML = '<span class="empty">Starting Python…</span>';
+    runPython(p.snippet, '', (res) => {
+      if (res.timedOut){
+        log.innerHTML = '<span class="err">Timed out -- possible infinite loop.</span>';
+        return;
+      }
+      log.innerHTML = res.logs.map(l => '<div>' + escapeHtml(l) + '</div>').join('');
+      if (res.error){
+        log.innerHTML += '<div class="err">' + escapeHtml(cleanPythonError(res.error)) + '</div>';
+      }
+    });
+  };
+}
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+function updateStatusBar(){
+  const crumb = document.getElementById('statusBreadcrumb');
+  const prog = document.getElementById('statusProgress');
+  if (state.activeId){
+    const lesson = LESSONS.find(l => l.id === state.activeId);
+    crumb.textContent = 'Python Fundamentals › ' + MODULES[lesson.module].title + ' › ' + lesson.title;
+  } else {
+    crumb.textContent = 'Welcome';
+  }
+  prog.textContent = state.completed.size + ' / ' + LESSONS.length + ' complete';
+}
+
+/* ============================================================
+   MOBILE SIDEBAR
+   ============================================================ */
+function openSidebarMobile(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+document.getElementById('hamburgerBtn').onclick = () => {
+  const sb = document.getElementById('sidebar');
+  if (sb.classList.contains('open')) closeSidebarMobile(); else openSidebarMobile();
+};
+document.getElementById('sidebarOverlay').onclick = closeSidebarMobile;
+document.getElementById('navHome').onclick = () => {
+  state.activeId = null;
+  closeSidebarMobile();
+  renderWelcome();
+  renderTabs();
+  renderSidebar();
+};
+document.getElementById('navExplorer').onclick = () => {
+  if (window.innerWidth <= 860) openSidebarMobile();
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderSidebar();
+renderTabs();
+renderWelcome();
+</script>
+<!--hub-link--><a href="index.html" aria-label="Back to Learning Hub" style="position:fixed;right:10px;bottom:46px;z-index:99999;width:38px;height:38px;border-radius:50%;background:#007ACC;color:#fff;font:700 18px/38px system-ui,sans-serif;text-align:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.28);opacity:.88">&#8962;</a>
+</body>
+</html>
